@@ -1,5 +1,8 @@
 {
     "cSpell.words": [
         "webserver"
-    ]
+    ],
+    "files.associations": {
+        "*.h": "c"
+    }
 }
