@@ -1,45 +1,45 @@
 ##############################################################################
 # Target
-EXE			:= webserver
-EXE_DEBUG	:= $(EXE).debug
+EXE        := webserver
+EXE_DEBUG  := $(EXE).debug
 
 ##############################################################################
 # Toolchain
 #
-CC					:= gcc
-CLEAN				:= rm -rf
-DOWNLOAD_TARBALL	:= curl -s -L
-MEMCHECK			:= valgrind --leak-check=yes
-MKDIR				:= mkdir -p
-UNTAR_INTO			:= tar xz -C
+CC                := gcc
+CLEAN             := rm -rf
+DOWNLOAD_TARBALL  := curl -s -L
+MEMCHECK          := valgrind --leak-check=yes
+MKDIR             := mkdir -p
+UNTAR_INTO        := tar xz -C
 
 ##############################################################################
 # Paths
 #
-ROOT		:= $(CURDIR)/
-SOURCE		:= $(ROOT)src/
-INCLUDE		:= $(ROOT)include/
-BUILD		:= $(ROOT)build/
-LIB			:= $(ROOT)lib/
-LIB_BUILD	:= $(BUILD)lib/
+ROOT        := $(CURDIR)/
+SOURCE      := $(ROOT)src/
+INCLUDE     := $(ROOT)include/
+BUILD       := $(ROOT)build/
+LIB         := $(ROOT)lib/
+LIB_BUILD   := $(BUILD)lib/
 $(shell $(MKDIR) $(BUILD))
 $(shell $(MKDIR) $(LIB))
 $(shell $(MKDIR) $(LIB_BUILD))
 
 ##############################################################################
 # Libraries
-#  - Unity-2.6.0	Testing library
+#  - Unity-2.6.0  Testing library
 #
 LIB_INCLUDES := $(LIB)Unity-2.6.0/src
-LIB_SOURCES := $(LIB)Unity-2.6.0/src
+LIB_SOURCES  := $(LIB)Unity-2.6.0/src
 $(LIB_SOURCES):
 	$(DOWNLOAD_TARBALL) https://github.com/ThrowTheSwitch/Unity/archive/refs/tags/v2.6.0.tar.gz | $(UNTAR_INTO) $(LIB)
 
 ##############################################################################
 # Build & Run
 #
-CFLAGS			:= -Wall -O3$(foreach inc, $(LIB_INCLUDES), -I$(inc)) -I$(INCLUDE) 
-OBJECTS			:= $(patsubst $(INCLUDE)%.h, $(BUILD)%.o, $(wildcard *, $(INCLUDE)*.h))
+CFLAGS   := -Wall -O3$(foreach inc, $(LIB_INCLUDES), -I$(inc)) -I$(INCLUDE) 
+OBJECTS  := $(patsubst $(INCLUDE)%.h, $(BUILD)%.o, $(wildcard *, $(INCLUDE)*.h))
 
 $(BUILD)%.o: $(SOURCE)%.c
 	$(CC) $(CFLAGS) -c $< -o $@ 
@@ -56,10 +56,10 @@ build-debug: $(EXE_DEBUG)
 ##############################################################################
 # Testing
 #
-TEST		:= $(ROOT)test/
-TESTS		:= $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
+TEST      := $(ROOT)test/
+TESTS     := $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
 
-TEST_LIB	:= $(LIB_BUILD)unity.o
+TEST_LIB  := $(LIB_BUILD)unity.o
 $(TEST_LIB): $(LIB_SOURCES)
 	$(CC) $(CFLAGS) -c $(LIB)Unity-2.6.0/src/unity.c -o $@
 
