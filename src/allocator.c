@@ -3,7 +3,7 @@
 
 Allocator *createAllocator(size_t minimum_region_capacity)
 {
-  Allocator *allocator = malloc(sizeof(Allocator));
+  Allocator *allocator = calloc(sizeof(Allocator), 1);
   if (!allocator)
   {
     return NULL;
@@ -18,6 +18,9 @@ Allocator *createAllocator(size_t minimum_region_capacity)
 
 size_t deleteAllocator(Allocator *allocator)
 {
+  if (!allocator)
+    return 0;
+
   size_t deallocated = 0;
   AllocatorRegion *cursor = NULL;
   AllocatorRegion *next_cursor = allocator->head_region;
@@ -34,7 +37,7 @@ size_t deleteAllocator(Allocator *allocator)
   return deallocated;
 }
 
-uintptr_t pushAllocator(Allocator *allocator, size_t size)
+uintptr_t growAllocator(Allocator *allocator, size_t size)
 {
   if (allocator->tail_region &&
       (allocator->tail_region->total_capacity - allocator->tail_region->used_capacity) >= size)
@@ -49,13 +52,13 @@ uintptr_t pushAllocator(Allocator *allocator, size_t size)
                         ? size
                         : allocator->minimum_region_capacity;
 
-  AllocatorRegion *region = malloc(sizeof(AllocatorRegion) + capacity);
+  AllocatorRegion *region = calloc(1, sizeof(AllocatorRegion));
   if (!region)
   {
     return (uintptr_t)NULL;
   }
 
-  region->content = (uintptr_t)(region + sizeof(AllocatorRegion));
+  region->content = (uintptr_t)calloc(capacity, 1);
   region->total_capacity = capacity;
   region->used_capacity = 0;
   region->next_region = NULL;
