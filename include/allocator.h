@@ -1,4 +1,5 @@
 #ifndef WEBSERVER_ALLOCATOR_H
+#define WEBSERVER_ALLOCATOR_H
 #include <stddef.h>
 #include <stdint.h>
 
