@@ -38,8 +38,8 @@ $(LIB_SOURCES):
 ##############################################################################
 # Build & Run
 #
-CFLAGS   := -Wall -O3$(foreach inc, $(LIB_INCLUDES), -I$(inc)) -I$(INCLUDE) 
-OBJECTS  := $(patsubst $(INCLUDE)%.h, $(BUILD)%.o, $(wildcard *, $(INCLUDE)*.h))
+CFLAGS        := -Wall -O3$(foreach inc, $(LIB_INCLUDES), -I$(inc)) -I$(INCLUDE)
+OBJECTS       := $(patsubst $(SOURCE)%.c, $(BUILD)%.o, $(filter-out $(SOURCE)$(EXE).c, $(wildcard *, $(SOURCE)*.c)))
 
 $(BUILD)%.o: $(SOURCE)%.c
 	$(CC) $(CFLAGS) -c $< -o $@ 
