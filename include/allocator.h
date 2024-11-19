@@ -18,10 +18,7 @@ typedef struct Allocator
 } Allocator;
 
 Allocator *createAllocator(size_t minimum_region_capacity);
-#define createStrictAllocator() createAllocator(0)
 #define create8KBAllocator() createAllocator(8 * 1024)
-#define create16KBAllocator() createAllocator(16 * 1024)
-#define create32KBAllocator() createAllocator(32 * 1024)
 
 size_t deleteAllocator(Allocator *allocator);
 

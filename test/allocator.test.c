@@ -5,7 +5,7 @@ Allocator *strict_alloc;
 
 void setUp(void)
 {
-  strict_alloc = createStrictAllocator();
+  strict_alloc = createAllocator(512);
 }
 
 void tearDown(void)
