@@ -3,12 +3,12 @@
 #include <stdint.h>
 #include "allocator.h"
 
-typedef struct OZCharArray
+typedef struct OZArray
 {
   char *data;
   size_t size;
-} OZCharArrayT;
+} OZArrayT;
 
-OZCharArrayT *ozCharArrayCreate(OZAllocatorT *allocator, size_t size);
+OZArrayT *ozArrayCreate(OZAllocatorT *allocator, size_t size);
 
 #endif
