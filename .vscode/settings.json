@@ -1,5 +1,8 @@
 {
     "cSpell.words": [
+        "memcheck",
+        "untar",
+        "valgrind",
         "webserver"
     ],
     "files.associations": {

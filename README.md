@@ -1,4 +1,4 @@
-# webserver
+# ozone
 
 Low overhead, transport layer to application layer webserver.
 
@@ -10,6 +10,13 @@ and recipes.
 ```
 make all
 ```
+
+## Compile-time Flags
+
+| Flag           | Default  | Effect                                      |
+| -------------- | -------- | ------------------------------------------- |
+| `OZ_LOG_DEBUG` | disabled | Enables debug-level logging                 |
+| `OZ_LOG_TRACE` | disabled | Enables trace-level and debug-level logging |
 
 ## Testing
 

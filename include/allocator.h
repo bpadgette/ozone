@@ -1,30 +1,30 @@
-#ifndef WEBSERVER_ALLOCATOR_H
-#include <stddef.h>
+#ifndef OZONE_ALLOCATOR_H
+#define OZONE_ALLOCATOR_H
 #include <stdint.h>
+#include <stddef.h>
 
-typedef struct AllocatorRegion
+typedef struct OZAllocator
 {
-  struct AllocatorRegion *next_region;
-  size_t used_capacity;
-  size_t total_capacity;
-  uintptr_t content;
-} AllocatorRegion;
+  uintptr_t cursor;
+  uintptr_t end;
+  struct OZAllocator *previous;
+  struct OZAllocator *next;
+} OZAllocatorT;
 
-typedef struct Allocator
-{
-  AllocatorRegion *head_region, *tail_region;
-  size_t minimum_region_capacity;
-} Allocator;
+OZAllocatorT *ozAllocatorCreate(size_t initial_allocation_size);
+void ozAllocatorDelete(OZAllocatorT *allocator);
 
-Allocator *createAllocator(size_t minimum_region_capacity);
-#define createStrictAllocator() createAllocator(0)
-#define create8KBAllocator() createAllocator(8 * 1024)
-#define create16KBAllocator() createAllocator(16 * 1024)
-#define create32KBAllocator() createAllocator(32 * 1024)
+#define ozAllocatorGetStart(allocator) (sizeof(OZAllocatorT) + (uintptr_t)allocator)
+#define ozAllocatorGetRegionCapacity(allocator) (size_t)(allocator->end - ozAllocatorGetStart(allocator))
+size_t ozAllocatorGetTotalCapacity(OZAllocatorT *allocator);
 
-size_t deleteAllocator(Allocator *allocator);
+#define ozAllocatorGetRegionFree(allocator) (size_t)(allocator->end - allocator->cursor)
+size_t ozAllocatorGetTotalFree(OZAllocatorT *allocator);
 
-uintptr_t growAllocator(Allocator *allocator, size_t size);
-#define pushAllocator(allocator, type, count) (type *)growAllocator(allocator, count * sizeof(type))
+void ozAllocatorClear(OZAllocatorT *allocator);
+
+uintptr_t ozAllocatorReserveBytes(OZAllocatorT *allocator, size_t size);
+#define ozAllocatorReserveOne(allocator, type) (type *)ozAllocatorReserveBytes(allocator, 1 * sizeof(type))
+#define ozAllocatorReserveMany(allocator, type, count) (type *)ozAllocatorReserveBytes(allocator, count * sizeof(type))
 
 #endif
