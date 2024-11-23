@@ -47,13 +47,13 @@ $(BUILD)%.o: $(SOURCE)%.c
 	$(CC) $(CFLAGS) -c $< -o $@ 
 
 $(BUILD)%.debug.o: $(SOURCE)%.c
-	$(CC) $(CFLAGS) -DOZ_LOG_TRACE -g -c $< -o $@ 
+	$(CC) $(CFLAGS) -DOZ_LOG_DEBUG -g -c $< -o $@ 
 
 $(EXE): $(OBJECTS)
 	$(CC) $(CFLAGS) -static $(SOURCE)$(EXE).c $^ -o $(BUILD)$(EXE)
 
 $(EXE_DEBUG): $(DEBUG_OBJECTS)
-	$(CC) $(CFLAGS) -DOZ_LOG_TRACE -g  $(SOURCE)$(EXE).c $^ -o $(BUILD)$(EXE_DEBUG)
+	$(CC) $(CFLAGS) -DOZ_LOG_DEBUG -g  $(SOURCE)$(EXE).c $^ -o $(BUILD)$(EXE_DEBUG)
 
 build: $(EXE)
 build-debug: $(EXE_DEBUG)
