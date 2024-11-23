@@ -1,79 +1,105 @@
-#include "allocator.h"
+
 #include <stdlib.h>
+#include <string.h>
+#include "allocator.h"
+#include "log.h"
 
-Allocator *createAllocator(size_t minimum_region_capacity)
+OZAllocatorT *ozAllocatorCreate(size_t size)
 {
-  Allocator *allocator = calloc(sizeof(Allocator), 1);
+  OZAllocatorT *allocator = (OZAllocatorT *)malloc(size + sizeof(OZAllocatorT));
+  ozLogTrace("Allocated %ld bytes with malloc, %ld usable as allocation space", size + sizeof(OZAllocatorT), size);
   if (!allocator)
-  {
     return NULL;
-  }
 
-  allocator->minimum_region_capacity = minimum_region_capacity;
-  allocator->head_region = NULL;
-  allocator->tail_region = NULL;
+  *allocator = (OZAllocatorT){
+      .cursor = ozAllocatorGetStart(allocator),
+      .end = ozAllocatorGetStart(allocator) + (uintptr_t)size,
+      .previous = NULL,
+      .next = NULL};
 
   return allocator;
 }
 
-size_t deleteAllocator(Allocator *allocator)
+void ozAllocatorDelete(OZAllocatorT *allocator)
 {
   if (!allocator)
-    return 0;
+    return;
 
-  size_t deallocated = 0;
-  AllocatorRegion *cursor = NULL;
-  AllocatorRegion *next_cursor = allocator->head_region;
-  while ((cursor = next_cursor))
+  OZAllocatorT *allocator_iterator = allocator;
+  OZAllocatorT *next = NULL;
+  do
   {
-    next_cursor = cursor->next_region;
-    deallocated += (sizeof(AllocatorRegion) + cursor->total_capacity);
-    free(cursor);
-  };
-
-  free(allocator);
-  deallocated += sizeof(allocator);
-
-  return deallocated;
+    next = allocator_iterator->next;
+    free(allocator_iterator);
+  } while ((allocator_iterator = next));
 }
 
-uintptr_t growAllocator(Allocator *allocator, size_t size)
+size_t ozAllocatorGetTotalCapacity(OZAllocatorT *allocator)
 {
-  if (allocator->tail_region &&
-      (allocator->tail_region->total_capacity - allocator->tail_region->used_capacity) >= size)
+  size_t capacity = 0;
+  if (!allocator)
+    return capacity;
+
+  OZAllocatorT *allocator_iterator = allocator;
+  do
   {
-    uintptr_t content_position = allocator->tail_region->content + allocator->tail_region->used_capacity;
-    allocator->tail_region->used_capacity += size;
+    capacity += ozAllocatorGetRegionCapacity(allocator_iterator);
+  } while ((allocator_iterator = allocator_iterator->next));
 
-    return content_position;
-  }
+  return capacity;
+}
 
-  size_t capacity = size > allocator->minimum_region_capacity
-                        ? size
-                        : allocator->minimum_region_capacity;
+size_t ozAllocatorGetTotalFree(OZAllocatorT *allocator)
+{
+  size_t free = 0;
+  if (!allocator)
+    return free;
 
-  AllocatorRegion *region = calloc(1, sizeof(AllocatorRegion));
-  if (!region)
+  OZAllocatorT *allocator_iterator = allocator;
+  do
   {
+    free += ozAllocatorGetRegionFree(allocator_iterator);
+  } while ((allocator_iterator = allocator_iterator->next));
+
+  return free;
+}
+
+uintptr_t ozAllocatorReserveBytes(OZAllocatorT *allocator, size_t size)
+{
+  if (!allocator)
     return (uintptr_t)NULL;
-  }
 
-  region->content = (uintptr_t)calloc(capacity, 1);
-  region->total_capacity = capacity;
-  region->used_capacity = 0;
-  region->next_region = NULL;
-
-  if (!allocator->head_region)
+  OZAllocatorT *allocator_iterator = allocator;
+  do
   {
-    allocator->head_region = region;
-  }
+    if (size <= ozAllocatorGetRegionFree(allocator_iterator))
+    {
+      uintptr_t cursor = allocator_iterator->cursor;
+      allocator_iterator->cursor += (uintptr_t)size;
+      ozLogTrace("Reserved %ld bytes among previously allocated bytes", size);
+      return cursor;
+    }
+  } while ((allocator_iterator = allocator_iterator->next));
 
-  if (allocator->tail_region)
+  allocator_iterator->next = ozAllocatorCreate(size > ozAllocatorGetRegionCapacity(allocator)
+                                                   ? size
+                                                   : ozAllocatorGetRegionCapacity(allocator));
+
+  allocator_iterator->next->previous = allocator_iterator;
+
+  return allocator_iterator->next->cursor;
+}
+
+void ozAllocatorClear(OZAllocatorT *allocator)
+{
+  if (!allocator)
+    return;
+
+  ozLogTrace("Clearing %ld bytes", ozAllocatorGetTotalCapacity(allocator));
+  OZAllocatorT *allocator_iterator = allocator;
+  do
   {
-    allocator->tail_region->next_region = region;
-  }
-
-  allocator->tail_region = region;
-
-  return region->content;
+    memset((void *)ozAllocatorGetStart(allocator_iterator), 0, ozAllocatorGetRegionCapacity(allocator_iterator));
+    allocator_iterator->cursor = ozAllocatorGetStart(allocator_iterator);
+  } while ((allocator_iterator = allocator_iterator->next));
 }
