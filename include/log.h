@@ -18,8 +18,7 @@
         "\"level\":\"" level "\","                               \
         "\"timestamp\":\"%04d-%02d-%02d %02d:%02d:%02d.%03ld\"," \
         "\"message\":\"" format "\","                            \
-        "\"function\":\"%s\","                                   \
-        "\"location\":\"%s:%d\"}\r\n",                           \
+        "\"location\":\"(%s) %s:%d\"}\r\n",                      \
         now->tm_year + 1900,                                     \
         now->tm_mon,                                             \
         now->tm_mday,                                            \
