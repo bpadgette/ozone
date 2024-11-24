@@ -14,8 +14,8 @@ typedef struct OZAllocator
 OZAllocatorT *ozAllocatorCreate(size_t initial_allocation_size);
 void ozAllocatorDelete(OZAllocatorT *allocator);
 
-#define ozAllocatorGetStart(allocator) (sizeof(OZAllocatorT) + (uintptr_t)allocator)
-#define ozAllocatorGetRegionCapacity(allocator) (size_t)(allocator->end - ozAllocatorGetStart(allocator))
+#define ozAllocatorGetRegionStart(allocator) (sizeof(OZAllocatorT) + (uintptr_t)allocator)
+#define ozAllocatorGetRegionCapacity(allocator) (size_t)(allocator->end - ozAllocatorGetRegionStart(allocator))
 size_t ozAllocatorGetTotalCapacity(OZAllocatorT *allocator);
 
 #define ozAllocatorGetRegionFree(allocator) (size_t)(allocator->end - allocator->cursor)
