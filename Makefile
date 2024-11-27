@@ -22,10 +22,8 @@ SOURCE      := $(ROOT)src/
 INCLUDE     := $(ROOT)include/
 BUILD       := $(ROOT)build/
 LIB         := $(ROOT)lib/
-LIB_BUILD   := $(BUILD)lib/
 $(shell $(MKDIR) $(BUILD))
 $(shell $(MKDIR) $(LIB))
-$(shell $(MKDIR) $(LIB_BUILD))
 
 ##############################################################################
 # Libraries
@@ -64,7 +62,7 @@ build-debug: $(EXE_DEBUG)
 TEST      := $(ROOT)test/
 TESTS     := $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
 
-TEST_LIB  := $(LIB_BUILD)unity.o
+TEST_LIB  := $(LIB)unity.o
 $(TEST_LIB): $(LIB_SOURCES)
 	$(CC) $(CFLAGS) -c $(LIB)Unity-2.6.0/src/unity.c -o $@
 
