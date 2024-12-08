@@ -1,26 +1,15 @@
-#include <stdio.h>
-#include <errno.h>
-#include "allocator.h"
-#include "socket.h"
-#include "log.h"
+#include "http.h"
 
-OZSocketResponseT *handler(OZAllocatorT *alloc, OZSocketRequestT *request)
+int handler(OZAllocatorT *alloc, OZHTTPHandlerParameterT *param)
 {
-  ozLogDebug("Request Size: %ld", request->size);
+  (void)alloc;
 
-  OZSocketResponseT *response = ozSocketResponseCreate(alloc, 70);
-  snprintf(response->data,
-           response->size,
-           "HTTP/1.0 200 OK\r\n"
-           "Content-length: 3\r\n"
-           "Content-type: text/plain\r\n\r\n"
-           "ooo\r\n");
+  param->response->body = ozArrayStringFromChars("Hello, world!");
 
-  return response;
+  return 0;
 }
 
-int main(int argc, char **argv)
+int main()
 {
-  ozLogInfo("Launching");
-  return ozServeSocket(handler);
+  return ozHTTPServe(8080, handler);
 }

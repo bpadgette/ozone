@@ -1,14 +1,22 @@
 #ifndef OZONE_ARRAY_H
 #define OZONE_ARRAY_H
 #include <stdint.h>
+#include <string.h>
 #include "allocator.h"
 
-typedef struct OZCharArray
+typedef struct OZArrayString
 {
   char *data;
-  size_t size;
-} OZCharArrayT;
+  size_t length;
+} OZArrayStringT;
 
-OZCharArrayT *ozCharArrayCreate(OZAllocatorT *allocator, size_t size);
+OZArrayStringT *ozArrayStringCreate(OZAllocatorT *allocator, size_t size);
+#define ozArrayStringFromChars(string) \
+  ((OZArrayStringT){.data = string, .length = sizeof(string)})
+
+int ozArrayStringCompare(OZArrayStringT *left, OZArrayStringT *right);
+#define ozArrayStringIs(left, right) (ozArrayStringCompare(left, right) == 0)
+
+OZArrayStringT *ozArrayStringCopy(OZAllocatorT *allocator, OZArrayStringT *source);
 
 #endif

@@ -1,7 +1,8 @@
+#include "allocator.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include "allocator.h"
 #include "log.h"
 
 OZAllocatorT *ozAllocatorCreate(size_t size)
@@ -12,8 +13,8 @@ OZAllocatorT *ozAllocatorCreate(size_t size)
     return NULL;
 
   *allocator = (OZAllocatorT){
-      .cursor = ozAllocatorGetStart(allocator),
-      .end = ozAllocatorGetStart(allocator) + (uintptr_t)size,
+      .cursor = ozAllocatorGetRegionStart(allocator),
+      .end = ozAllocatorGetRegionStart(allocator) + (uintptr_t)size,
       .previous = NULL,
       .next = NULL};
 
@@ -79,15 +80,15 @@ uintptr_t ozAllocatorReserveBytes(OZAllocatorT *allocator, size_t size)
       ozLogTrace("Reserved %ld bytes among previously allocated bytes", size);
       return cursor;
     }
-  } while ((allocator_iterator = allocator_iterator->next));
+  } while (allocator_iterator->next && (allocator_iterator = allocator_iterator->next));
 
-  allocator_iterator->next = ozAllocatorCreate(size > ozAllocatorGetRegionCapacity(allocator)
-                                                   ? size
-                                                   : ozAllocatorGetRegionCapacity(allocator));
+  OZAllocatorT *new_region = ozAllocatorCreate(fmax(size, ozAllocatorGetRegionCapacity(allocator)));
 
-  allocator_iterator->next->previous = allocator_iterator;
+  new_region->previous = allocator_iterator;
+  new_region->cursor += size;
+  allocator_iterator->next = new_region;
 
-  return allocator_iterator->next->cursor;
+  return ozAllocatorGetRegionStart(new_region);
 }
 
 void ozAllocatorClear(OZAllocatorT *allocator)
@@ -99,7 +100,7 @@ void ozAllocatorClear(OZAllocatorT *allocator)
   OZAllocatorT *allocator_iterator = allocator;
   do
   {
-    memset((void *)ozAllocatorGetStart(allocator_iterator), 0, ozAllocatorGetRegionCapacity(allocator_iterator));
-    allocator_iterator->cursor = ozAllocatorGetStart(allocator_iterator);
+    memset((void *)ozAllocatorGetRegionStart(allocator_iterator), 0, ozAllocatorGetRegionCapacity(allocator_iterator));
+    allocator_iterator->cursor = ozAllocatorGetRegionStart(allocator_iterator);
   } while ((allocator_iterator = allocator_iterator->next));
 }
