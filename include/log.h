@@ -5,7 +5,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-#define ozLog(file, level, format, format_args...)               \
+#define ozLog(file, level, format, ...)                          \
   do                                                             \
   {                                                              \
     time_t seconds = time(NULL);                                 \
@@ -26,32 +26,32 @@
         now->tm_min,                                             \
         now->tm_sec,                                             \
         now_ms.tv_usec / 1000,                                   \
-        ##format_args,                                           \
+        ##__VA_ARGS__,                                           \
         __func__,                                                \
         basename(__FILE__),                                      \
         __LINE__);                                               \
     fflush(file);                                                \
   } while (0)
 
-#define ozLogError(format, format_args...) ozLog(stderr, "error", format, ##format_args)
-#define ozLogWarn(format, format_args...) ozLog(stderr, "warn", format, ##format_args)
-#define ozLogInfo(format, format_args...) ozLog(stdout, "info", format, ##format_args)
+#define ozLogError(format, ...) ozLog(stderr, "error", format, ##__VA_ARGS__)
+#define ozLogWarn(format, ...) ozLog(stderr, "warn", format, ##__VA_ARGS__)
+#define ozLogInfo(format, ...) ozLog(stdout, "info", format, ##__VA_ARGS__)
 
 #if defined(OZ_LOG_TRACE) || defined(OZ_LOG_DEBUG)
-#define ozLogDebug(format, format_args...) ozLog(stdout, "debug", format, ##format_args)
+#define ozLogDebug(format, ...) ozLog(stdout, "debug", format, ##__VA_ARGS__)
 #else
-#define ozLogDebug(format, format_args...) \
-  do                                       \
-  {                                        \
+#define ozLogDebug(format, ...) \
+  do                            \
+  {                             \
   } while (0)
 #endif
 
 #ifdef OZ_LOG_TRACE
-#define ozLogTrace(format, format_args...) ozLog(stdout, "trace", format, ##format_args)
+#define ozLogTrace(format, ...) ozLog(stdout, "trace", format, ##__VA_ARGS__)
 #else
-#define ozLogTrace(format, format_args...) \
-  do                                       \
-  {                                        \
+#define ozLogTrace(format, ...) \
+  do                            \
+  {                             \
   } while (0)
 #endif
 
