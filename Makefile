@@ -37,21 +37,22 @@ $(LIB_SOURCES):
 ##############################################################################
 # Build & Run
 #
-CFLAGS        := -Wall -O3$(foreach inc, $(LIB_INCLUDES), -I$(inc)) -I$(INCLUDE)
+CFLAGS        := -Wall -Werror -Wextra -pedantic -O3$(foreach inc, $(LIB_INCLUDES), -I$(inc)) -I$(INCLUDE)
+CLIBS         := -lm
 OBJECTS       := $(patsubst $(SOURCE)%.c, $(BUILD)%.o, $(filter-out $(SOURCE)$(EXE).c, $(wildcard *, $(SOURCE)*.c)))
 DEBUG_OBJECTS := $(patsubst $(SOURCE)%.c, $(BUILD)%.debug.o, $(filter-out $(SOURCE)$(EXE).c, $(wildcard *, $(SOURCE)*.c)))
 
 $(BUILD)%.o: $(SOURCE)%.c
-	$(CC) $(CFLAGS) -c $< -o $@ 
+	$(CC) $(CFLAGS) -c $< $(CLIBS) -o $@
 
 $(BUILD)%.debug.o: $(SOURCE)%.c
-	$(CC) $(CFLAGS) -DOZ_LOG_DEBUG -g -c $< -o $@ 
+	$(CC) $(CFLAGS) -DOZ_LOG_DEBUG -g -c $< $(CLIBS) -o $@
 
 $(EXE): $(OBJECTS)
-	$(CC) $(CFLAGS) -static $(SOURCE)$(EXE).c $^ -o $(BUILD)$(EXE)
+	$(CC) $(CFLAGS) -static $(SOURCE)$(EXE).c $^ $(CLIBS) -o $(BUILD)$(EXE)
 
 $(EXE_DEBUG): $(DEBUG_OBJECTS)
-	$(CC) $(CFLAGS) -DOZ_LOG_DEBUG -g  $(SOURCE)$(EXE).c $^ -o $(BUILD)$(EXE_DEBUG)
+	$(CC) $(CFLAGS) -DOZ_LOG_DEBUG -g  $(SOURCE)$(EXE).c $^ $(CLIBS) -o $(BUILD)$(EXE_DEBUG)
 
 build: $(EXE)
 build-debug: $(EXE_DEBUG)
@@ -64,10 +65,10 @@ TESTS     := $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
 
 TEST_LIB  := $(LIB)unity.o
 $(TEST_LIB): $(LIB_SOURCES)
-	$(CC) $(CFLAGS) -c $(LIB)Unity-2.6.0/src/unity.c -o $@
+	$(CC) $(CFLAGS) -c $(LIB)Unity-2.6.0/src/unity.c $(CLIBS) -o $@
 
 $(BUILD)%.test: $(TEST)%.test.c $(DEBUG_OBJECTS) $(TEST_LIB)
-	$(CC) $(CFLAGS) -g $^ -o $@
+	$(CC) $(CFLAGS) -g $^ $(CLIBS) -o $@
 	$@
 
 test: $(TESTS)

@@ -1,44 +1,50 @@
+#include "socket.h"
+
 #include <errno.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netinet/tcp.h>
 #include <unistd.h>
-#include "allocator.h"
-#include "socket.h"
 #include "log.h"
 
-#define OZ_SOCKET_REQUEST_CHUNK_LENGTH 1024
-#define OZ_SOCKET_REQUEST_MAX_LENGTH 8 * OZ_SOCKET_REQUEST_CHUNK_LENGTH
-
-int ozServeSocket(OZSocketHandlerT *handler)
+int ozSocketServeTCP(OZSocketConfigT config)
 {
-  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  if (sockfd == -1)
+  int socket_fd = socket(AF_INET6, SOCK_STREAM, 0);
+  if (socket_fd == -1)
   {
-    ozLogError("Could not get socket file descriptor");
+    ozLogError("Failed to get AF_INET6 SOCK_STREAM socket file descriptor, returning EACCES");
     return EACCES;
   }
 
-  struct sockaddr_in host_addr;
+  struct sockaddr_in6 host_addr = {0};
   int host_addrlen = sizeof(host_addr);
-  host_addr.sin_family = AF_INET;
-  host_addr.sin_port = htons(8080);
-  host_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  host_addr.sin6_family = AF_INET6;
+  host_addr.sin6_port = htons(config.port);
 
-  if (bind(sockfd, (struct sockaddr *)&host_addr, host_addrlen) != 0 || listen(sockfd, SOMAXCONN) != 0)
+  const int socket_option_one = 1;
+  setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &socket_option_one, sizeof(int));
+  setsockopt(socket_fd, SOL_SOCKET, SO_KEEPALIVE, &socket_option_one, sizeof(int));
+  setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPIDLE, &socket_option_one, sizeof(int));
+  setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPINTVL, &socket_option_one, sizeof(int));
+  const int socket_option_ten = 10;
+  setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPCNT, &socket_option_ten, sizeof(int));
+
+  if (bind(socket_fd, (struct sockaddr *)&host_addr, host_addrlen) != 0 || listen(socket_fd, SOMAXCONN) != 0)
   {
-    ozLogError("Connection aborted");
+    ozLogError("Connection aborted, returning ECONNABORTED");
     return ECONNABORTED;
   }
 
-  OZAllocatorT *handler_allocator = ozAllocatorCreate(2 * OZ_SOCKET_REQUEST_MAX_LENGTH);
+  ozLogDebug("Listening for TCP connections on port %d with a %ld member handler_pipeline", config.port, config.handler_pipeline_length);
+  OZAllocatorT *handler_allocator = ozAllocatorCreate(OZ_SOCKET_INITIAL_ALLOCATION);
   for (;;)
   {
-    int newsockfd = accept(
-        sockfd,
+    int accepted_socket_fd = accept(
+        socket_fd,
         (struct sockaddr *)&host_addr,
         (socklen_t *)&host_addrlen);
 
-    if (newsockfd < 0)
+    if (accepted_socket_fd < 0)
     {
       ozLogError("Could not accept connection");
       continue;
@@ -51,12 +57,12 @@ int ozServeSocket(OZSocketHandlerT *handler)
     long int read_status = 0;
     do
     {
-      size_t bytes_readable = (bytes_read + OZ_SOCKET_REQUEST_CHUNK_LENGTH) > OZ_SOCKET_REQUEST_MAX_LENGTH
-                                  ? OZ_SOCKET_REQUEST_MAX_LENGTH - bytes_read
-                                  : OZ_SOCKET_REQUEST_CHUNK_LENGTH;
+      long int bytes_readable = (bytes_read + OZ_SOCKET_REQUEST_CHUNK_LENGTH) > OZ_SOCKET_REQUEST_MAX_LENGTH
+                                    ? OZ_SOCKET_REQUEST_MAX_LENGTH - bytes_read
+                                    : OZ_SOCKET_REQUEST_CHUNK_LENGTH;
 
       read_status = bytes_readable > 0
-                        ? read(newsockfd, bytes_read + request->data, bytes_readable)
+                        ? read(accepted_socket_fd, bytes_read + request->data, bytes_readable)
                         : -2;
 
       if (read_status > 0 && read_status < bytes_readable)
@@ -67,17 +73,38 @@ int ozServeSocket(OZSocketHandlerT *handler)
         ozLogError(
             "Could not read (part of) a request; internal error, %ld bytes read",
             bytes_read);
-      else if (read_status == -1)
+      else if (read_status == -2)
         ozLogError(
             "Could not read (part of) a request; out of memory, %ld bytes read, OZ_SOCKET_REQUEST_MAX_LENGTH %d",
             bytes_read, OZ_SOCKET_REQUEST_MAX_LENGTH);
     } while (read_status > 0);
 
-    OZSocketResponseT *response = handler(handler_allocator, request);
-    if (write(newsockfd, response->data, response->size) < 0)
-      ozLogError("Could not write (part of) response of length %ld to socket", response->size);
+    int skip_write = 0;
+    OZSocketHandlerParameterT handler_arg = {.request = request};
+    for (size_t handler_index = 0; handler_index < config.handler_pipeline_length; handler_index++)
+    {
+      int error = config.handler_pipeline[handler_index](handler_allocator, &handler_arg);
+      if (error && config.error_handler)
+      {
+        ozLogWarn("Socket handler_pipeline[%ld] returned %d; will invoke error_handler", handler_index, error);
+        config.error_handler(handler_allocator, &handler_arg, error);
+        break;
+      }
+      else if (error)
+      {
+        ozLogError("Socket handler_pipeline[%ld] returned %d; no error_handler is defined so no response will be returned",
+                   handler_index, error);
+        break;
+      }
+    }
 
-    close(newsockfd);
+    if (!skip_write && write(
+                           accepted_socket_fd,
+                           ((OZSocketResponseT *)handler_arg.response)->data,
+                           ((OZSocketResponseT *)handler_arg.response)->length) < 0)
+      ozLogError("Could not write (part of) response of length %ld to socket", ((OZSocketResponseT *)handler_arg.response)->length);
+
+    close(accepted_socket_fd);
   }
 
   ozAllocatorDelete(handler_allocator);

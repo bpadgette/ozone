@@ -1,9 +1,13 @@
 {
     "cSpell.words": [
+        "CLIBS",
         "memcheck",
+        "OZHTTP",
         "untar",
         "valgrind",
-        "webserver"
+        "webserver",
+        "Werror",
+        "Wextra"
     ],
     "files.associations": {
         "*.h": "c"

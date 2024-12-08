@@ -11,7 +11,7 @@ void tearDown(void)
 
 void shouldReserveAndClearSingleRegion(void)
 {
-  int size = 1024;
+  size_t size = 1024;
   OZAllocatorT *alloc = ozAllocatorCreate(size);
   char *allocation = ozAllocatorReserveMany(alloc, char, size);
 
@@ -30,7 +30,7 @@ void shouldReserveAndClearSingleRegion(void)
 
 void shouldReserveAndClearMultipleRegions(void)
 {
-  int size = 1024;
+  size_t size = 1024;
   OZAllocatorT *alloc = ozAllocatorCreate(size);
 
   char *allocation = ozAllocatorReserveMany(alloc, char, size);

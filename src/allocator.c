@@ -1,9 +1,9 @@
+#include "allocator.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include "allocator.h"
 #include "log.h"
-#include "math.h"
 
 OZAllocatorT *ozAllocatorCreate(size_t size)
 {
@@ -82,7 +82,7 @@ uintptr_t ozAllocatorReserveBytes(OZAllocatorT *allocator, size_t size)
     }
   } while (allocator_iterator->next && (allocator_iterator = allocator_iterator->next));
 
-  OZAllocatorT *new_region = ozAllocatorCreate(ozMathMax(size, ozAllocatorGetRegionCapacity(allocator)));
+  OZAllocatorT *new_region = ozAllocatorCreate(fmax(size, ozAllocatorGetRegionCapacity(allocator)));
 
   new_region->previous = allocator_iterator;
   new_region->cursor += size;
