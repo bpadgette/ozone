@@ -1,5 +1,5 @@
-#include "allocator.h"
-#include "array.h"
+#include "ozone_allocator.h"
+#include "ozone_array.h"
 #include "unity.h"
 
 void setUp(void)
@@ -13,31 +13,31 @@ void tearDown(void)
 void shouldCreateZeroedArrayString(void)
 {
   size_t size = 1024;
-  OZAllocatorT *alloc = ozAllocatorCreate(size);
+  OzoneAllocatorT *alloc = ozoneAllocatorCreate(size);
 
-  OZArrayStringT *array = ozArrayStringCreate(alloc, 12);
+  OzoneArrayStringT *array = ozoneArrayStringCreate(alloc, 12);
   array->data = "hello";
 
   TEST_ASSERT_EQUAL_STRING_MESSAGE(array->data, "hello", "allocates a zero-allocated data section");
 
-  ozAllocatorDelete(alloc);
+  ozoneAllocatorDelete(alloc);
 }
 
 void shouldCopyArrayString(void)
 {
   size_t size = 1024;
-  OZAllocatorT *alloc = ozAllocatorCreate(size);
+  OzoneAllocatorT *alloc = ozoneAllocatorCreate(size);
 
-  OZArrayStringT *array = ozArrayStringCreate(alloc, 6);
+  OzoneArrayStringT *array = ozoneArrayStringCreate(alloc, 6);
   array->data = "hello";
   TEST_ASSERT_EQUAL_STRING_MESSAGE(array->data, "hello", "creates original array");
 
-  OZArrayStringT *copy = ozArrayStringCopy(alloc, array);
+  OzoneArrayStringT *copy = ozoneArrayStringCopy(alloc, array);
   array->data = "Hello";
   TEST_ASSERT_EQUAL_STRING_MESSAGE(array->data, "Hello", "changes affect original array");
   TEST_ASSERT_EQUAL_STRING_MESSAGE(copy->data, "hello", "deep copies original array");
 
-  ozAllocatorDelete(alloc);
+  ozoneAllocatorDelete(alloc);
 }
 
 int main(void)

@@ -5,7 +5,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-#define ozLog(file, level, format, ...)                          \
+#define ozoneLog(file, level, format, ...)                       \
   do                                                             \
   {                                                              \
     time_t seconds = time(NULL);                                 \
@@ -33,25 +33,25 @@
     fflush(file);                                                \
   } while (0)
 
-#define ozLogError(format, ...) ozLog(stderr, "error", format, ##__VA_ARGS__)
-#define ozLogWarn(format, ...) ozLog(stderr, "warn", format, ##__VA_ARGS__)
-#define ozLogInfo(format, ...) ozLog(stdout, "info", format, ##__VA_ARGS__)
+#define ozoneLogError(format, ...) ozoneLog(stderr, "error", format, ##__VA_ARGS__)
+#define ozoneLogWarn(format, ...) ozoneLog(stderr, "warn", format, ##__VA_ARGS__)
+#define ozoneLogInfo(format, ...) ozoneLog(stdout, "info", format, ##__VA_ARGS__)
 
-#if defined(OZ_LOG_TRACE) || defined(OZ_LOG_DEBUG)
-#define ozLogDebug(format, ...) ozLog(stdout, "debug", format, ##__VA_ARGS__)
+#if defined(OZONE_LOG_TRACE) || defined(OZONE_LOG_DEBUG)
+#define ozoneLogDebug(format, ...) ozoneLog(stdout, "debug", format, ##__VA_ARGS__)
 #else
-#define ozLogDebug(format, ...) \
-  do                            \
-  {                             \
+#define ozoneLogDebug(format, ...) \
+  do                               \
+  {                                \
   } while (0)
 #endif
 
-#ifdef OZ_LOG_TRACE
-#define ozLogTrace(format, ...) ozLog(stdout, "trace", format, ##__VA_ARGS__)
+#ifdef OZONE_LOG_TRACE
+#define ozoneLogTrace(format, ...) ozoneLog(stdout, "trace", format, ##__VA_ARGS__)
 #else
-#define ozLogTrace(format, ...) \
-  do                            \
-  {                             \
+#define ozoneLogTrace(format, ...) \
+  do                               \
+  {                                \
   } while (0)
 #endif
 

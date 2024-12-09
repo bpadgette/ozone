@@ -13,10 +13,10 @@ make all
 
 ## Compile-time Flags
 
-| Flag           | Default  | Effect                                      |
-| -------------- | -------- | ------------------------------------------- |
-| `OZ_LOG_DEBUG` | disabled | Enables debug-level logging                 |
-| `OZ_LOG_TRACE` | disabled | Enables trace-level and debug-level logging |
+| Flag              | Default  | Effect                                      |
+| ----------------- | -------- | ------------------------------------------- |
+| `OZONE_LOG_DEBUG` | disabled | Enables debug-level logging                 |
+| `OZONE_LOG_TRACE` | disabled | Enables trace-level and debug-level logging |
 
 ## Testing
 
