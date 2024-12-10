@@ -1,6 +1,6 @@
 # ozone
 
-Low overhead, transport layer to application layer webserver.
+Minimal dependency, C-based web framework.
 
 # Getting Started
 
