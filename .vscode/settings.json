@@ -3,6 +3,7 @@
         "CLIBS",
         "DOZONE",
         "fpic",
+        "libozone",
         "memcheck",
         "untar",
         "valgrind",
