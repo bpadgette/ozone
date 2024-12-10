@@ -34,7 +34,7 @@ OzoneArrayStringT *ozoneArrayStringCopy(OzoneAllocatorT *allocator, OzoneArraySt
   if (!copy)
     return NULL;
 
-  for (size_t index = 0; index <= source->length; index++)
+  for (size_t index = 0; index < source->length; index++)
     copy->data[index] = source->data[index];
 
   return copy;
