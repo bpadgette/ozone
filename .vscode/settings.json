@@ -2,6 +2,7 @@
     "cSpell.words": [
         "CLIBS",
         "DOZONE",
+        "fpic",
         "memcheck",
         "untar",
         "valgrind",
