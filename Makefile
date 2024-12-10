@@ -45,7 +45,7 @@ $(BUILD)%.debug.o: $(SOURCE)%.c
 	$(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g -c $< $(CLIBS) -o $@
 
 $(TARGET_H):
-	$(COPY) $(INCLUDE)$(TARGET).h $(TARGET_H)
+	$(COPY) $(INCLUDE)* $(BUILD)
 
 $(TARGET_LIB): $(OBJECTS)
 	$(ARCHIVER) $(TARGET_LIB) $(OBJECTS)
