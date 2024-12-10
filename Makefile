@@ -4,9 +4,7 @@
 CC                := gcc
 CLEAN             := rm -rf
 COPY              := cp -rf
-DEBUGGER          := gdb
 DOWNLOAD_TARBALL  := curl -s -L
-MEMCHECK          := valgrind --leak-check=yes
 MKDIR             := mkdir -p
 UNTAR_INTO        := tar xz -C
 
@@ -34,8 +32,8 @@ TARGET_DEBUG_LIB   := $(BUILD)lib$(TARGET).debug.so
 #
 CFLAGS        := -Wall -Werror -Wextra -pedantic -fpic -O3 -I$(INCLUDE)
 CLIBS         := -lm
-OBJECTS       := $(patsubst $(SOURCE)%.c, $(BUILD)%.o, $(filter-out $(SOURCE)$(TARGET).c, $(wildcard *, $(SOURCE)*.c)))
-DEBUG_OBJECTS := $(patsubst $(SOURCE)%.c, $(BUILD)%.debug.o, $(filter-out $(SOURCE)$(TARGET).c, $(wildcard *, $(SOURCE)*.c)))
+OBJECTS       := $(patsubst $(SOURCE)%.c, $(BUILD)%.o, $(wildcard *, $(SOURCE)*.c))
+DEBUG_OBJECTS := $(patsubst $(SOURCE)%.c, $(BUILD)%.debug.o, $(wildcard *, $(SOURCE)*.c))
 
 $(BUILD)%.o: $(SOURCE)%.c
 	$(CC) $(CFLAGS) -c $< $(CLIBS) -o $@
@@ -82,14 +80,7 @@ $(BUILD_EXAMPLES)%: $(TARGET_LIB)
 $(BUILD_EXAMPLES)%.debug: $(TARGET_DEBUG_LIB)
 	$(shell $(MKDIR) $(BUILD_EXAMPLES)) && $(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g $(EXAMPLES)$*.c $< $(CLIBS) -o $@
 
-start: $(BUILD_EXAMPLES)start
-	$<
-
-debug: $(BUILD_EXAMPLES)start.debug
-	$(DEBUGGER) $<
-
-memcheck: $(BUILD_EXAMPLES)start.debug
-	$(MEMCHECK) $<
+build-examples: $(patsubst $(EXAMPLES)%.c, $(BUILD_EXAMPLES)%, $(wildcard *, $(EXAMPLES)*.c))
 
 ##############################################################################
 # Installation
@@ -106,6 +97,6 @@ uninstall:
 clean:
 	$(CLEAN) $(BUILD)
 
-all: build build-debug test
+all: build build-debug build-examples test
 
-.PHONY: build build-debug test debug memcheck clean start install uninstall all
+.PHONY: build build-debug build-examples test clean install uninstall all
