@@ -4,19 +4,30 @@
 #include <string.h>
 #include "ozone_allocator.h"
 
-typedef struct OzoneArrayString
-{
-  char *data;
-  size_t length;
-} OzoneArrayStringT;
+/**
+ * For each OZONE_DEFINE_ARRAY_TYPE(type, name) in OZONE_ARRAY_H there must be:
+ *   - OZONE_DEFINE_ARRAY_CREATE(type, name) in the implementation
+ */
+#define OZONE_DEFINE_ARRAY_TYPE(type, name) \
+  typedef struct Ozone##name##Array         \
+  {                                         \
+    type *data;                             \
+    size_t length;                          \
+  } Ozone##name##ArrayT;                    \
+  Ozone##name##ArrayT *ozone##name##ArrayCreate(OzoneAllocatorT *allocator, size_t size)
 
-OzoneArrayStringT *ozoneArrayStringCreate(OzoneAllocatorT *allocator, size_t size);
-#define ozoneArrayStringFromChars(string) \
-  ((OzoneArrayStringT){.data = string, .length = sizeof(string)})
+#define OZONE_DEFINE_ARRAY_CREATE(type, name)                                                                                                     \
+  Ozone##name##ArrayT *ozone##name##ArrayCreate(OzoneAllocatorT *allocator, size_t size)                                                          \
+  {                                                                                                                                               \
+    Ozone##name##ArrayT *array = (Ozone##name##ArrayT *)ozoneAllocatorReserveBytes(allocator, sizeof(Ozone##name##ArrayT) + size * sizeof(type)); \
+    array->data = (type *)(array + sizeof(Ozone##name##ArrayT));                                                                                  \
+    array->length = size;                                                                                                                         \
+    return array;                                                                                                                                 \
+  }
 
-int ozoneArrayStringCompare(OzoneArrayStringT *left, OzoneArrayStringT *right);
-#define ozoneArrayStringIs(left, right) (ozoneArrayStringCompare(left, right) == 0)
+OZONE_DEFINE_ARRAY_TYPE(char, Char);
 
-OzoneArrayStringT *ozoneArrayStringCopy(OzoneAllocatorT *allocator, OzoneArrayStringT *source);
+#define ozoneCharArray(string) \
+  ((OzoneCharArrayT){.data = string, .length = sizeof(string)})
 
 #endif

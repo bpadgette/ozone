@@ -8,51 +8,53 @@ typedef unsigned short int OzoneHTTPStatusCodeT;
 
 typedef struct OzoneHTTPHeaders
 {
-  OzoneArrayStringT *keys;
-  OzoneArrayStringT *values;
+  OzoneCharArrayT *keys;
+  OzoneCharArrayT *values;
   size_t count;
 } OzoneHTTPHeadersT;
 
 typedef struct OzoneHTTPRequest
 {
-  OzoneArrayStringT method;
-  OzoneArrayStringT target;
-  OzoneArrayStringT version;
+  OzoneCharArrayT method;
+  OzoneCharArrayT target;
+  OzoneCharArrayT version;
   OzoneHTTPHeadersT headers;
-  OzoneArrayStringT body;
+  OzoneCharArrayT body;
 } OzoneHTTPRequestT;
 
 typedef struct OzoneHTTPResponse
 {
-  OzoneArrayStringT version;
+  OzoneCharArrayT version;
   OzoneHTTPStatusCodeT code;
   OzoneHTTPHeadersT headers;
-  OzoneArrayStringT body;
+  OzoneCharArrayT body;
 } OzoneHTTPResponseT;
 
-OzoneArrayStringT *ozoneHTTPHeadersGetValue(OzoneHTTPHeadersT headers, OzoneArrayStringT key);
+OzoneCharArrayT *ozoneHTTPHeadersGetValue(OzoneHTTPHeadersT headers, OzoneCharArrayT key);
 
-OzoneHTTPHeadersT *ozoneHTTPHeadersSetHeaders(OzoneAllocatorT *alloc, OzoneHTTPHeadersT *headers, OzoneArrayStringT *keys, OzoneArrayStringT *values, size_t set_count);
+OzoneHTTPHeadersT *ozoneHTTPHeadersSetHeaders(OzoneAllocatorT *alloc, OzoneHTTPHeadersT *headers, OzoneCharArrayT *keys, OzoneCharArrayT *values, size_t set_count);
 
-OzoneHTTPRequestT *ozoneHTTPRequestCreateFromString(OzoneAllocatorT *alloc, OzoneArrayStringT *input);
+OzoneHTTPRequestT *ozoneHTTPRequestCreateFromString(OzoneAllocatorT *alloc, OzoneCharArrayT *input);
 
 OzoneHTTPResponseT *ozoneHTTPResponseCreate(OzoneAllocatorT *alloc);
 
-OzoneArrayStringT *ozoneHTTPResponseGetString(OzoneAllocatorT *alloc, OzoneHTTPResponseT *response);
+OzoneCharArrayT *ozoneHTTPResponseGetString(OzoneAllocatorT *alloc, OzoneHTTPResponseT *response);
 
-OzoneArrayStringT ozoneHTTPStatusString(OzoneHTTPStatusCodeT status);
+OzoneCharArrayT ozoneHTTPStatusString(OzoneHTTPStatusCodeT status);
 
-typedef struct OzoneHTTPHandlerParameter
+typedef struct OzoneHTTPHandlerContext
 {
+  OzoneAllocatorT *allocator;
   OzoneHTTPRequestT *request;
   OzoneHTTPResponseT *response;
-} OzoneHTTPHandlerParameterT;
+} OzoneHTTPHandlerContextT;
 
-int ozoneHTTPSocketHandlerBegin(OzoneAllocatorT *alloc, OzoneSocketHandlerParameterT *param);
-int ozoneHTTPSocketHandlerEnd(OzoneAllocatorT *alloc, OzoneSocketHandlerParameterT *param);
-void ozoneHTTPSocketErrorHandler(OzoneAllocatorT *alloc, OzoneSocketHandlerParameterT *param, int error);
+int ozoneHTTPSocketHandlerBegin(OzoneSocketHandlerContextT *context);
+int ozoneHTTPSocketHandlerEnd(OzoneSocketHandlerContextT *context);
+void ozoneHTTPSocketErrorHandler(OzoneSocketHandlerContextT *context, int error);
 
-typedef int(OzoneHTTPHandlerT)(OzoneAllocatorT *alloc, OzoneHTTPHandlerParameterT *param);
+typedef int(OzoneHTTPHandlerT)(OzoneHTTPHandlerContextT *context);
+
 int ozoneHTTPServe(unsigned short int port, OzoneHTTPHandlerT *handler);
 
 #endif

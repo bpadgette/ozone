@@ -10,12 +10,12 @@ void tearDown(void)
 {
 }
 
-void shouldCreateZeroedArrayString(void)
+void shouldCreateZeroedCharArray(void)
 {
   size_t size = 1024;
   OzoneAllocatorT *alloc = ozoneAllocatorCreate(size);
 
-  OzoneArrayStringT *array = ozoneArrayStringCreate(alloc, 12);
+  OzoneCharArrayT *array = ozoneCharArrayCreate(alloc, 12);
   array->data = "hello";
 
   TEST_ASSERT_EQUAL_STRING_MESSAGE(array->data, "hello", "allocates a zero-allocated data section");
@@ -23,27 +23,9 @@ void shouldCreateZeroedArrayString(void)
   ozoneAllocatorDelete(alloc);
 }
 
-void shouldCopyArrayString(void)
-{
-  size_t size = 1024;
-  OzoneAllocatorT *alloc = ozoneAllocatorCreate(size);
-
-  OzoneArrayStringT *array = ozoneArrayStringCreate(alloc, 6);
-  array->data = "hello";
-  TEST_ASSERT_EQUAL_STRING_MESSAGE(array->data, "hello", "creates original array");
-
-  OzoneArrayStringT *copy = ozoneArrayStringCopy(alloc, array);
-  array->data = "Hello";
-  TEST_ASSERT_EQUAL_STRING_MESSAGE(array->data, "Hello", "changes affect original array");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE(copy->data, "hello", "deep copies original array");
-
-  ozoneAllocatorDelete(alloc);
-}
-
 int main(void)
 {
   UNITY_BEGIN();
-  RUN_TEST(shouldCreateZeroedArrayString);
-  RUN_TEST(shouldCopyArrayString);
+  RUN_TEST(shouldCreateZeroedCharArray);
   return UNITY_END();
 }

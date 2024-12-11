@@ -8,20 +8,15 @@
 
 #define OZONE_SOCKET_INITIAL_ALLOCATION (OZONE_SOCKET_REQUEST_MAX_LENGTH)
 
-typedef OzoneArrayStringT OzoneSocketRequestT;
-#define ozoneSocketRequestCreate(alloc, size) (OzoneSocketRequestT *)ozoneArrayStringCreate(alloc, size)
-
-typedef OzoneArrayStringT OzoneSocketResponseT;
-#define ozoneSocketResponseCreate(alloc, size) (OzoneSocketResponseT *)ozoneArrayStringCreate(alloc, size)
-
-typedef struct OzoneSocketHandlerParameter
+typedef struct OzoneSocketHandlerContext
 {
+  OzoneAllocatorT *allocator;
   void *request;
   void *response;
-} OzoneSocketHandlerParameterT;
+} OzoneSocketHandlerContextT;
 
-typedef int(OzoneSocketHandlerT)(OzoneAllocatorT *alloc, OzoneSocketHandlerParameterT *param);
-typedef void(OzoneSocketErrorHandlerT)(OzoneAllocatorT *alloc, OzoneSocketHandlerParameterT *param, int error);
+typedef int(OzoneSocketHandlerT)(OzoneSocketHandlerContextT *context);
+typedef void(OzoneSocketErrorHandlerT)(OzoneSocketHandlerContextT *context, int error);
 
 typedef struct OzoneSocketConfig
 {

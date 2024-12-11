@@ -51,7 +51,7 @@ int ozoneSocketServeTCP(OzoneSocketConfigT config)
     }
 
     ozoneAllocatorClear(handler_allocator);
-    OzoneSocketRequestT *request = ozoneSocketRequestCreate(handler_allocator, OZONE_SOCKET_REQUEST_MAX_LENGTH);
+    OzoneCharArrayT *request = ozoneCharArrayCreate(handler_allocator, OZONE_SOCKET_REQUEST_MAX_LENGTH);
 
     long int bytes_read = 0;
     long int read_status = 0;
@@ -80,14 +80,16 @@ int ozoneSocketServeTCP(OzoneSocketConfigT config)
     } while (read_status > 0);
 
     int skip_write = 0;
-    OzoneSocketHandlerParameterT handler_arg = {.request = request};
+    OzoneSocketHandlerContextT handler_arg = {
+        .allocator = handler_allocator,
+        .request = request};
     for (size_t handler_index = 0; handler_index < config.handler_pipeline_length; handler_index++)
     {
-      int error = config.handler_pipeline[handler_index](handler_allocator, &handler_arg);
+      int error = config.handler_pipeline[handler_index](&handler_arg);
       if (error && config.error_handler)
       {
         ozoneLogWarn("Socket handler_pipeline[%ld] returned %d; will invoke error_handler", handler_index, error);
-        config.error_handler(handler_allocator, &handler_arg, error);
+        config.error_handler(&handler_arg, error);
         break;
       }
       else if (error)
@@ -100,9 +102,9 @@ int ozoneSocketServeTCP(OzoneSocketConfigT config)
 
     if (!skip_write && write(
                            accepted_socket_fd,
-                           ((OzoneSocketResponseT *)handler_arg.response)->data,
-                           ((OzoneSocketResponseT *)handler_arg.response)->length) < 0)
-      ozoneLogError("Could not write (part of) response of length %ld to socket", ((OzoneSocketResponseT *)handler_arg.response)->length);
+                           ((OzoneCharArrayT *)handler_arg.response)->data,
+                           ((OzoneCharArrayT *)handler_arg.response)->length) < 0)
+      ozoneLogError("Could not write (part of) response of length %ld to socket", ((OzoneCharArrayT *)handler_arg.response)->length);
 
     close(accepted_socket_fd);
   }

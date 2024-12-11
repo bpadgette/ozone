@@ -15,8 +15,8 @@ void shouldCreateHTTPHeaders(void)
   size_t size = 1024;
   OzoneAllocatorT *alloc = ozoneAllocatorCreate(size);
 
-  OzoneArrayStringT new_keys[1] = {(OzoneArrayStringT){.data = "content-type", .length = 13}};
-  OzoneArrayStringT new_values[1] = {(OzoneArrayStringT){.data = "text/plain", .length = 11}};
+  OzoneCharArrayT new_keys[1] = {(OzoneCharArrayT){.data = "content-type", .length = 13}};
+  OzoneCharArrayT new_values[1] = {(OzoneCharArrayT){.data = "text/plain", .length = 11}};
   OzoneHTTPHeadersT *headers = ozoneHTTPHeadersSetHeaders(alloc, NULL, new_keys, new_values, 1);
 
   TEST_ASSERT_MESSAGE(headers->count == 1, "set new header count");
@@ -31,8 +31,8 @@ void shouldOverwriteHTTPHeaders(void)
   size_t size = 1024;
   OzoneAllocatorT *alloc = ozoneAllocatorCreate(size);
 
-  OzoneArrayStringT new_keys[2] = {(OzoneArrayStringT){.data = "content-type", .length = 13}, (OzoneArrayStringT){.data = "authorization", .length = 14}};
-  OzoneArrayStringT new_values[2] = {(OzoneArrayStringT){.data = "text/plain", .length = 11}, (OzoneArrayStringT){.data = "Bearer token", .length = 13}};
+  OzoneCharArrayT new_keys[2] = {(OzoneCharArrayT){.data = "content-type", .length = 13}, (OzoneCharArrayT){.data = "authorization", .length = 14}};
+  OzoneCharArrayT new_values[2] = {(OzoneCharArrayT){.data = "text/plain", .length = 11}, (OzoneCharArrayT){.data = "Bearer token", .length = 13}};
   OzoneHTTPHeadersT *headers = ozoneHTTPHeadersSetHeaders(alloc, NULL, new_keys, new_values, 2);
 
   TEST_ASSERT_MESSAGE(headers->count == 2, "set new header count");
@@ -41,8 +41,8 @@ void shouldOverwriteHTTPHeaders(void)
   TEST_ASSERT_EQUAL_STRING_MESSAGE(new_keys[1].data, headers->keys[1].data, "set second new header key");
   TEST_ASSERT_EQUAL_STRING_MESSAGE(new_values[1].data, headers->values[1].data, "set second new header value");
 
-  OzoneArrayStringT overwrite_key[1] = {(OzoneArrayStringT){.data = "content-type", .length = 13}};
-  OzoneArrayStringT overwrite_value[1] = {(OzoneArrayStringT){.data = "text/html", .length = 10}};
+  OzoneCharArrayT overwrite_key[1] = {(OzoneCharArrayT){.data = "content-type", .length = 13}};
+  OzoneCharArrayT overwrite_value[1] = {(OzoneCharArrayT){.data = "text/html", .length = 10}};
   ozoneHTTPHeadersSetHeaders(alloc, headers, overwrite_key, overwrite_value, 1);
 
   TEST_ASSERT_MESSAGE(headers->count == 2, "not set new header count");
@@ -59,7 +59,7 @@ void shouldCreateHTTPRequestFromString(void)
   size_t size = 1024;
   OzoneAllocatorT *alloc = ozoneAllocatorCreate(size);
 
-  OzoneArrayStringT string = (OzoneArrayStringT){
+  OzoneCharArrayT string = (OzoneCharArrayT){
       .data = "POST /users HTTP/1.1\r\n"
               "Host: example.com\r\n"
               "Content-Type: application/x-www-form-urlencoded\r\n"
@@ -92,13 +92,13 @@ void shouldCreateStringFromHTTPResponse(void)
 
   OzoneHTTPResponseT *response = ozoneHTTPResponseCreate(alloc);
   response->code = 200;
-  response->body = ozoneArrayStringFromChars("ooo");
+  response->body = ozoneCharArray("ooo");
   response->headers = (OzoneHTTPHeadersT){
       .count = 1,
-      .keys = &ozoneArrayStringFromChars("Content-Type"),
-      .values = &ozoneArrayStringFromChars("text/plain")};
+      .keys = &ozoneCharArray("Content-Type"),
+      .values = &ozoneCharArray("text/plain")};
 
-  OzoneArrayStringT *string = ozoneHTTPResponseGetString(alloc, response);
+  OzoneCharArrayT *string = ozoneHTTPResponseGetString(alloc, response);
   TEST_ASSERT_EQUAL_STRING_MESSAGE(
       "HTTP/1.1 200 OK\r\n"
       "Content-Type: text/plain\r\n"
