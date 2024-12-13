@@ -1,19 +1,15 @@
 #include "ozone_allocator.h"
 #include "unity.h"
 
-void setUp(void)
-{
-}
+void setUp(void) { }
 
-void tearDown(void)
-{
-}
+void tearDown(void) { }
 
 void shouldReserveAndClearSingleRegion(void)
 {
   size_t size = 1024;
-  OzoneAllocatorT *alloc = ozoneAllocatorCreate(size);
-  char *allocation = ozoneAllocatorReserveMany(alloc, char, size);
+  OzoneAllocatorT* alloc = ozoneAllocatorCreate(size);
+  char* allocation = ozoneAllocatorReserveMany(alloc, char, size);
 
   TEST_ASSERT_MESSAGE(ozoneAllocatorGetTotalCapacity(alloc) == size, "allocates capacity equal to size");
   TEST_ASSERT_MESSAGE(ozoneAllocatorGetRegionCapacity(alloc) == size, "allocates capacity to single region");
@@ -31,10 +27,10 @@ void shouldReserveAndClearSingleRegion(void)
 void shouldReserveAndClearMultipleRegions(void)
 {
   size_t size = 1024;
-  OzoneAllocatorT *alloc = ozoneAllocatorCreate(size);
+  OzoneAllocatorT* alloc = ozoneAllocatorCreate(size);
 
-  char *allocation = ozoneAllocatorReserveMany(alloc, char, size);
-  char *second_allocation = ozoneAllocatorReserveMany(alloc, char, size);
+  char* allocation = ozoneAllocatorReserveMany(alloc, char, size);
+  char* second_allocation = ozoneAllocatorReserveMany(alloc, char, size);
 
   TEST_ASSERT_MESSAGE(ozoneAllocatorGetTotalCapacity(alloc) == size * 2, "allocates capacity equal to size * 2");
   TEST_ASSERT_MESSAGE(ozoneAllocatorGetRegionCapacity(alloc) == size, "allocates capacity to first region");
@@ -46,7 +42,8 @@ void shouldReserveAndClearMultipleRegions(void)
   TEST_ASSERT_MESSAGE(second_allocation[size - 1] == 0, "grants access to full second allocation");
 
   ozoneAllocatorClear(alloc);
-  TEST_ASSERT_MESSAGE(ozoneAllocatorGetTotalCapacity(alloc) == size * 2, "has total capacity equal to size after clear");
+  TEST_ASSERT_MESSAGE(
+      ozoneAllocatorGetTotalCapacity(alloc) == size * 2, "has total capacity equal to size after clear");
   TEST_ASSERT_MESSAGE(ozoneAllocatorGetTotalFree(alloc) == size * 2, "has total free space equal to size after clear");
 
   ozoneAllocatorDelete(alloc);
