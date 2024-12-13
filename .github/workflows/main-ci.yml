@@ -7,10 +7,12 @@ on:
 
 jobs:
   build-and-test:
-    name: Build & Test
+    name: Quality Checks, Build, & Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Quality Checks
+        run: make format-check
       - name: Build
         run: make build
       - name: Test
