@@ -1,0 +1,5 @@
+# see https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+---
+BasedOnStyle: Webkit
+IndentWidth: 2
+ColumnLimit: 120

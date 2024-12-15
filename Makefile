@@ -5,6 +5,9 @@ CC                := gcc
 CLEAN             := rm -rf
 COPY              := cp -rf
 DOWNLOAD_TARBALL  := curl -s -L
+FORMAT            := clang-format -i
+FORMAT_CHECK      := clang-format -i -Werror --dry-run
+FORMAT_TARGETS    := **/*.c **/*.h
 MKDIR             := mkdir -p
 UNTAR_INTO        := tar xz -C
 
@@ -94,9 +97,16 @@ uninstall:
 ##############################################################################
 # Helpers
 #
+format:
+	cd $(ROOT) && $(FORMAT) $(FORMAT_TARGETS)
+
+format-check:
+	cd $(ROOT) && $(FORMAT_CHECK) $(FORMAT_TARGETS)
+
 clean:
 	$(CLEAN) $(BUILD)
 
 all: build build-debug build-examples test
 
-.PHONY: build build-debug build-examples test clean install uninstall all
+.DELETE_ON_ERROR:
+.PHONY: format format-check build build-debug build-examples test clean install uninstall all

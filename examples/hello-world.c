@@ -1,15 +1,5 @@
 #include "ozone.h"
 
-int handler(OzoneAllocatorT *alloc, OzoneHTTPHandlerParameterT *param)
-{
-  (void)alloc;
+ozoneHTTPHandler(handler, { res->body = ozoneCharArray("Hello, world!"); });
 
-  param->response->body = ozoneArrayStringFromChars("Hello, world!");
-
-  return 0;
-}
-
-int main()
-{
-  return ozoneHTTPServe(8080, handler);
-}
+int main() { return ozoneHTTPServe(8080, handler); }
