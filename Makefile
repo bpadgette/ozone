@@ -108,4 +108,5 @@ clean:
 
 all: build build-debug build-examples test
 
+.DELETE_ON_ERROR:
 .PHONY: format format-check build build-debug build-examples test clean install uninstall all
