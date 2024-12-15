@@ -1,56 +1,77 @@
 #ifndef OZONE_HTTP
 #define OZONE_HTTP
 #include "ozone_allocator.h"
-#include "ozone_array.h"
 #include "ozone_socket.h"
+#include "ozone_string.h"
+
+typedef enum OzoneHTTPVersion {
+  OZONE_HTTP_VERSION_UNKNOWN,
+  OZONE_HTTP_VERSION_1_0 = 10,
+  OZONE_HTTP_VERSION_1_1 = 11,
+} OzoneHTTPVersionT;
+
+OzoneHTTPVersionT ozoneHTTPParseVersion(const OzoneStringT* version_string);
+
+typedef enum OzoneHTTPMethod {
+  OZONE_HTTP_METHOD_UNKNOWN,
+  OZONE_HTTP_METHOD_GET,
+  OZONE_HTTP_METHOD_HEAD,
+  OZONE_HTTP_METHOD_POST,
+  OZONE_HTTP_METHOD_PUT,
+  OZONE_HTTP_METHOD_DELETE,
+  OZONE_HTTP_METHOD_CONNECT,
+  OZONE_HTTP_METHOD_OPTIONS,
+  OZONE_HTTP_METHOD_TRACE,
+  OZONE_HTTP_METHOD_PATCH,
+} OzoneHTTPMethodT;
+
+OzoneHTTPMethodT ozoneHTTPParseMethod(const OzoneStringT* method_string);
 
 typedef unsigned short int OzoneHTTPStatusCodeT;
 
-typedef struct OzoneHTTPHeaders {
-  OzoneCharArrayT* keys;
-  OzoneCharArrayT* values;
-  size_t count;
-} OzoneHTTPHeadersT;
+OzoneStringT ozoneHTTPStatusString(OzoneHTTPStatusCodeT status);
+
+typedef struct OzoneHTTPHeader {
+  OzoneStringT name;
+  OzoneStringT value;
+  struct OzoneHTTPHeader* next;
+} OzoneHTTPHeaderT;
+
+OzoneStringT* ozoneHTTPGetHeaderValue(OzoneHTTPHeaderT* headers, OzoneStringT name);
+void ozoneHTTPAppendHeader(
+    OzoneAllocatorT* allocator, OzoneHTTPHeaderT** headers, OzoneStringT name, OzoneStringT value);
 
 typedef struct OzoneHTTPRequest {
-  OzoneCharArrayT method;
-  OzoneCharArrayT target;
-  OzoneCharArrayT version;
-  OzoneHTTPHeadersT headers;
-  OzoneCharArrayT body;
+  OzoneHTTPMethodT method;
+  OzoneStringT target;
+  OzoneHTTPVersionT version;
+  OzoneHTTPHeaderT* headers;
+  OzoneStringT body;
 } OzoneHTTPRequestT;
 
 typedef struct OzoneHTTPResponse {
-  OzoneCharArrayT version;
+  OzoneHTTPVersionT version;
   OzoneHTTPStatusCodeT code;
-  OzoneHTTPHeadersT headers;
-  OzoneCharArrayT body;
+  OzoneHTTPHeaderT* headers;
+  OzoneStringT body;
 } OzoneHTTPResponseT;
 
-OzoneCharArrayT* ozoneHTTPHeadersGetValue(OzoneHTTPHeadersT headers, OzoneCharArrayT key);
-
-OzoneHTTPHeadersT* ozoneHTTPHeadersSetHeaders(OzoneAllocatorT* alloc, OzoneHTTPHeadersT* headers, OzoneCharArrayT* keys,
-    OzoneCharArrayT* values, size_t set_count);
-
-OzoneHTTPRequestT* ozoneHTTPRequestCreateFromString(OzoneAllocatorT* alloc, OzoneCharArrayT* input);
-
-OzoneHTTPResponseT* ozoneHTTPResponseCreate(OzoneAllocatorT* alloc);
-
-OzoneCharArrayT* ozoneHTTPResponseGetString(OzoneAllocatorT* alloc, OzoneHTTPResponseT* response);
-
-OzoneCharArrayT ozoneHTTPStatusString(OzoneHTTPStatusCodeT status);
-
 typedef struct OzoneHTTPHandlerContext {
-  OzoneAllocatorT* allocator;
-  OzoneHTTPRequestT* request;
-  OzoneHTTPResponseT* response;
+  OzoneHTTPRequestT request;
+  OzoneHTTPResponseT response;
 } OzoneHTTPHandlerContextT;
 
-int ozoneHTTPSocketHandlerBegin(OzoneSocketHandlerContextT* context);
-int ozoneHTTPSocketHandlerEnd(OzoneSocketHandlerContextT* context);
-void ozoneHTTPSocketErrorHandler(OzoneSocketHandlerContextT* context, int error);
+typedef struct OzoneHTTPSocketHandlerContext {
+  OzoneAllocatorT* allocator;
+  const OzoneSocketChunkT* request;
+  OzoneSocketChunkT* response;
+  OzoneHTTPHandlerContextT* extra_context;
+} OzoneHTTPSocketHandlerContextT;
 
-typedef int(OzoneHTTPHandlerT)(OzoneHTTPHandlerContextT* context);
+typedef int(OzoneHTTPHandlerT)(OzoneHTTPSocketHandlerContextT* context);
+
+OzoneHTTPRequestT* ozoneHTTPParseSocketChunks(OzoneAllocatorT* allocator, const OzoneSocketChunkT* socket_request);
+OzoneSocketChunkT* ozoneHTTPCreateSocketChunks(OzoneAllocatorT* allocator, OzoneHTTPResponseT* http_response);
 
 int ozoneHTTPServe(unsigned short int port, OzoneHTTPHandlerT* handler);
 

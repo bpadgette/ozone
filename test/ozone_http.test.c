@@ -1,106 +1,53 @@
+#include "test.h"
+
 #include "ozone_http.h"
-#include "ozone_allocator.h"
-#include "unity.h"
+#include <string.h>
 
-void setUp(void) { }
+const char* EXAMPLE_HTTP_REQUEST = {
+  "POST /users HTTP/1.1\r\n"
+  "Host: example.com\r\n"
+  "Content-Type: application/x-www-form-urlencoded\r\n"
+  "Content-Length: 27\r\n"
+  "\r\n"
+  "field1=value1&field2=value2",
+};
 
-void tearDown(void) { }
-
-void shouldCreateHTTPHeaders(void)
+void shouldParseSocketChunksAsHTTPRequest(void)
 {
-  size_t size = 1024;
-  OzoneAllocatorT* alloc = ozoneAllocatorCreate(size);
+  OzoneAllocatorT* alloc = ozoneAllocatorCreate(1024);
 
-  OzoneCharArrayT new_keys[1] = { (OzoneCharArrayT) { .data = "content-type", .length = 13 } };
-  OzoneCharArrayT new_values[1] = { (OzoneCharArrayT) { .data = "text/plain", .length = 11 } };
-  OzoneHTTPHeadersT* headers = ozoneHTTPHeadersSetHeaders(alloc, NULL, new_keys, new_values, 1);
-
-  TEST_ASSERT_MESSAGE(headers->count == 1, "set new header count");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE(new_keys[0].data, headers->keys[0].data, "set new header key");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE(new_values[0].data, headers->values[0].data, "set new header value");
-
-  ozoneAllocatorDelete(alloc);
-}
-
-void shouldOverwriteHTTPHeaders(void)
-{
-  size_t size = 1024;
-  OzoneAllocatorT* alloc = ozoneAllocatorCreate(size);
-
-  OzoneCharArrayT new_keys[2] = { (OzoneCharArrayT) { .data = "content-type", .length = 13 },
-    (OzoneCharArrayT) { .data = "authorization", .length = 14 } };
-  OzoneCharArrayT new_values[2] = { (OzoneCharArrayT) { .data = "text/plain", .length = 11 },
-    (OzoneCharArrayT) { .data = "Bearer token", .length = 13 } };
-  OzoneHTTPHeadersT* headers = ozoneHTTPHeadersSetHeaders(alloc, NULL, new_keys, new_values, 2);
-
-  TEST_ASSERT_MESSAGE(headers->count == 2, "set new header count");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE(new_keys[0].data, headers->keys[0].data, "set new header key");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE(new_values[0].data, headers->values[0].data, "set new header value");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE(new_keys[1].data, headers->keys[1].data, "set second new header key");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE(new_values[1].data, headers->values[1].data, "set second new header value");
-
-  OzoneCharArrayT overwrite_key[1] = { (OzoneCharArrayT) { .data = "content-type", .length = 13 } };
-  OzoneCharArrayT overwrite_value[1] = { (OzoneCharArrayT) { .data = "text/html", .length = 10 } };
-  ozoneHTTPHeadersSetHeaders(alloc, headers, overwrite_key, overwrite_value, 1);
-
-  TEST_ASSERT_MESSAGE(headers->count == 2, "not set new header count");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE(overwrite_key[0].data, headers->keys[0].data, "not set new header key");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE(overwrite_value[0].data, headers->values[0].data, "set new header value");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE(new_keys[1].data, headers->keys[1].data, "not set second new header key");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE(new_values[1].data, headers->values[1].data, "not set second new header value");
-
-  ozoneAllocatorDelete(alloc);
-}
-
-void shouldCreateHTTPRequestFromString(void)
-{
-  size_t size = 1024;
-  OzoneAllocatorT* alloc = ozoneAllocatorCreate(size);
-
-  OzoneCharArrayT string = (OzoneCharArrayT) { .data = "POST /users HTTP/1.1\r\n"
-                                                       "Host: example.com\r\n"
-                                                       "Content-Type: application/x-www-form-urlencoded\r\n"
-                                                       "Content-Length: 11\r\n"
-                                                       "\r\n"
-                                                       "hello=world"
-                                                       "\r\n"
-                                                       "\r\n",
-    .length = 124 };
-
-  OzoneHTTPRequestT* request = ozoneHTTPRequestCreateFromString(alloc, &string);
-  TEST_ASSERT_EQUAL_STRING_MESSAGE("POST", request->method.data, "set method");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE("/users", request->target.data, "set target");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE("HTTP/1.1", request->version.data, "set version");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE("Host", request->headers.keys[0].data, "set header 1");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE("example.com", request->headers.values[0].data, "set header 1");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE("Content-Type", request->headers.keys[1].data, "set header 2");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE(
-      "application/x-www-form-urlencoded", request->headers.values[1].data, "set header 2");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE("Content-Length", request->headers.keys[2].data, "set header 3");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE("11", request->headers.values[2].data, "set header 3");
-  TEST_ASSERT_EQUAL_STRING_MESSAGE("hello=world", request->body.data, "set body");
-
-  ozoneAllocatorDelete(alloc);
-}
-
-void shouldCreateStringFromHTTPResponse(void)
-{
-  size_t size = 1024;
-  OzoneAllocatorT* alloc = ozoneAllocatorCreate(size);
-
-  OzoneHTTPResponseT* response = ozoneHTTPResponseCreate(alloc);
-  response->code = 200;
-  response->body = ozoneCharArray("ooo");
-  response->headers = (OzoneHTTPHeadersT) {
-    .count = 1, .keys = &ozoneCharArray("Content-Type"), .values = &ozoneCharArray("text/plain")
+  OzoneSocketChunkT chunk = (OzoneSocketChunkT) {
+    .buffer = ozoneAllocatorReserveMany(alloc, char, 512),
+    .length = 512,
   };
+  memcpy(chunk.buffer, EXAMPLE_HTTP_REQUEST, chunk.length);
 
-  OzoneCharArrayT* string = ozoneHTTPResponseGetString(alloc, response);
-  TEST_ASSERT_EQUAL_STRING_MESSAGE("HTTP/1.1 200 OK\r\n"
-                                   "Content-Type: text/plain\r\n"
-                                   "Content-Length: 3\r\n\r\n"
-                                   "ooo\r\n",
-      string->data, "create HTTP string from response");
+  OzoneHTTPRequestT* request = ozoneHTTPParseSocketChunks(alloc, &chunk);
+  TEST_ASSERT_NOT_NULL_MESSAGE(request, "It returns an HTTP request");
+
+  TEST_ASSERT_EQUAL_MESSAGE(OZONE_HTTP_METHOD_POST, request->method, "It parses the correct HTTP method");
+  OzoneStringT target = ozoneCharArray("/users");
+  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(target, request->target, "It parses the correct HTTP target");
+
+  TEST_ASSERT_EQUAL_MESSAGE(OZONE_HTTP_VERSION_1_1, request->version, "It parses the correct HTTP version");
+
+  OzoneStringT value = ozoneCharArray("example.com");
+  OzoneStringT* header = ozoneHTTPGetHeaderValue(request->headers, ozoneCharArray("Host"));
+  TEST_ASSERT_NOT_NULL_MESSAGE(header, "It returns a Host header");
+  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(value, (*header), "It parses the correct Host value");
+
+  value = ozoneCharArray("application/x-www-form-urlencoded");
+  header = ozoneHTTPGetHeaderValue(request->headers, ozoneCharArray("Content-Type"));
+  TEST_ASSERT_NOT_NULL_MESSAGE(header, "It returns a Content-Type header");
+  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(value, (*header), "It parses the correct Content-Type value");
+
+  value = ozoneCharArray("27");
+  header = ozoneHTTPGetHeaderValue(request->headers, ozoneCharArray("Content-Length"));
+  TEST_ASSERT_NOT_NULL_MESSAGE(header, "It returns a Content-Length header");
+  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(value, (*header), "It parses the correct Content-Length value");
+
+  OzoneStringT body = ozoneCharArray("field1=value1&field2=value2");
+  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(body, request->body, "It parses the correct HTTP body");
 
   ozoneAllocatorDelete(alloc);
 }
@@ -108,9 +55,6 @@ void shouldCreateStringFromHTTPResponse(void)
 int main(void)
 {
   UNITY_BEGIN();
-  RUN_TEST(shouldCreateHTTPHeaders);
-  RUN_TEST(shouldOverwriteHTTPHeaders);
-  RUN_TEST(shouldCreateHTTPRequestFromString);
-  RUN_TEST(shouldCreateStringFromHTTPResponse);
+  RUN_TEST(shouldParseSocketChunksAsHTTPRequest);
   return UNITY_END();
 }

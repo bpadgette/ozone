@@ -1,21 +1,22 @@
 #ifndef OZONE_SOCKET_H
 #define OZONE_SOCKET_H
 #include "ozone_allocator.h"
-#include "ozone_array.h"
 
-#define OZONE_SOCKET_REQUEST_MAX_LENGTH 16 * 1024
-#define OZONE_SOCKET_REQUEST_CHUNK_LENGTH 1024
-
-#define OZONE_SOCKET_INITIAL_ALLOCATION (OZONE_SOCKET_REQUEST_MAX_LENGTH)
+typedef struct OzoneSocketChunk {
+  char* buffer;
+  size_t length;
+  struct OzoneSocketChunk* next;
+} OzoneSocketChunkT;
 
 typedef struct OzoneSocketHandlerContext {
   OzoneAllocatorT* allocator;
-  void* request;
-  void* response;
+  const OzoneSocketChunkT* request;
+  OzoneSocketChunkT* response;
+  void* extra_context;
 } OzoneSocketHandlerContextT;
 
 typedef int(OzoneSocketHandlerT)(OzoneSocketHandlerContextT* context);
-typedef void(OzoneSocketErrorHandlerT)(OzoneSocketHandlerContextT* context, int error);
+typedef int(OzoneSocketErrorHandlerT)(OzoneSocketHandlerContextT* context, int error);
 
 typedef struct OzoneSocketConfig {
   unsigned short int port;
