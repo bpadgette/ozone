@@ -4,11 +4,16 @@
 #include "ozone_http.h"
 
 /**
- * Define an ozone HTTP handler
+ * \brief Define an ozone HTTP handler
  *
+ * The following parameters are provided for convenience:
+ *
+ * \param OzoneAllocatorT* allocator
+ * \param OzoneHTTPHandlerContextT* http
  * \param OzoneHTTPRequestT* req
  * \param OzoneHTTPResponseT* res
- * \param int err = 0;
+ *
+ * \returns int 0 on success, or errno on failure
  */
 #define ozoneHTTPHandler(_handler_name_, _handler_body_)                                                               \
   int _handler_name_(OzoneHTTPSocketHandlerContextT* _handler_context)                                                 \
