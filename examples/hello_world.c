@@ -1,20 +1,33 @@
 #include "ozone.h"
 
-ozoneHTTPHandler(middleware, {
+ozoneHandler(middleware, {
   ozoneHTTPAppendHeader(allocator, &res->headers, ozoneCharArray("X-Server-Name"), ozoneCharArray("My Ozone Server"));
 });
 
-ozoneHTTPHandler(handler, { res->body = ozoneCharArray("Hello, world!"); });
+ozoneHandler(home, { res->body = ozoneCharArray("Hello, world!"); });
+OzoneAppHandlerT* home_stack[] = { middleware, home };
+
+ozoneHandler(badRequest, {
+  res->body = ozoneCharArray("I will not");
+  res->code = 400;
+});
+OzoneAppHandlerT* bad_request_stack[] = { middleware, badRequest };
 
 int main()
 {
+  OzoneAppConfigT config = { .port = 8080 };
+
+  OzoneAppRouteT routes[] = {
+    ozoneAppRoute(GET, "/", home_stack),
+    ozoneAppRoute(GET, "/use-javascript", bad_request_stack),
+  };
+
+  config.routes = routes;
+  config.routes_count = 2;
+
   OzoneAllocatorT* allocator = ozoneAllocatorCreate(4096);
-  OzoneHTTPConfigT config = { 0 };
-  config.port = 8080;
+  ozoneAppServe(allocator, config);
+  ozoneAllocatorDelete(allocator);
 
-  OzoneHTTPHandlerT* handler_pipeline[] = { middleware, handler };
-  config.handler_pipeline = handler_pipeline;
-  config.handler_pipeline_count = 2;
-
-  return ozoneHTTPServe(allocator, config);
+  return 0;
 }
