@@ -6,10 +6,10 @@ Minimal dependency, C-based web framework.
 
 ## Hello, World!
 
-Build and run `./examples/hello-world.c` with:
+Build and run `./examples/hello_world.c` with:
 
 ```bash
-make build-examples && ./build/examples/hello-world
+make build-examples && ./build/examples/hello_world
 ```
 
 ## Examples & Tests
