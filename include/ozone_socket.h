@@ -20,13 +20,11 @@ typedef struct OzoneSocketChunk {
 typedef struct OzoneSocketHandlerContext OZONE_SOCKET_HANDLER_CONTEXT_FIELDS(void, void) OzoneSocketHandlerContextT;
 
 typedef int(OzoneSocketHandlerT)(OzoneSocketHandlerContextT* context);
-typedef int(OzoneSocketErrorHandlerT)(OzoneSocketHandlerContextT* context, int error);
 
 typedef struct OzoneSocketConfig {
   unsigned short int port;
   OzoneSocketHandlerT** handler_pipeline;
   size_t handler_pipeline_count;
-  OzoneSocketErrorHandlerT* error_handler;
   void* application_context;
 } OzoneSocketConfigT;
 

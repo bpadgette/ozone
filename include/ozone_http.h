@@ -72,7 +72,6 @@ typedef struct OzoneHTTPConfig {
   unsigned short int port;
   OzoneHTTPHandlerT** handler_pipeline;
   size_t handler_pipeline_count;
-  OzoneSocketErrorHandlerT* error_handler;
   void* application_context;
 } OzoneHTTPConfigT;
 

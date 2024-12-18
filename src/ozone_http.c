@@ -394,14 +394,6 @@ int ozoneHTTPEndPipeline(OzoneHTTPContextT* context)
   return 0;
 }
 
-int ozoneHTTPErrorHandler(OzoneHTTPHandlerContextT* context, int error)
-{
-  (void)context;
-  (void)error;
-
-  return 0;
-}
-
 int ozoneHTTPServe(OzoneAllocatorT* allocator, OzoneHTTPConfigT config)
 {
   size_t http_pipeline_count = 2 + config.handler_pipeline_count;
@@ -414,7 +406,6 @@ int ozoneHTTPServe(OzoneAllocatorT* allocator, OzoneHTTPConfigT config)
 
   ozoneLogInfo("Serving at http://localhost:%d", config.port);
   return ozoneSocketServeTCP((OzoneSocketConfigT) {
-      .error_handler = (OzoneSocketErrorHandlerT*)ozoneHTTPErrorHandler,
       .handler_pipeline = http_pipeline,
       .handler_pipeline_count = http_pipeline_count,
       .port = config.port,

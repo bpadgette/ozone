@@ -83,17 +83,7 @@ int ozoneSocketServeTCP(OzoneSocketConfigT config)
     };
 
     for (size_t handler_index = 0; handler_index < config.handler_pipeline_count; handler_index++) {
-      int error = config.handler_pipeline[handler_index](&handler_arg);
-      if (error && config.error_handler) {
-        ozoneLogWarn("Socket handler_pipeline[%ld] returned %d; will invoke error_handler", handler_index, error);
-        config.error_handler(&handler_arg, error);
-        break;
-      } else if (error) {
-        ozoneLogError(
-            "Socket handler_pipeline[%ld] returned %d; no error_handler is defined so no response will be returned",
-            handler_index, error);
-        break;
-      }
+      config.handler_pipeline[handler_index](&handler_arg);
     }
 
     int write_status = 0;
