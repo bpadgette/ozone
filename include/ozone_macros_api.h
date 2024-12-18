@@ -16,17 +16,16 @@
  * \returns int 0 on success, or errno on failure
  */
 #define ozoneHTTPHandler(_handler_name_, _handler_body_)                                                               \
-  int _handler_name_(OzoneHTTPSocketHandlerContextT* _handler_context)                                                 \
+  int _handler_name_(OzoneHTTPContextT* http_context)                                                                  \
   {                                                                                                                    \
-    OzoneAllocatorT* allocator = _handler_context->allocator;                                                          \
-    OzoneHTTPHandlerContextT* http = _handler_context->extra_context;                                                  \
-    OzoneHTTPRequestT* req = &http->request;                                                                           \
-    OzoneHTTPResponseT* res = &http->response;                                                                         \
+    OzoneAllocatorT* allocator = http_context->allocator;                                                              \
+    OzoneHTTPRequestT* req = &http_context->request_context->request;                                                  \
+    OzoneHTTPResponseT* res = &http_context->request_context->response;                                                \
     (void)allocator;                                                                                                   \
     (void)req;                                                                                                         \
     (void)res;                                                                                                         \
     _handler_body_ return 0;                                                                                           \
   }                                                                                                                    \
-  int _handler_name_(OzoneHTTPSocketHandlerContextT* _handler_context)
+  int _handler_name_(OzoneHTTPContextT* http_context)
 
 #endif

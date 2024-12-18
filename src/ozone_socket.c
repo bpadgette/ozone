@@ -39,7 +39,7 @@ int ozoneSocketServeTCP(OzoneSocketConfigT config)
   }
 
   ozoneLogDebug("Listening for TCP connections on port %d with a %ld member handler_pipeline", config.port,
-      config.handler_pipeline_length);
+      config.handler_pipeline_count);
   OzoneAllocatorT* handler_allocator = ozoneAllocatorCreate(OZONE_SOCKET_INITIAL_ALLOCATION);
   for (;;) {
     int accepted_socket_fd = accept(socket_fd, (struct sockaddr*)&host_addr, (socklen_t*)&host_addrlen);
@@ -76,8 +76,13 @@ int ozoneSocketServeTCP(OzoneSocketConfigT config)
       current_chunk->length = OZONE_SOCKET_REQUEST_CHUNK_SIZE;
     } while ((read_status = read(accepted_socket_fd, current_chunk->buffer, current_chunk->length)));
 
-    OzoneSocketHandlerContextT handler_arg = { .allocator = handler_allocator, .request = &request_chunks };
-    for (size_t handler_index = 0; handler_index < config.handler_pipeline_length; handler_index++) {
+    OzoneSocketHandlerContextT handler_arg = {
+      .allocator = handler_allocator,
+      .request = &request_chunks,
+      .application_context = config.application_context,
+    };
+
+    for (size_t handler_index = 0; handler_index < config.handler_pipeline_count; handler_index++) {
       int error = config.handler_pipeline[handler_index](&handler_arg);
       if (error && config.error_handler) {
         ozoneLogWarn("Socket handler_pipeline[%ld] returned %d; will invoke error_handler", handler_index, error);

@@ -61,18 +61,21 @@ typedef struct OzoneHTTPHandlerContext {
   OzoneHTTPResponseT response;
 } OzoneHTTPHandlerContextT;
 
-typedef struct OzoneHTTPSocketHandlerContext {
-  OzoneAllocatorT* allocator;
-  const OzoneSocketChunkT* request;
-  OzoneSocketChunkT* response;
-  OzoneHTTPHandlerContextT* extra_context;
-} OzoneHTTPSocketHandlerContextT;
+typedef struct OzoneHTTPContext OZONE_SOCKET_HANDLER_CONTEXT_FIELDS(void, OzoneHTTPHandlerContextT) OzoneHTTPContextT;
 
-typedef int(OzoneHTTPHandlerT)(OzoneHTTPSocketHandlerContextT* context);
+typedef int(OzoneHTTPHandlerT)(OzoneHTTPContextT* context);
 
 OzoneHTTPRequestT* ozoneHTTPParseSocketChunks(OzoneAllocatorT* allocator, const OzoneSocketChunkT* socket_request);
 OzoneSocketChunkT* ozoneHTTPCreateSocketChunks(OzoneAllocatorT* allocator, OzoneHTTPResponseT* http_response);
 
-int ozoneHTTPServe(unsigned short int port, OzoneHTTPHandlerT* handler);
+typedef struct OzoneHTTPConfig {
+  unsigned short int port;
+  OzoneHTTPHandlerT** handler_pipeline;
+  size_t handler_pipeline_count;
+  OzoneSocketErrorHandlerT* error_handler;
+  void* application_context;
+} OzoneHTTPConfigT;
+
+int ozoneHTTPServe(OzoneAllocatorT* allocator, OzoneHTTPConfigT config);
 
 #endif
