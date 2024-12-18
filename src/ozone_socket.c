@@ -79,7 +79,7 @@ int ozoneSocketServeTCP(OzoneSocketConfigT config)
     OzoneSocketHandlerContextT handler_arg = {
       .allocator = handler_allocator,
       .request = &request_chunks,
-      .application_context = config.application_context,
+      .application = config.application,
     };
 
     for (size_t handler_index = 0; handler_index < config.handler_pipeline_count; handler_index++) {

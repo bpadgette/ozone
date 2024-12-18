@@ -72,7 +72,7 @@ typedef struct OzoneHTTPConfig {
   unsigned short int port;
   OzoneHTTPHandlerT** handler_pipeline;
   size_t handler_pipeline_count;
-  void* application_context;
+  void* application;
 } OzoneHTTPConfigT;
 
 int ozoneHTTPServe(OzoneAllocatorT* allocator, OzoneHTTPConfigT config);

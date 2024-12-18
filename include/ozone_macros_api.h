@@ -19,8 +19,8 @@
   int _handler_name_(OzoneAppContextT* handler_context)                                                                \
   {                                                                                                                    \
     OzoneAllocatorT* allocator = handler_context->allocator;                                                           \
-    OzoneHTTPRequestT* req = &handler_context->request_context->request;                                               \
-    OzoneHTTPResponseT* res = &handler_context->request_context->response;                                             \
+    OzoneHTTPRequestT* req = &handler_context->parsed->request;                                                        \
+    OzoneHTTPResponseT* res = &handler_context->parsed->response;                                                      \
     (void)allocator;                                                                                                   \
     (void)req;                                                                                                         \
     (void)res;                                                                                                         \
