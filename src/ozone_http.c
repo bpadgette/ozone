@@ -342,25 +342,25 @@ OzoneSocketChunkT* ozoneHTTPCreateSocketChunks(OzoneAllocatorT* allocator, Ozone
   return socket_chunk;
 }
 
-int ozoneHTTPBeginPipeline(OzoneHTTPSocketHandlerContextT* context)
+int ozoneHTTPBeginPipeline(OzoneHTTPContextT* context)
 {
-  context->extra_context = ozoneAllocatorReserveOne(context->allocator, OzoneHTTPHandlerContextT);
-  context->extra_context->request = *ozoneHTTPParseSocketChunks(context->allocator, context->request);
+  context->parsed = ozoneAllocatorReserveOne(context->allocator, OzoneHTTPHandlerContextT);
+  context->parsed->request = *ozoneHTTPParseSocketChunks(context->allocator, context->request);
   ozoneLogInfo("%s",
       ozoneStringScanBuffer(context->allocator, context->request->buffer, context->request->length,
           &ozoneCharArray("\r"), OZONE_STRING_ENCODING_ISO_8859_1)
           ->buffer);
 
-  context->extra_context->response = (OzoneHTTPResponseT) { 0 };
+  context->parsed->response = (OzoneHTTPResponseT) { 0 };
 
   return 0;
 }
-int ozoneHTTPEndPipeline(OzoneHTTPSocketHandlerContextT* context)
+int ozoneHTTPEndPipeline(OzoneHTTPContextT* context)
 {
-  if (!context->extra_context)
+  if (!context->parsed)
     return 0;
 
-  OzoneHTTPResponseT* response = &context->extra_context->response;
+  OzoneHTTPResponseT* response = &context->parsed->response;
 
   if (!response->code)
     response->code = response->body.length ? 200 : 204;
@@ -394,27 +394,21 @@ int ozoneHTTPEndPipeline(OzoneHTTPSocketHandlerContextT* context)
   return 0;
 }
 
-int ozoneHTTPErrorHandler(OzoneHTTPSocketHandlerContextT* context, int error)
+int ozoneHTTPServe(OzoneAllocatorT* allocator, OzoneHTTPConfigT config)
 {
-  (void)context;
-  (void)error;
+  size_t http_pipeline_count = 2 + config.handler_pipeline_count;
+  OzoneSocketHandlerT** http_pipeline = ozoneAllocatorReserveMany(allocator, OzoneSocketHandlerT*, http_pipeline_count);
+  http_pipeline[0] = (OzoneSocketHandlerT*)ozoneHTTPBeginPipeline;
+  for (size_t handler_index = 0; handler_index < config.handler_pipeline_count; handler_index++) {
+    http_pipeline[handler_index + 1] = (OzoneSocketHandlerT*)config.handler_pipeline[handler_index];
+  }
+  http_pipeline[http_pipeline_count - 1] = (OzoneSocketHandlerT*)ozoneHTTPEndPipeline;
 
-  return 0;
-}
-
-int ozoneHTTPServe(unsigned short int port, OzoneHTTPHandlerT* handler)
-{
-  OzoneSocketHandlerT* handler_pipeline[] = {
-    (OzoneSocketHandlerT*)ozoneHTTPBeginPipeline,
-    (OzoneSocketHandlerT*)handler,
-    (OzoneSocketHandlerT*)ozoneHTTPEndPipeline,
-  };
-
-  ozoneLogInfo("Serving at http://localhost:%d", port);
+  ozoneLogInfo("Serving at http://localhost:%d", config.port);
   return ozoneSocketServeTCP((OzoneSocketConfigT) {
-      .error_handler = (OzoneSocketErrorHandlerT*)ozoneHTTPErrorHandler,
-      .handler_pipeline = handler_pipeline,
-      .handler_pipeline_length = sizeof(handler_pipeline) / sizeof(OzoneSocketHandlerT*),
-      .port = port,
+      .handler_pipeline = http_pipeline,
+      .handler_pipeline_count = http_pipeline_count,
+      .port = config.port,
+      .application = config.application,
   });
 }
