@@ -4,24 +4,32 @@
 
 int ozoneAppRouter(OzoneAppContextT* context)
 {
-  for (size_t route_index = 0; route_index < context->application_context->route_count; route_index++) {
+  size_t route_index = 0;
+  for (; route_index < context->application_context->route_count; route_index++) {
+    if (context->request_context->request.method != context->application_context->route_configs[route_index].method)
+      continue;
+
     if (ozoneStringCompare(&context->request_context->request.target,
             &context->application_context->route_configs[route_index].target_pattern)
-        != 0) {
+        != 0)
       continue;
-    }
 
-    OzoneAppHandlerT** handler_pipeline
-        = (OzoneAppHandlerT**)context->application_context->route_handler_pipelines[route_index];
-    size_t handler_pipeline_count = context->application_context->route_handler_pipelines_counts[route_index];
-    for (size_t handler_index = 0; handler_index < handler_pipeline_count; handler_index++) {
-      handler_pipeline[handler_index](context);
-    }
+    break;
+  }
 
+  if (route_index >= context->application_context->route_count) {
+    context->request_context->response.code = 404;
+    context->request_context->response.body = ozoneHTTPStatusString(404);
     return 0;
   }
 
-  context->request_context->response.code = 404;
+  OzoneAppHandlerT** handler_pipeline
+      = (OzoneAppHandlerT**)context->application_context->route_handler_pipelines[route_index];
+  size_t handler_pipeline_count = context->application_context->route_handler_pipelines_counts[route_index];
+  for (size_t handler_index = 0; handler_index < handler_pipeline_count; handler_index++) {
+    handler_pipeline[handler_index](context);
+  }
+
   return 0;
 }
 
