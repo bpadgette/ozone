@@ -2,15 +2,14 @@
 
 #include "ozone_log.h"
 
-int ozoneAppRouter(OzoneAppContextT* context)
-{
+int ozoneAppRouter(OzoneAppContextT* context) {
   size_t route_index = 0;
   for (; route_index < context->application->route_count; route_index++) {
-    if (context->parsed->request.method != context->application->route_configs[route_index].method)
+    if (context->parsed_request->method != context->application->route_configs[route_index].method)
       continue;
 
     if (ozoneStringCompare(
-            &context->parsed->request.target, &context->application->route_configs[route_index].target_pattern)
+            &context->parsed_request->target, &context->application->route_configs[route_index].target_pattern)
         != 0)
       continue;
 
@@ -18,8 +17,8 @@ int ozoneAppRouter(OzoneAppContextT* context)
   }
 
   if (route_index >= context->application->route_count) {
-    context->parsed->response.code = 404;
-    context->parsed->response.body = ozoneHTTPStatusString(404);
+    context->parsed_response->code = 404;
+    context->parsed_response->body = ozoneHTTPStatusString(404);
     return 0;
   }
 
@@ -32,8 +31,7 @@ int ozoneAppRouter(OzoneAppContextT* context)
   return 0;
 }
 
-int ozoneAppServe(OzoneAllocatorT* allocator, OzoneAppConfigT config)
-{
+int ozoneAppServe(OzoneAllocatorT* allocator, OzoneAppConfigT config) {
   OzoneHTTPConfigT http_config = { 0 };
   http_config.port = config.port;
 

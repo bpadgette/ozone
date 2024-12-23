@@ -8,18 +8,19 @@ typedef struct OzoneSocketChunk {
   struct OzoneSocketChunk* next;
 } OzoneSocketChunkT;
 
-#define OZONE_SOCKET_HANDLER_CONTEXT_FIELDS(_application_type_, _parsed_type_)                                         \
+#define OZONE_SOCKET_CONTEXT_FIELDS(_parsed_request_type_, _parsed_response_type_, _app_context_type_)                 \
   {                                                                                                                    \
     OzoneAllocatorT* allocator;                                                                                        \
-    const OzoneSocketChunkT* request;                                                                                  \
-    OzoneSocketChunkT* response;                                                                                       \
-    _application_type_* application;                                                                                   \
-    _parsed_type_* parsed;                                                                                             \
+    const OzoneSocketChunkT* raw_request;                                                                              \
+    OzoneSocketChunkT* raw_response;                                                                                   \
+    _parsed_request_type_* parsed_request;                                                                             \
+    _parsed_response_type_* parsed_response;                                                                           \
+    _app_context_type_* application;                                                                                   \
   }
 
-typedef struct OzoneSocketHandlerContext OZONE_SOCKET_HANDLER_CONTEXT_FIELDS(void, void) OzoneSocketHandlerContextT;
+typedef struct OzoneSocketContext OZONE_SOCKET_CONTEXT_FIELDS(void, void, void) OzoneSocketContextT;
 
-typedef int(OzoneSocketHandlerT)(OzoneSocketHandlerContextT* context);
+typedef int(OzoneSocketHandlerT)(OzoneSocketContextT* context);
 
 typedef struct OzoneSocketConfig {
   unsigned short int port;

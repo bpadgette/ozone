@@ -56,12 +56,8 @@ typedef struct OzoneHTTPResponse {
   OzoneStringT body;
 } OzoneHTTPResponseT;
 
-typedef struct OzoneHTTPHandlerContext {
-  OzoneHTTPRequestT request;
-  OzoneHTTPResponseT response;
-} OzoneHTTPHandlerContextT;
-
-typedef struct OzoneHTTPContext OZONE_SOCKET_HANDLER_CONTEXT_FIELDS(void, OzoneHTTPHandlerContextT) OzoneHTTPContextT;
+typedef struct OzoneHTTPContext OZONE_SOCKET_CONTEXT_FIELDS(
+    OzoneHTTPRequestT, OzoneHTTPResponseT, void) OzoneHTTPContextT;
 
 typedef int(OzoneHTTPHandlerT)(OzoneHTTPContextT* context);
 

@@ -11,8 +11,7 @@
 #define OZONE_SOCKET_REQUEST_CHUNK_SIZE 1024
 #define OZONE_SOCKET_INITIAL_ALLOCATION 32 * 1024
 
-int ozoneSocketServeTCP(OzoneSocketConfigT config)
-{
+int ozoneSocketServeTCP(OzoneSocketConfigT config) {
   int socket_fd = socket(AF_INET6, SOCK_STREAM, 0);
   if (socket_fd == -1) {
     ozoneLogError("Failed to get AF_INET6 SOCK_STREAM socket file descriptor, returning EACCES");
@@ -76,9 +75,10 @@ int ozoneSocketServeTCP(OzoneSocketConfigT config)
       current_chunk->length = OZONE_SOCKET_REQUEST_CHUNK_SIZE;
     } while ((read_status = read(accepted_socket_fd, current_chunk->buffer, current_chunk->length)));
 
-    OzoneSocketHandlerContextT handler_arg = {
+    OzoneSocketContextT handler_arg = {
       .allocator = handler_allocator,
-      .request = &request_chunks,
+      .raw_request = &request_chunks,
+      .raw_response = NULL,
       .application = config.application,
     };
 
@@ -87,7 +87,7 @@ int ozoneSocketServeTCP(OzoneSocketConfigT config)
     }
 
     int write_status = 0;
-    current_chunk = handler_arg.response;
+    current_chunk = handler_arg.raw_response;
     while (current_chunk) {
       write_status = write(accepted_socket_fd, current_chunk->buffer, current_chunk->length);
       if (write_status == -1) {
