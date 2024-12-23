@@ -5,8 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-OzoneAllocatorT* ozoneAllocatorCreate(size_t size)
-{
+OzoneAllocatorT* ozoneAllocatorCreate(size_t size) {
   OzoneAllocatorT* allocator = (OzoneAllocatorT*)malloc(size + sizeof(OzoneAllocatorT));
   ozoneLogTrace(
       "Allocated %ld bytes with malloc, %ld usable as allocation space", size + sizeof(OzoneAllocatorT), size);
@@ -21,8 +20,7 @@ OzoneAllocatorT* ozoneAllocatorCreate(size_t size)
   return allocator;
 }
 
-void ozoneAllocatorDelete(OzoneAllocatorT* allocator)
-{
+void ozoneAllocatorDelete(OzoneAllocatorT* allocator) {
   if (!allocator)
     return;
 
@@ -34,8 +32,7 @@ void ozoneAllocatorDelete(OzoneAllocatorT* allocator)
   } while ((allocator_iterator = next));
 }
 
-size_t ozoneAllocatorGetTotalCapacity(OzoneAllocatorT* allocator)
-{
+size_t ozoneAllocatorGetTotalCapacity(OzoneAllocatorT* allocator) {
   size_t capacity = 0;
   if (!allocator)
     return capacity;
@@ -48,8 +45,7 @@ size_t ozoneAllocatorGetTotalCapacity(OzoneAllocatorT* allocator)
   return capacity;
 }
 
-size_t ozoneAllocatorGetTotalFree(OzoneAllocatorT* allocator)
-{
+size_t ozoneAllocatorGetTotalFree(OzoneAllocatorT* allocator) {
   size_t free = 0;
   if (!allocator)
     return free;
@@ -62,8 +58,7 @@ size_t ozoneAllocatorGetTotalFree(OzoneAllocatorT* allocator)
   return free;
 }
 
-uintptr_t ozoneAllocatorReserveBytes(OzoneAllocatorT* allocator, size_t size)
-{
+uintptr_t ozoneAllocatorReserveBytes(OzoneAllocatorT* allocator, size_t size) {
   if (!allocator)
     return (uintptr_t)NULL;
 
@@ -86,8 +81,7 @@ uintptr_t ozoneAllocatorReserveBytes(OzoneAllocatorT* allocator, size_t size)
   return ozoneAllocatorGetRegionStart(new_region);
 }
 
-void ozoneAllocatorClear(OzoneAllocatorT* allocator)
-{
+void ozoneAllocatorClear(OzoneAllocatorT* allocator) {
   if (!allocator)
     return;
 

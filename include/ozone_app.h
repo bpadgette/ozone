@@ -18,8 +18,8 @@ typedef struct OzoneAppApplicationContext {
   size_t route_count;
 } OzoneAppApplicationContextT;
 
-typedef struct OzoneAppContext OZONE_SOCKET_HANDLER_CONTEXT_FIELDS(
-    OzoneAppApplicationContextT, OzoneHTTPHandlerContextT) OzoneAppContextT;
+typedef struct OzoneAppContext OZONE_SOCKET_CONTEXT_FIELDS(
+    OzoneHTTPRequestT, OzoneHTTPResponseT, OzoneAppApplicationContextT) OzoneAppContextT;
 
 typedef int(OzoneAppHandlerT)(OzoneAppContextT* context);
 
@@ -30,8 +30,7 @@ typedef struct OzoneAppRoute {
 } OzoneAppRouteT;
 
 #define ozoneAppRoute(_method_, _target_pattern_, _handler_pipeline_)                                                  \
-  (OzoneAppRouteT)                                                                                                     \
-  {                                                                                                                    \
+  (OzoneAppRouteT) {                                                                                                   \
     .config = (OzoneAppHTTPRouteConfigT) { .method = OZONE_HTTP_METHOD_##_method_,                                     \
       .target_pattern = ozoneCharArray(_target_pattern_) },                                                            \
     .handler_pipeline = _handler_pipeline_,                                                                            \

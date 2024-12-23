@@ -2,8 +2,7 @@
 
 #include "ozone_allocator.h"
 
-void shouldReserveAndClearSingleRegion(void)
-{
+void shouldReserveAndClearSingleRegion(void) {
   size_t size = 1024;
   OzoneAllocatorT* alloc = ozoneAllocatorCreate(size);
   char* allocation = ozoneAllocatorReserveMany(alloc, char, size);
@@ -21,8 +20,7 @@ void shouldReserveAndClearSingleRegion(void)
   ozoneAllocatorDelete(alloc);
 }
 
-void shouldReserveAndClearMultipleRegions(void)
-{
+void shouldReserveAndClearMultipleRegions(void) {
   size_t size = 1024;
   OzoneAllocatorT* alloc = ozoneAllocatorCreate(size);
 
@@ -47,8 +45,7 @@ void shouldReserveAndClearMultipleRegions(void)
   ozoneAllocatorDelete(alloc);
 }
 
-int main(void)
-{
+int main(void) {
   UNITY_BEGIN();
   RUN_TEST(shouldReserveAndClearSingleRegion);
   RUN_TEST(shouldReserveAndClearMultipleRegions);
