@@ -12,8 +12,7 @@ const char* EXAMPLE_HTTP_REQUEST = {
   "field1=value1&field2=value2",
 };
 
-void shouldParseSocketChunksAsHTTPRequest(void)
-{
+void shouldParseSocketChunksAsHTTPRequest(void) {
   OzoneAllocatorT* alloc = ozoneAllocatorCreate(1024);
 
   OzoneSocketChunkT chunk = (OzoneSocketChunkT) {
@@ -52,8 +51,7 @@ void shouldParseSocketChunksAsHTTPRequest(void)
   ozoneAllocatorDelete(alloc);
 }
 
-int main(void)
-{
+int main(void) {
   UNITY_BEGIN();
   RUN_TEST(shouldParseSocketChunksAsHTTPRequest);
   return UNITY_END();

@@ -2,8 +2,7 @@
 
 #include <string.h>
 
-int ozoneStringCompare(const OzoneStringT* left, const OzoneStringT* right)
-{
+int ozoneStringCompare(const OzoneStringT* left, const OzoneStringT* right) {
   if (!left && !right)
     return 0;
   if (!right)
@@ -26,8 +25,7 @@ int ozoneStringCompare(const OzoneStringT* left, const OzoneStringT* right)
 }
 
 OzoneStringT* ozoneStringScanBuffer(OzoneAllocatorT* allocator, char* buffer, size_t buffer_size,
-    const OzoneStringT* stop, OzoneStringEncodingT encoding)
-{
+    const OzoneStringT* stop, OzoneStringEncodingT encoding) {
   size_t scan_length = 0;
   while (scan_length < buffer_size) {
     if (stop && (buffer_size - scan_length) >= stop->length

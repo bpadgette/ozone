@@ -13,8 +13,7 @@ ozoneHandler(badRequest, {
 });
 OzoneAppHandlerT* bad_request_stack[] = { before, badRequest };
 
-int main()
-{
+int main() {
   OzoneAppRouteT routes[] = {
     ozoneAppRoute(GET, "/", home_stack),
     ozoneAppRoute(GET, "/use-javascript", bad_request_stack),

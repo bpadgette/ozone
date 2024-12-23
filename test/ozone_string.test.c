@@ -2,8 +2,7 @@
 
 #include "ozone_string.h"
 
-void shouldScanStringBuffer(void)
-{
+void shouldScanStringBuffer(void) {
   OzoneAllocatorT* alloc = ozoneAllocatorCreate(1024);
 
   OzoneStringT string = ozoneCharArray("hello, world!");
@@ -22,8 +21,7 @@ void shouldScanStringBuffer(void)
   ozoneAllocatorDelete(alloc);
 }
 
-int main(void)
-{
+int main(void) {
   UNITY_BEGIN();
   RUN_TEST(shouldScanStringBuffer);
   return UNITY_END();
