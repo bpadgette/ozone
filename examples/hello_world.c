@@ -24,7 +24,7 @@ int main()
   OzoneAppConfigT config = {
     .port = 8080,
     .routes = routes,
-    .routes_count = 2,
+    .routes_count = 3,
   };
 
   OzoneAllocatorT* allocator = ozoneAllocatorCreate(4096);
