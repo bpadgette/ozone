@@ -338,6 +338,7 @@ OzoneSocketChunkT* ozoneHTTPCreateSocketChunks(OzoneAllocatorT* allocator, Ozone
 int ozoneHTTPBeginPipeline(OzoneHTTPContextT* context) {
   context->parsed_request = ozoneHTTPParseSocketChunks(context->allocator, context->raw_request);
   context->parsed_response = ozoneAllocatorReserveOne(context->allocator, OzoneHTTPResponseT);
+  *context->parsed_response = (OzoneHTTPResponseT) { 0 };
 
   ozoneLogInfo("%s",
       ozoneStringScanBuffer(context->allocator, context->raw_request->buffer, context->raw_request->length,
@@ -346,6 +347,7 @@ int ozoneHTTPBeginPipeline(OzoneHTTPContextT* context) {
 
   return 0;
 }
+
 int ozoneHTTPEndPipeline(OzoneHTTPContextT* context) {
   if (!context->parsed_response)
     return 0;
@@ -375,7 +377,7 @@ int ozoneHTTPEndPipeline(OzoneHTTPContextT* context) {
     }
   }
 
-  context->raw_request = ozoneHTTPCreateSocketChunks(context->allocator, response);
+  context->raw_response = ozoneHTTPCreateSocketChunks(context->allocator, response);
   ozoneLogInfo("%s",
       ozoneStringScanBuffer(context->allocator, context->raw_response->buffer, context->raw_response->length,
           &ozoneCharArray("\r"), OZONE_STRING_ENCODING_ISO_8859_1)

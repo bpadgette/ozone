@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/lib/**/src"
-            ]
+            ],
+            "cStandard": "gnu99"
         }
     ],
     "version": 4

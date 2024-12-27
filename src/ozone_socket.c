@@ -1,15 +1,24 @@
 #include "ozone_socket.h"
 
 #include "ozone_log.h"
-#include "ozone_string.h"
 #include <arpa/inet.h>
 #include <errno.h>
 #include <netinet/tcp.h>
+#include <signal.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
 #define OZONE_SOCKET_REQUEST_CHUNK_SIZE 1024
 #define OZONE_SOCKET_INITIAL_ALLOCATION 32 * 1024
+
+int ozone_socket_shutdown = 0;
+void ozoneSocketSignalAction(int signum) {
+  if (signum == SIGINT) {
+    ozoneLogInfo("Received SIGINT, will shutdown");
+    ozone_socket_shutdown = 1;
+    fflush(stdout);
+  }
+}
 
 int ozoneSocketServeTCP(OzoneSocketConfigT config) {
   int socket_fd = socket(AF_INET6, SOCK_STREAM, 0);
@@ -40,7 +49,11 @@ int ozoneSocketServeTCP(OzoneSocketConfigT config) {
   ozoneLogDebug("Listening for TCP connections on port %d with a %ld member handler_pipeline", config.port,
       config.handler_pipeline_count);
   OzoneAllocatorT* handler_allocator = ozoneAllocatorCreate(OZONE_SOCKET_INITIAL_ALLOCATION);
-  for (;;) {
+
+  struct sigaction signal_actions = { .sa_handler = &ozoneSocketSignalAction };
+  sigaction(SIGINT, &signal_actions, NULL);
+
+  while (!ozone_socket_shutdown) {
     int accepted_socket_fd = accept(socket_fd, (struct sockaddr*)&host_addr, (socklen_t*)&host_addrlen);
 
     if (accepted_socket_fd < 0) {

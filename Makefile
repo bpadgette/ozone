@@ -33,7 +33,7 @@ TARGET_DEBUG_LIB   := $(BUILD)lib$(TARGET).debug.so
 ##############################################################################
 # Build
 #
-CFLAGS        := -Wall -Werror -Wextra -pedantic -fpic -O3 -I$(INCLUDE)
+CFLAGS        := -std=gnu99 -Wall -Werror -Wextra -pedantic -fpic -O3 -I$(INCLUDE)
 CLIBS         := -lm
 OBJECTS       := $(patsubst $(SOURCE)%.c, $(BUILD)%.o, $(wildcard *, $(SOURCE)*.c))
 DEBUG_OBJECTS := $(patsubst $(SOURCE)%.c, $(BUILD)%.debug.o, $(wildcard *, $(SOURCE)*.c))
