@@ -56,7 +56,6 @@ build-debug: $(TARGET_DEBUG_LIB)
 ##############################################################################
 # Testing
 #
-TEST_LIB_INCLUDES := $(LIB)Unity-2.6.0/src/
 TEST_LIB_SOURCE  := $(LIB)Unity-2.6.0/src/
 $(TEST_LIB_SOURCE):
 	$(DOWNLOAD_TARBALL) https://github.com/ThrowTheSwitch/Unity/archive/refs/tags/v2.6.0.tar.gz | $(UNTAR_INTO) $(LIB)
@@ -66,7 +65,7 @@ $(TEST_LIB): $(TEST_LIB_SOURCE)
 	$(CC) $(CFLAGS) -c $(TEST_LIB_SOURCE)unity.c $(CLIBS) -o $@
 
 $(BUILD)%.test: $(TEST)%.test.c $(DEBUG_OBJECTS) $(TEST_LIB)
-	$(CC) $(CFLAGS) $(foreach inc, $(TEST_LIB_INCLUDES), -I$(inc)) -g $^ $(CLIBS) -o $@
+	$(CC) $(CFLAGS) -I$(TEST_LIB_SOURCE) -g $^ $(CLIBS) -o $@
 	$@
 
 test: $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
