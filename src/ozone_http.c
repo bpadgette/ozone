@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+OZONE_VECTOR_DEFINE_API(OzoneHTTPHeaderT, ozoneHTTPHeader)
+
 #define OZONE_REMAINING_CURSOR_SIZE (buffer + buffer_size - cursor)
 
 OzoneHTTPVersionT ozoneHTTPParseVersion(const OzoneStringT* version_string) {
@@ -170,35 +172,14 @@ OzoneStringT ozoneHTTPStatusString(OzoneHTTPStatusCodeT status) {
   }
 }
 
-OzoneStringT* ozoneHTTPGetHeaderValue(OzoneHTTPHeaderT* headers, OzoneStringT name) {
-  OzoneHTTPHeaderT* header = headers;
-  while (header) {
+OzoneStringT* ozoneHTTPGetHeaderValue(OzoneHTTPHeaderTVectorT* headers, OzoneStringT name) {
+  for (size_t header_index = 0; header_index < headers->length; header_index++) {
+    OzoneHTTPHeaderT* header = &headers->elements[header_index];
     if (ozoneStringCompare(&header->name, &name) == 0)
       return &header->value;
-
-    header = header->next;
-  };
+  }
 
   return NULL;
-}
-
-void ozoneHTTPAppendHeader(
-    OzoneAllocatorT* allocator, OzoneHTTPHeaderT** headers, OzoneStringT name, OzoneStringT value) {
-  if (*headers == NULL) {
-    *headers = ozoneAllocatorReserveOne(allocator, OzoneHTTPHeaderT);
-    (*headers)->name = name;
-    (*headers)->value = value;
-    return;
-  }
-
-  OzoneHTTPHeaderT* tail = *headers;
-  while (tail->next) {
-    tail = tail->next;
-  }
-
-  tail->next = ozoneAllocatorReserveOne(allocator, OzoneHTTPHeaderT);
-  tail->next->name = name;
-  tail->next->value = value;
 }
 
 OzoneHTTPRequestT* ozoneHTTPParseSocketChunks(OzoneAllocatorT* allocator, const OzoneSocketChunkT* socket_request) {
@@ -258,7 +239,7 @@ OzoneHTTPRequestT* ozoneHTTPParseSocketChunks(OzoneAllocatorT* allocator, const 
   cursor += 2;
 
   OzoneStringT* content_length_string
-      = ozoneHTTPGetHeaderValue(http_request->headers, ozoneCharArray("Content-Length"));
+      = ozoneHTTPGetHeaderValue(&http_request->headers, ozoneCharArray("Content-Length"));
   if (!content_length_string)
     return http_request;
 
@@ -287,11 +268,11 @@ OzoneSocketChunkT* ozoneHTTPCreateSocketChunks(OzoneAllocatorT* allocator, Ozone
 
   size_t buffer_size = version.length + status.length + 1;
 
-  OzoneHTTPHeaderT* header = http_response->headers;
-  while (header) {
+  for (size_t header_index = 0; header_index < http_response->headers.length; header_index++) {
+    OzoneHTTPHeaderT* header = &http_response->headers.elements[header_index];
     buffer_size += header->name.length + 1 + header->value.length + 1;
-    header = header->next;
   }
+
   buffer_size += 2;
 
   if (http_response->body.length)
@@ -310,8 +291,8 @@ OzoneSocketChunkT* ozoneHTTPCreateSocketChunks(OzoneAllocatorT* allocator, Ozone
   cursor[status.length] = '\n';
   cursor += status.length + 1;
 
-  header = http_response->headers;
-  while (header) {
+  for (size_t header_index = 0; header_index < http_response->headers.length; header_index++) {
+    OzoneHTTPHeaderT* header = &http_response->headers.elements[header_index];
     memcpy(cursor, header->name.buffer, header->name.length - 1);
     cursor[header->name.length - 1] = ':';
     cursor[header->name.length] = ' ';
@@ -320,8 +301,6 @@ OzoneSocketChunkT* ozoneHTTPCreateSocketChunks(OzoneAllocatorT* allocator, Ozone
     cursor[header->value.length - 1] = '\r';
     cursor[header->value.length] = '\n';
     cursor += header->value.length + 1;
-
-    header = header->next;
   }
 
   cursor[0] = '\r';
@@ -358,11 +337,11 @@ int ozoneHTTPEndPipeline(OzoneHTTPContextT* context) {
     response->code = response->body.length ? 200 : 204;
 
   if (response->body.length) {
-    if (!ozoneHTTPGetHeaderValue(response->headers, ozoneCharArray("Content-Type")))
+    if (!ozoneHTTPGetHeaderValue(&response->headers, ozoneCharArray("Content-Type")))
       ozoneHTTPAppendHeader(
           context->allocator, &response->headers, ozoneCharArray("Content-Type"), ozoneCharArray("text/plain"));
 
-    if (!ozoneHTTPGetHeaderValue(response->headers, ozoneCharArray("Content-Length"))) {
+    if (!ozoneHTTPGetHeaderValue(&response->headers, ozoneCharArray("Content-Length"))) {
       // todo: extract to helper
       char content_length[32] = { 0 };
       snprintf(content_length, sizeof(content_length), "%ld", response->body.length - 1);
@@ -372,8 +351,14 @@ int ozoneHTTPEndPipeline(OzoneHTTPContextT* context) {
         ;
       // end todo
 
-      ozoneHTTPAppendHeader(context->allocator, &response->headers, ozoneCharArray("Content-Length"),
-          (OzoneStringT) { .buffer = content_length, .length = length, .encoding = OZONE_STRING_ENCODING_ISO_8859_1 });
+      ozoneHTTPHeaderVectorPush(context->allocator, &response->headers,
+          (OzoneHTTPHeaderT) {
+              .name = ozoneCharArray("Content-Length"),
+              .value = (OzoneStringT) { .buffer = content_length,
+                  .length = length,
+                  .encoding = OZONE_STRING_ENCODING_ISO_8859_1,
+             },
+          });
     }
   }
 
