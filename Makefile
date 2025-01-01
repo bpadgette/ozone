@@ -85,6 +85,9 @@ $(BUILD_EXAMPLES)%.debug: $(TARGET_DEBUG_LIB)
 
 build-examples: $(patsubst $(EXAMPLES)%.c, $(BUILD_EXAMPLES)%, $(wildcard *, $(EXAMPLES)*.c))
 
+ex-%: $(BUILD_EXAMPLES)%
+	$(BUILD_EXAMPLES)$*
+
 ##############################################################################
 # Installation
 #

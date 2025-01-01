@@ -9,27 +9,23 @@ Minimal dependency, C-based web framework.
 Build and run `./examples/hello_world.c` with:
 
 ```bash
-make build-examples && ./build/examples/hello_world
+make ex-hello_world
 ```
 
-## Examples & Tests
+## Tests & Other Examples
 
-Learn more about ozone by checking out the other programs in `./examples` and the `./test` directory.
-
-Build the examples with:
-
-```bash
-make build-examples
-```
-
-Find the built examples in `./build/examples`.
-
-### Testing
+Learn more about ozone by running the unit tests and programs in `./test` and `./examples`.
 
 Build and run tests with:
 
 ```bash
 make test
+```
+
+Build all of the examples to `./build/examples` with:
+
+```bash
+make build-examples
 ```
 
 # Build & Install
