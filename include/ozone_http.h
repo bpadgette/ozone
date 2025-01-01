@@ -65,12 +65,13 @@ OzoneHTTPRequestT* ozoneHTTPParseSocketChunks(OzoneAllocatorT* allocator, const 
 OzoneSocketChunkT* ozoneHTTPCreateSocketChunks(OzoneAllocatorT* allocator, OzoneHTTPResponseT* http_response);
 
 typedef struct OzoneHTTPConfig {
+  OzoneAllocatorT* allocator;
   unsigned short int port;
   OzoneHTTPHandlerT** handler_pipeline;
   size_t handler_pipeline_count;
   void* application;
 } OzoneHTTPConfigT;
 
-int ozoneHTTPServe(OzoneAllocatorT* allocator, OzoneHTTPConfigT config);
+int ozoneHTTPServe(OzoneHTTPConfigT config);
 
 #endif

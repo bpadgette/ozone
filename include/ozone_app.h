@@ -8,10 +8,11 @@
 #include "ozone_string.h"
 
 typedef struct OzoneAppConfig {
+  OzoneAllocatorT* allocator;
   unsigned short int port;
   OzoneRouterConfigT router;
 } OzoneAppConfigT;
 
-int ozoneAppServe(OzoneAllocatorT* allocator, OzoneAppConfigT config);
+int ozoneAppServe(OzoneAppConfigT config);
 
 #endif

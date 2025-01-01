@@ -386,9 +386,10 @@ int ozoneHTTPEndPipeline(OzoneHTTPContextT* context) {
   return 0;
 }
 
-int ozoneHTTPServe(OzoneAllocatorT* allocator, OzoneHTTPConfigT config) {
+int ozoneHTTPServe(OzoneHTTPConfigT config) {
   size_t http_pipeline_count = 2 + config.handler_pipeline_count;
-  OzoneSocketHandlerT** http_pipeline = ozoneAllocatorReserveMany(allocator, OzoneSocketHandlerT*, http_pipeline_count);
+  OzoneSocketHandlerT** http_pipeline
+      = ozoneAllocatorReserveMany(config.allocator, OzoneSocketHandlerT*, http_pipeline_count);
   http_pipeline[0] = (OzoneSocketHandlerT*)ozoneHTTPBeginPipeline;
   for (size_t handler_index = 0; handler_index < config.handler_pipeline_count; handler_index++) {
     http_pipeline[handler_index + 1] = (OzoneSocketHandlerT*)config.handler_pipeline[handler_index];

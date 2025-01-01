@@ -3,18 +3,21 @@
 #include "ozone_log.h"
 #include "ozone_router.h"
 
-int ozoneAppServe(OzoneAllocatorT* allocator, OzoneAppConfigT config) {
+int ozoneAppServe(OzoneAppConfigT config) {
   OzoneHTTPConfigT http_config = { 0 };
+  http_config.allocator = config.allocator;
   http_config.port = config.port;
 
   ozoneLogInfo("Registering %ld routes", config.router.endpoints_count);
 
-  OzoneRouterApplicationContextT* app = ozoneAllocatorReserveOne(allocator, OzoneRouterApplicationContextT);
+  OzoneRouterApplicationContextT* app = ozoneAllocatorReserveOne(config.allocator, OzoneRouterApplicationContextT);
 
-  app->route_configs = ozoneAllocatorReserveMany(allocator, OzoneRouterHTTPConfigT, config.router.endpoints_count);
+  app->route_configs
+      = ozoneAllocatorReserveMany(config.allocator, OzoneRouterHTTPConfigT, config.router.endpoints_count);
   app->route_handler_pipelines
-      = ozoneAllocatorReserveMany(allocator, OzoneHTTPHandlerT**, config.router.endpoints_count);
-  app->route_handler_pipelines_counts = ozoneAllocatorReserveMany(allocator, size_t, config.router.endpoints_count);
+      = ozoneAllocatorReserveMany(config.allocator, OzoneHTTPHandlerT**, config.router.endpoints_count);
+  app->route_handler_pipelines_counts
+      = ozoneAllocatorReserveMany(config.allocator, size_t, config.router.endpoints_count);
 
   app->route_count = config.router.endpoints_count;
   for (size_t route_index = 0; route_index < config.router.endpoints_count; route_index++) {
@@ -30,5 +33,5 @@ int ozoneAppServe(OzoneAllocatorT* allocator, OzoneAppConfigT config) {
   http_config.handler_pipeline = handler_pipeline;
   http_config.handler_pipeline_count = 1;
 
-  return ozoneHTTPServe(allocator, http_config);
+  return ozoneHTTPServe(http_config);
 }

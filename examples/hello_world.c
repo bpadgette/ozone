@@ -20,11 +20,15 @@ int main() {
     ozoneHTTPEndpoint(POST, "/just-write-it-in-rust", bad_request_stack),
   };
 
-  OzoneAppConfigT config = { .port = 8080, .router = ozoneRouterConfig(endpoints) };
+  OzoneAppConfigT config = {
+    .allocator = ozoneAllocatorCreate(4096),
+    .port = 8080,
+    .router = ozoneRouterConfig(endpoints),
+  };
 
-  OzoneAllocatorT* allocator = ozoneAllocatorCreate(4096);
-  int return_code = ozoneAppServe(allocator, config);
-  ozoneAllocatorDelete(allocator);
+  int return_code = ozoneAppServe(config);
+
+  ozoneAllocatorDelete(config.allocator);
 
   return return_code;
 }
