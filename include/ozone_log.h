@@ -16,7 +16,7 @@
         "\"level\":\"" level "\","                                                                                     \
         "\"timestamp\":\"%04d-%02d-%02d %02d:%02d:%02d.%03ld\","                                                       \
         "\"message\":\"",                                                                                              \
-        now->tm_year + 1900, now->tm_mon, now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec,                        \
+        now->tm_year + 1900, now->tm_mon + 1, now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec,                    \
         now_ms.tv_usec / 1000);                                                                                        \
     fprintf(file, ##__VA_ARGS__);                                                                                      \
     fprintf(file,                                                                                                      \
