@@ -1,8 +1,10 @@
 #ifndef OZONE_HTTP
 #define OZONE_HTTP
+
 #include "ozone_allocator.h"
 #include "ozone_socket.h"
 #include "ozone_string.h"
+#include "ozone_vector.h"
 
 typedef enum OzoneHTTPVersion {
   OZONE_HTTP_VERSION_UNKNOWN,
@@ -34,25 +36,30 @@ OzoneStringT ozoneHTTPStatusString(OzoneHTTPStatusCodeT status);
 typedef struct OzoneHTTPHeader {
   OzoneStringT name;
   OzoneStringT value;
-  struct OzoneHTTPHeader* next;
 } OzoneHTTPHeaderT;
 
-OzoneStringT* ozoneHTTPGetHeaderValue(OzoneHTTPHeaderT* headers, OzoneStringT name);
-void ozoneHTTPAppendHeader(
-    OzoneAllocatorT* allocator, OzoneHTTPHeaderT** headers, OzoneStringT name, OzoneStringT value);
+OZONE_VECTOR_DECLARE_API(OzoneHTTPHeaderT, ozoneHTTPHeader)
+#define ozoneHTTPAppendHeader(_allocator_, _headers_, _name_, _value_)                                                 \
+  ozoneHTTPHeaderVectorPush(_allocator_, _headers_,                                                                    \
+      (OzoneHTTPHeaderT) {                                                                                             \
+          .name = _name_,                                                                                              \
+          .value = _value_,                                                                                            \
+      });
+
+OzoneStringT* ozoneHTTPGetHeaderValue(OzoneHTTPHeaderTVectorT* headers, OzoneStringT name);
 
 typedef struct OzoneHTTPRequest {
   OzoneHTTPMethodT method;
   OzoneStringT target;
   OzoneHTTPVersionT version;
-  OzoneHTTPHeaderT* headers;
+  OzoneHTTPHeaderTVectorT headers;
   OzoneStringT body;
 } OzoneHTTPRequestT;
 
 typedef struct OzoneHTTPResponse {
   OzoneHTTPVersionT version;
   OzoneHTTPStatusCodeT code;
-  OzoneHTTPHeaderT* headers;
+  OzoneHTTPHeaderTVectorT headers;
   OzoneStringT body;
 } OzoneHTTPResponseT;
 
