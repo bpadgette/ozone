@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-OZONE_VECTOR_DEFINE_API(OzoneHTTPHeaderT, ozoneHTTPHeader)
+OZONE_VECTOR_IMPLEMENT_API(HTTPHeaderT)
 
 #define OZONE_REMAINING_CURSOR_SIZE (buffer + buffer_size - cursor)
 
@@ -351,7 +351,7 @@ int ozoneHTTPEndPipeline(OzoneHTTPContextT* context) {
         ;
       // end todo
 
-      ozoneHTTPHeaderVectorPush(context->allocator, &response->headers,
+      ozoneHTTPHeaderTVectorPush(context->allocator, &response->headers,
           (OzoneHTTPHeaderT) {
               .name = ozoneCharArray("Content-Length"),
               .value = (OzoneStringT) { .buffer = content_length,

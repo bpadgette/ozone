@@ -38,9 +38,9 @@ typedef struct OzoneHTTPHeader {
   OzoneStringT value;
 } OzoneHTTPHeaderT;
 
-OZONE_VECTOR_DECLARE_API(OzoneHTTPHeaderT, ozoneHTTPHeader)
+OZONE_VECTOR_DECLARE_API(HTTPHeaderT)
 #define ozoneHTTPAppendHeader(_allocator_, _headers_, _name_, _value_)                                                 \
-  ozoneHTTPHeaderVectorPush(_allocator_, _headers_,                                                                    \
+  ozoneHTTPHeaderTVectorPush(_allocator_, _headers_,                                                                   \
       (OzoneHTTPHeaderT) {                                                                                             \
           .name = _name_,                                                                                              \
           .value = _value_,                                                                                            \
