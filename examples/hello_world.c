@@ -1,14 +1,14 @@
 #include "ozone.h"
 
 ozoneHTTPHandler(before, {
-  ozoneHTTPAppendHeader(allocator, &res->headers, ozoneCharArray("X-Server-Name"), ozoneCharArray("My Ozone Server"));
+  ozoneHTTPAppendHeader(allocator, &res->headers, &ozoneString("X-Server-Name"), &ozoneString("My Ozone Server"));
 });
 
-ozoneHTTPHandler(home, { res->body = ozoneCharArray("Hello, world!"); });
+ozoneHTTPHandler(home, { res->body = ozoneString("Hello, world!"); });
 OzoneHTTPHandlerT* home_stack[] = { before, home };
 
 ozoneHTTPHandler(badRequest, {
-  res->body = ozoneCharArray("I will not");
+  res->body = ozoneString("I will not");
   res->code = 400;
 });
 OzoneHTTPHandlerT* bad_request_stack[] = { before, badRequest };

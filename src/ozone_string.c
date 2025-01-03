@@ -2,7 +2,22 @@
 
 #include <string.h>
 
+OZONE_VECTOR_IMPLEMENT_API(char)
 OZONE_VECTOR_IMPLEMENT_API(OzoneStringT)
+
+OzoneStringT ozoneStringCopy(OzoneAllocatorT* allocator, const OzoneStringT* original) {
+  char* buffer = ozoneAllocatorReserveMany(allocator, char, ozoneStringLength(original));
+  memcpy(buffer, original->vector.elements, ozoneStringLength(original));
+  return ((OzoneStringT) {
+      .vector = ((OzoneVectorCharT) {
+          .elements = buffer,
+          .length = ozoneStringLength(original),
+          .capacity = original->vector.capacity,
+          .capacity_increment = original->vector.capacity_increment,
+      }),
+      .encoding = original->encoding,
+  });
+}
 
 int ozoneStringCompare(const OzoneStringT* left, const OzoneStringT* right) {
   if (!left && !right)
@@ -18,20 +33,20 @@ int ozoneStringCompare(const OzoneStringT* left, const OzoneStringT* right) {
   if (left->encoding > right->encoding)
     return 1;
 
-  if (left->length < right->length)
+  if (ozoneStringLength(left) < ozoneStringLength(right))
     return -1;
-  if (left->length > right->length)
+  if (ozoneStringLength(left) > ozoneStringLength(right))
     return 1;
 
-  return memcmp(left->buffer, right->buffer, left->length);
+  return memcmp(ozoneStringBuffer(left), ozoneStringBuffer(right), ozoneStringLength(left));
 }
 
-OzoneStringT* ozoneStringScanBuffer(OzoneAllocatorT* allocator, char* buffer, size_t buffer_size,
+OzoneStringT ozoneStringScanBuffer(OzoneAllocatorT* allocator, char* buffer, size_t buffer_size,
     const OzoneStringT* stop, OzoneStringEncodingT encoding) {
   size_t scan_length = 0;
   while (scan_length < buffer_size) {
-    if (stop && (buffer_size - scan_length) >= stop->length
-        && !memcmp(buffer + scan_length, stop->buffer, stop->length - 1)) {
+    if (stop && (buffer_size - scan_length) >= ozoneStringLength(stop)
+        && !memcmp(buffer + scan_length, ozoneStringBuffer(stop), ozoneStringLength(stop) - 1)) {
       scan_length++;
       break;
     }
@@ -39,13 +54,18 @@ OzoneStringT* ozoneStringScanBuffer(OzoneAllocatorT* allocator, char* buffer, si
     scan_length++;
   }
 
-  OzoneStringT* string = ozoneAllocatorReserveOne(allocator, OzoneStringT);
-  string->buffer = ozoneAllocatorReserveMany(allocator, char, scan_length);
-  string->length = scan_length;
-  string->encoding = encoding;
+  OzoneStringT string = ((OzoneStringT) {
+      .vector = ((OzoneVectorCharT) {
+          .elements = ozoneAllocatorReserveMany(allocator, char, scan_length),
+          .length = scan_length,
+          .capacity = scan_length,
+          .capacity_increment = scan_length,
+      }),
+      .encoding = encoding,
+  });
 
-  memcpy(string->buffer, buffer, string->length);
-  string->buffer[string->length - 1] = '\0';
+  memcpy(ozoneStringBuffer(&string), buffer, ozoneStringLength(&string));
+  ozoneStringBuffer(&string)[ozoneStringLength(&string) - 1] = '\0';
 
   return string;
 }

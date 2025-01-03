@@ -9,9 +9,9 @@ OZONE_VECTOR_IMPLEMENT_API(OzoneHTTPHeaderT)
 #define OZONE_REMAINING_CURSOR_SIZE (buffer + buffer_size - cursor)
 
 OzoneHTTPVersionT ozoneHTTPParseVersion(const OzoneStringT* version_string) {
-  if (ozoneStringCompare(version_string, &ozoneCharArray("HTTP/1.1")) == 0)
+  if (ozoneStringCompare(version_string, &ozoneString("HTTP/1.1")) == 0)
     return OZONE_HTTP_VERSION_1_1;
-  if (ozoneStringCompare(version_string, &ozoneCharArray("HTTP/1.0")) == 0)
+  if (ozoneStringCompare(version_string, &ozoneString("HTTP/1.0")) == 0)
     return OZONE_HTTP_VERSION_1_0;
 
   ozoneLogWarn("Could not parse HTTP version");
@@ -19,23 +19,23 @@ OzoneHTTPVersionT ozoneHTTPParseVersion(const OzoneStringT* version_string) {
 }
 
 OzoneHTTPMethodT ozoneHTTPParseMethod(const OzoneStringT* method_string) {
-  if (ozoneStringCompare(method_string, &ozoneCharArray("GET")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("GET")) == 0)
     return OZONE_HTTP_METHOD_GET;
-  if (ozoneStringCompare(method_string, &ozoneCharArray("HEAD")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("HEAD")) == 0)
     return OZONE_HTTP_METHOD_HEAD;
-  if (ozoneStringCompare(method_string, &ozoneCharArray("POST")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("POST")) == 0)
     return OZONE_HTTP_METHOD_POST;
-  if (ozoneStringCompare(method_string, &ozoneCharArray("PUT")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("PUT")) == 0)
     return OZONE_HTTP_METHOD_PUT;
-  if (ozoneStringCompare(method_string, &ozoneCharArray("DELETE")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("DELETE")) == 0)
     return OZONE_HTTP_METHOD_DELETE;
-  if (ozoneStringCompare(method_string, &ozoneCharArray("CONNECT")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("CONNECT")) == 0)
     return OZONE_HTTP_METHOD_CONNECT;
-  if (ozoneStringCompare(method_string, &ozoneCharArray("OPTIONS")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("OPTIONS")) == 0)
     return OZONE_HTTP_METHOD_OPTIONS;
-  if (ozoneStringCompare(method_string, &ozoneCharArray("PATCH")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("PATCH")) == 0)
     return OZONE_HTTP_METHOD_PATCH;
-  if (ozoneStringCompare(method_string, &ozoneCharArray("TRACE")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("TRACE")) == 0)
     return OZONE_HTTP_METHOD_TRACE;
 
   ozoneLogWarn("Could not parse HTTP method");
@@ -45,130 +45,130 @@ OzoneHTTPMethodT ozoneHTTPParseMethod(const OzoneStringT* method_string) {
 OzoneStringT ozoneHTTPStatusString(OzoneHTTPStatusCodeT status) {
   switch (status) {
   case 100:
-    return ozoneCharArray("100 Continue");
+    return ozoneString("100 Continue");
   case 101:
-    return ozoneCharArray("101 Switching Protocols");
+    return ozoneString("101 Switching Protocols");
   case 102:
-    return ozoneCharArray("102 Processing");
+    return ozoneString("102 Processing");
   case 103:
-    return ozoneCharArray("103 Early Hints");
+    return ozoneString("103 Early Hints");
   case 200:
-    return ozoneCharArray("200 OK");
+    return ozoneString("200 OK");
   case 201:
-    return ozoneCharArray("201 Created");
+    return ozoneString("201 Created");
   case 202:
-    return ozoneCharArray("202 Accepted");
+    return ozoneString("202 Accepted");
   case 203:
-    return ozoneCharArray("203 Non-Authoritative Information");
+    return ozoneString("203 Non-Authoritative Information");
   case 204:
-    return ozoneCharArray("204 No Content");
+    return ozoneString("204 No Content");
   case 205:
-    return ozoneCharArray("205 Reset Content");
+    return ozoneString("205 Reset Content");
   case 206:
-    return ozoneCharArray("206 Partial Content");
+    return ozoneString("206 Partial Content");
   case 207:
-    return ozoneCharArray("207 Multi-Status");
+    return ozoneString("207 Multi-Status");
   case 208:
-    return ozoneCharArray("208 Already Reported");
+    return ozoneString("208 Already Reported");
   case 226:
-    return ozoneCharArray("226 IM Used");
+    return ozoneString("226 IM Used");
   case 300:
-    return ozoneCharArray("300 Multiple Choices");
+    return ozoneString("300 Multiple Choices");
   case 301:
-    return ozoneCharArray("301 Moved Permanently");
+    return ozoneString("301 Moved Permanently");
   case 302:
-    return ozoneCharArray("302 Found");
+    return ozoneString("302 Found");
   case 303:
-    return ozoneCharArray("303 See Other");
+    return ozoneString("303 See Other");
   case 304:
-    return ozoneCharArray("304 Not Modified");
+    return ozoneString("304 Not Modified");
   case 305:
-    return ozoneCharArray("305 Use Proxy");
+    return ozoneString("305 Use Proxy");
   case 307:
-    return ozoneCharArray("307 Temporary Redirect");
+    return ozoneString("307 Temporary Redirect");
   case 308:
-    return ozoneCharArray("308 Permanent Redirect");
+    return ozoneString("308 Permanent Redirect");
   case 400:
-    return ozoneCharArray("400 Bad Request");
+    return ozoneString("400 Bad Request");
   case 401:
-    return ozoneCharArray("401 Unauthorized");
+    return ozoneString("401 Unauthorized");
   case 402:
-    return ozoneCharArray("402 Payment Required");
+    return ozoneString("402 Payment Required");
   case 403:
-    return ozoneCharArray("403 Forbidden");
+    return ozoneString("403 Forbidden");
   case 404:
-    return ozoneCharArray("404 Not Found");
+    return ozoneString("404 Not Found");
   case 405:
-    return ozoneCharArray("405 Method Not Allowed");
+    return ozoneString("405 Method Not Allowed");
   case 406:
-    return ozoneCharArray("406 Not Acceptable");
+    return ozoneString("406 Not Acceptable");
   case 407:
-    return ozoneCharArray("407 Proxy Authentication Required");
+    return ozoneString("407 Proxy Authentication Required");
   case 408:
-    return ozoneCharArray("408 Request Timeout");
+    return ozoneString("408 Request Timeout");
   case 409:
-    return ozoneCharArray("409 Conflict");
+    return ozoneString("409 Conflict");
   case 410:
-    return ozoneCharArray("410 Gone");
+    return ozoneString("410 Gone");
   case 411:
-    return ozoneCharArray("411 Length Required");
+    return ozoneString("411 Length Required");
   case 412:
-    return ozoneCharArray("412 Precondition Failed");
+    return ozoneString("412 Precondition Failed");
   case 413:
-    return ozoneCharArray("413 Content Too Large");
+    return ozoneString("413 Content Too Large");
   case 414:
-    return ozoneCharArray("414 URI Too Long");
+    return ozoneString("414 URI Too Long");
   case 415:
-    return ozoneCharArray("415 Unsupported Media Type");
+    return ozoneString("415 Unsupported Media Type");
   case 416:
-    return ozoneCharArray("416 Range Not Satisfiable");
+    return ozoneString("416 Range Not Satisfiable");
   case 417:
-    return ozoneCharArray("417 Expectation Failed");
+    return ozoneString("417 Expectation Failed");
   case 418:
-    return ozoneCharArray("418 I'm a teapot");
+    return ozoneString("418 I'm a teapot");
   case 421:
-    return ozoneCharArray("421 Misdirected Request");
+    return ozoneString("421 Misdirected Request");
   case 422:
-    return ozoneCharArray("422 Unprocessable Content");
+    return ozoneString("422 Unprocessable Content");
   case 423:
-    return ozoneCharArray("423 Locked");
+    return ozoneString("423 Locked");
   case 424:
-    return ozoneCharArray("424 Failed Dependency");
+    return ozoneString("424 Failed Dependency");
   case 425:
-    return ozoneCharArray("425 Too Early");
+    return ozoneString("425 Too Early");
   case 426:
-    return ozoneCharArray("426 Upgrade Required");
+    return ozoneString("426 Upgrade Required");
   case 428:
-    return ozoneCharArray("428 Precondition Required");
+    return ozoneString("428 Precondition Required");
   case 429:
-    return ozoneCharArray("429 Too Many Requests");
+    return ozoneString("429 Too Many Requests");
   case 431:
-    return ozoneCharArray("431 Request Header Fields Too Large");
+    return ozoneString("431 Request Header Fields Too Large");
   case 500:
-    return ozoneCharArray("500 Internal Server Error");
+    return ozoneString("500 Internal Server Error");
   case 501:
-    return ozoneCharArray("501 Not Implemented");
+    return ozoneString("501 Not Implemented");
   case 502:
-    return ozoneCharArray("502 Bad Gateway");
+    return ozoneString("502 Bad Gateway");
   case 503:
-    return ozoneCharArray("503 Service Unavailable");
+    return ozoneString("503 Service Unavailable");
   case 504:
-    return ozoneCharArray("504 Gateway Timeout");
+    return ozoneString("504 Gateway Timeout");
   case 505:
-    return ozoneCharArray("505 HTTP Version Not Supported");
+    return ozoneString("505 HTTP Version Not Supported");
   case 506:
-    return ozoneCharArray("506 Variant Also Negotiates");
+    return ozoneString("506 Variant Also Negotiates");
   case 507:
-    return ozoneCharArray("507 Insufficient Storage");
+    return ozoneString("507 Insufficient Storage");
   case 508:
-    return ozoneCharArray("508 Loop Detected");
+    return ozoneString("508 Loop Detected");
   case 510:
-    return ozoneCharArray("510 Not Extended");
+    return ozoneString("510 Not Extended");
   case 511:
-    return ozoneCharArray("511 Network Authentication Required");
+    return ozoneString("511 Network Authentication Required");
   default:
     ozoneLogWarn("Unknown HTTP status %d", status);
-    return ozoneCharArray("500 Internal Server Error");
+    return ozoneString("500 Internal Server Error");
   }
 }
 
@@ -204,46 +204,46 @@ OzoneHTTPRequestT* ozoneHTTPParseSocketChunks(OzoneAllocatorT* allocator, const 
   OzoneHTTPRequestT* http_request = ozoneAllocatorReserveOne(allocator, OzoneHTTPRequestT);
   *http_request = (OzoneHTTPRequestT) { 0 };
 
-  OzoneStringT* method_string
-      = ozoneCharArrayScanBuffer(allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneCharArray(" "));
-  if (OZONE_HTTP_METHOD_UNKNOWN == (http_request->method = ozoneHTTPParseMethod(method_string)))
+  OzoneStringT method_string = ozoneStringScanBuffer(
+      allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString(" "), OZONE_STRING_ENCODING_ISO_8859_1);
+  if (OZONE_HTTP_METHOD_UNKNOWN == (http_request->method = ozoneHTTPParseMethod(&method_string)))
     return NULL;
-  cursor += method_string->length;
+  cursor += ozoneStringLength(&method_string);
 
-  http_request->target
-      = *ozoneCharArrayScanBuffer(allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneCharArray(" "));
-  cursor += http_request->target.length;
+  http_request->target = ozoneStringScanBuffer(
+      allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString(" "), OZONE_STRING_ENCODING_ISO_8859_1);
+  cursor += ozoneStringLength(&http_request->target);
 
-  OzoneStringT* http_version_string
-      = ozoneCharArrayScanBuffer(allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneCharArray("\r\n"));
-  if (OZONE_HTTP_VERSION_UNKNOWN == (http_request->version = ozoneHTTPParseVersion(http_version_string)))
+  OzoneStringT http_version_string = ozoneStringScanBuffer(
+      allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString("\r\n"), OZONE_STRING_ENCODING_ISO_8859_1);
+  if (OZONE_HTTP_VERSION_UNKNOWN == (http_request->version = ozoneHTTPParseVersion(&http_version_string)))
     return NULL;
-  cursor += http_version_string->length + 1;
+  cursor += ozoneStringLength(&http_version_string) + 1;
 
   while (buffer + buffer_size > (cursor + 1) && cursor[0] != '\r') {
-    OzoneStringT* name = ozoneCharArrayScanBuffer(allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneCharArray(":"));
-    if (!name)
+    OzoneStringT name = ozoneStringScanBuffer(
+        allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString(":"), OZONE_STRING_ENCODING_ISO_8859_1);
+    if (!ozoneStringLength(&name))
       break;
 
-    cursor += name->length + 1;
+    cursor += ozoneStringLength(&name) + 1;
 
-    OzoneStringT* value
-        = ozoneCharArrayScanBuffer(allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneCharArray("\r\n"));
-    if (!value)
+    OzoneStringT value = ozoneStringScanBuffer(
+        allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString("\r\n"), OZONE_STRING_ENCODING_ISO_8859_1);
+    if (!ozoneStringLength(&value))
       break;
 
-    ozoneHTTPAppendHeader(allocator, &http_request->headers, *name, *value);
-    cursor += value->length + 1;
+    ozoneHTTPAppendHeader(allocator, &http_request->headers, &name, &value);
+    cursor += ozoneStringLength(&value) + 1;
   }
 
   cursor += 2;
 
-  OzoneStringT* content_length_string
-      = ozoneHTTPGetHeaderValue(&http_request->headers, ozoneCharArray("Content-Length"));
+  OzoneStringT* content_length_string = ozoneHTTPGetHeaderValue(&http_request->headers, ozoneString("Content-Length"));
   if (!content_length_string)
     return http_request;
 
-  long int content_length = strtol(content_length_string->buffer, NULL, 10);
+  long int content_length = strtol(ozoneStringBuffer(content_length_string), NULL, 10);
   if (content_length == 0)
     return http_request;
 
@@ -255,60 +255,67 @@ OzoneHTTPRequestT* ozoneHTTPParseSocketChunks(OzoneAllocatorT* allocator, const 
   }
 
   cursor[content_length + 1] = '\0';
-  http_request->body
-      = (OzoneStringT) { .buffer = cursor, .length = content_length + 1, .encoding = OZONE_STRING_ENCODING_ISO_8859_1 };
+  http_request->body = ((OzoneStringT) {
+      .vector = ((OzoneVectorCharT) {
+          .elements = cursor,
+          .length = content_length + 1,
+          .capacity = content_length + 1,
+          .capacity_increment = content_length + 1,
+      }),
+      .encoding = OZONE_STRING_ENCODING_ISO_8859_1,
+  });
 
   return http_request;
 }
 
 OzoneSocketChunkT* ozoneHTTPCreateSocketChunks(OzoneAllocatorT* allocator, OzoneHTTPResponseT* http_response) {
   // todo: HTTP versioned response handling; upgrading and downgrading
-  OzoneStringT version = ozoneCharArray("HTTP/1.0");
+  OzoneStringT version = ozoneString("HTTP/1.0");
   OzoneStringT status = ozoneHTTPStatusString(http_response->code);
 
-  size_t buffer_size = version.length + status.length + 1;
+  size_t buffer_size = ozoneStringLength(&version) + ozoneStringLength(&status) + 1;
 
   for (size_t header_index = 0; header_index < http_response->headers.length; header_index++) {
     OzoneHTTPHeaderT* header = &http_response->headers.elements[header_index];
-    buffer_size += header->name.length + 1 + header->value.length + 1;
+    buffer_size += ozoneStringLength(&header->name) + 1 + ozoneStringLength(&header->value) + 1;
   }
 
   buffer_size += 2;
 
-  if (http_response->body.length)
-    buffer_size += http_response->body.length - 1;
+  if (ozoneStringLength(&http_response->body))
+    buffer_size += ozoneStringLength(&http_response->body) - 1;
 
   OzoneSocketChunkT* socket_chunk = ozoneAllocatorReserveOne(allocator, OzoneSocketChunkT);
   socket_chunk->buffer = ozoneAllocatorReserveMany(allocator, char, buffer_size);
   socket_chunk->length = buffer_size;
 
   char* cursor = socket_chunk->buffer;
-  memcpy(cursor, version.buffer, version.length - 1);
-  cursor[version.length - 1] = ' ';
-  cursor += version.length;
-  memcpy(cursor, status.buffer, status.length - 1);
-  cursor[status.length - 1] = '\r';
-  cursor[status.length] = '\n';
-  cursor += status.length + 1;
+  memcpy(cursor, ozoneStringBuffer(&version), ozoneStringLength(&version) - 1);
+  cursor[ozoneStringLength(&version) - 1] = ' ';
+  cursor += ozoneStringLength(&version);
+  memcpy(cursor, ozoneStringBuffer(&status), ozoneStringLength(&status) - 1);
+  cursor[ozoneStringLength(&status) - 1] = '\r';
+  cursor[ozoneStringLength(&status)] = '\n';
+  cursor += ozoneStringLength(&status) + 1;
 
   for (size_t header_index = 0; header_index < http_response->headers.length; header_index++) {
     OzoneHTTPHeaderT* header = &http_response->headers.elements[header_index];
-    memcpy(cursor, header->name.buffer, header->name.length - 1);
-    cursor[header->name.length - 1] = ':';
-    cursor[header->name.length] = ' ';
-    cursor += header->name.length + 1;
-    memcpy(cursor, header->value.buffer, header->value.length - 1);
-    cursor[header->value.length - 1] = '\r';
-    cursor[header->value.length] = '\n';
-    cursor += header->value.length + 1;
+    memcpy(cursor, ozoneStringBuffer(&header->name), ozoneStringLength(&header->name) - 1);
+    cursor[ozoneStringLength(&header->name) - 1] = ':';
+    cursor[ozoneStringLength(&header->name)] = ' ';
+    cursor += ozoneStringLength(&header->name) + 1;
+    memcpy(cursor, ozoneStringBuffer(&header->value), ozoneStringLength(&header->value) - 1);
+    cursor[ozoneStringLength(&header->value) - 1] = '\r';
+    cursor[ozoneStringLength(&header->value)] = '\n';
+    cursor += ozoneStringLength(&header->value) + 1;
   }
 
   cursor[0] = '\r';
   cursor[1] = '\n';
   cursor += 2;
 
-  if (http_response->body.length) {
-    memcpy(cursor, http_response->body.buffer, http_response->body.length - 1);
+  if (ozoneStringLength(&http_response->body)) {
+    memcpy(cursor, ozoneStringBuffer(&http_response->body), ozoneStringLength(&http_response->body) - 1);
   }
 
   return socket_chunk;
@@ -321,8 +328,8 @@ int ozoneHTTPBeginPipeline(OzoneHTTPContextT* context) {
 
   ozoneLogInfo("%s",
       ozoneStringScanBuffer(context->allocator, context->raw_request->buffer, context->raw_request->length,
-          &ozoneCharArray("\r"), OZONE_STRING_ENCODING_ISO_8859_1)
-          ->buffer);
+          &ozoneString("\r"), OZONE_STRING_ENCODING_ISO_8859_1)
+          .vector.elements);
 
   return 0;
 }
@@ -334,27 +341,31 @@ int ozoneHTTPEndPipeline(OzoneHTTPContextT* context) {
   OzoneHTTPResponseT* response = context->parsed_response;
 
   if (!response->code)
-    response->code = response->body.length ? 200 : 204;
+    response->code = ozoneStringLength(&response->body) ? 200 : 204;
 
-  if (response->body.length) {
-    if (!ozoneHTTPGetHeaderValue(&response->headers, ozoneCharArray("Content-Type")))
+  if (ozoneStringLength(&response->body)) {
+    if (!ozoneHTTPGetHeaderValue(&response->headers, ozoneString("Content-Type")))
       ozoneHTTPAppendHeader(
-          context->allocator, &response->headers, ozoneCharArray("Content-Type"), ozoneCharArray("text/plain"));
+          context->allocator, &response->headers, &ozoneString("Content-Type"), &ozoneString("text/plain"));
 
-    if (!ozoneHTTPGetHeaderValue(&response->headers, ozoneCharArray("Content-Length"))) {
+    if (!ozoneHTTPGetHeaderValue(&response->headers, ozoneString("Content-Length"))) {
       // todo: extract to helper
       char content_length[32] = { 0 };
-      snprintf(content_length, sizeof(content_length), "%ld", response->body.length - 1);
+      snprintf(content_length, sizeof(content_length), "%ld", ozoneStringLength(&response->body) - 1);
 
       size_t length = 0;
       while (content_length[length++] && length < sizeof(content_length))
         ;
       // end todo
 
-      ozoneHTTPAppendHeader(context->allocator, &response->headers, ozoneCharArray("Content-Length"),
-          ((OzoneStringT) {
-              .buffer = content_length,
-              .length = length,
+      ozoneHTTPAppendHeader(context->allocator, &response->headers, &ozoneString("Content-Length"),
+          &((OzoneStringT) {
+              .vector = ((OzoneVectorCharT) {
+                  .elements = content_length,
+                  .length = length,
+                  .capacity = length,
+                  .capacity_increment = length,
+              }),
               .encoding = OZONE_STRING_ENCODING_ISO_8859_1,
           }));
     }
@@ -363,8 +374,8 @@ int ozoneHTTPEndPipeline(OzoneHTTPContextT* context) {
   context->raw_response = ozoneHTTPCreateSocketChunks(context->allocator, response);
   ozoneLogInfo("%s",
       ozoneStringScanBuffer(context->allocator, context->raw_response->buffer, context->raw_response->length,
-          &ozoneCharArray("\r"), OZONE_STRING_ENCODING_ISO_8859_1)
-          ->buffer);
+          &ozoneString("\r"), OZONE_STRING_ENCODING_ISO_8859_1)
+          .vector.elements);
 
   return 0;
 }

@@ -6,7 +6,7 @@
 #define ozoneHTTPEndpoint(_method_, _target_pattern_, _handler_pipeline_)                                              \
   (OzoneRouterHTTPEndpointT) {                                                                                         \
     .config = (OzoneRouterHTTPConfigT) { .method = OZONE_HTTP_METHOD_##_method_,                                       \
-      .target_pattern = ozoneCharArray(_target_pattern_) },                                                            \
+      .target_pattern = ozoneString(_target_pattern_) },                                                               \
     .handler_pipeline = _handler_pipeline_,                                                                            \
     .handler_pipeline_count = sizeof(_handler_pipeline_) / sizeof(OzoneHTTPHandlerT*)                                  \
   }

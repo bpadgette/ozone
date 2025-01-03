@@ -14,8 +14,12 @@ OzoneStringTVectorT ozoneFileLoad(
     cursor[read_status] = '\0';
     ozoneVectorPushOzoneStringT(allocator, &vector,
         (OzoneStringT) {
-            .buffer = cursor,
-            .length = read_status + 1,
+            (OzoneVectorCharT) {
+                .elements = cursor,
+                .length = read_status + 1,
+                .capacity = read_status + 1,
+                .capacity_increment = read_status + 1,
+            },
             .encoding = encoding,
         });
 
@@ -29,13 +33,13 @@ OzoneStringTVectorT ozoneFileLoad(
 
 OzoneStringTVectorT ozoneFileLoadFromPath(
     OzoneAllocatorT* allocator, const OzoneStringT* path, OzoneStringEncodingT encoding, size_t max_chunk_bytes) {
-  FILE* file = fopen(path->buffer, "r");
+  FILE* file = fopen(ozoneStringBuffer(path), "r");
   if (!file) {
-    ozoneLogError("Could not open file %s", path->buffer);
+    ozoneLogError("Could not open file %s", ozoneStringBuffer(path));
     return (OzoneStringTVectorT) { 0 };
   }
 
-  ozoneLogDebug("Opened file %s", path->buffer);
+  ozoneLogDebug("Opened file %s", ozoneStringBuffer(path));
   OzoneStringTVectorT vector = ozoneFileLoad(allocator, file, encoding, max_chunk_bytes);
   fclose(file);
 

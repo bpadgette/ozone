@@ -41,10 +41,10 @@ typedef struct OzoneHTTPHeader {
 OZONE_VECTOR_DECLARE_API(OzoneHTTPHeaderT)
 #define ozoneHTTPAppendHeader(_allocator_, _headers_, _name_, _value_)                                                 \
   ozoneVectorPushOzoneHTTPHeaderT(_allocator_, _headers_,                                                              \
-      (OzoneHTTPHeaderT) {                                                                                             \
-          .name = _name_,                                                                                              \
-          .value = _value_,                                                                                            \
-      });
+      ((OzoneHTTPHeaderT) {                                                                                            \
+          .name = ozoneStringCopy(_allocator_, _name_),                                                                \
+          .value = ozoneStringCopy(_allocator_, _value_),                                                              \
+      }));
 
 OzoneStringT* ozoneHTTPGetHeaderValue(OzoneHTTPHeaderTVectorT* headers, OzoneStringT name);
 

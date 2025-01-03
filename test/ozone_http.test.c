@@ -23,28 +23,25 @@ void shouldParseSocketChunksAsHTTPRequest(void) {
   TEST_ASSERT_NOT_NULL_MESSAGE(request, "It returns an HTTP request");
 
   TEST_ASSERT_EQUAL_MESSAGE(OZONE_HTTP_METHOD_POST, request->method, "It parses the correct HTTP method");
-  OzoneStringT target = ozoneCharArray("/users");
-  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(target, request->target, "It parses the correct HTTP target");
+  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&ozoneString("/users"), &request->target, "It parses the correct HTTP target");
 
   TEST_ASSERT_EQUAL_MESSAGE(OZONE_HTTP_VERSION_1_1, request->version, "It parses the correct HTTP version");
 
-  OzoneStringT value = ozoneCharArray("example.com");
-  OzoneStringT* header = ozoneHTTPGetHeaderValue(&request->headers, ozoneCharArray("Host"));
+  OzoneStringT* header = ozoneHTTPGetHeaderValue(&request->headers, ozoneString("Host"));
   TEST_ASSERT_NOT_NULL_MESSAGE(header, "It returns a Host header");
-  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(value, (*header), "It parses the correct Host value");
+  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&ozoneString("example.com"), header, "It parses the correct Host value");
 
-  value = ozoneCharArray("application/x-www-form-urlencoded");
-  header = ozoneHTTPGetHeaderValue(&request->headers, ozoneCharArray("Content-Type"));
+  header = ozoneHTTPGetHeaderValue(&request->headers, ozoneString("Content-Type"));
   TEST_ASSERT_NOT_NULL_MESSAGE(header, "It returns a Content-Type header");
-  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(value, (*header), "It parses the correct Content-Type value");
+  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
+      &ozoneString("application/x-www-form-urlencoded"), header, "It parses the correct Content-Type value");
 
-  value = ozoneCharArray("27");
-  header = ozoneHTTPGetHeaderValue(&request->headers, ozoneCharArray("Content-Length"));
+  header = ozoneHTTPGetHeaderValue(&request->headers, ozoneString("Content-Length"));
   TEST_ASSERT_NOT_NULL_MESSAGE(header, "It returns a Content-Length header");
-  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(value, (*header), "It parses the correct Content-Length value");
+  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&ozoneString("27"), header, "It parses the correct Content-Length value");
 
-  OzoneStringT body = ozoneCharArray("field1=value1&field2=value2");
-  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(body, request->body, "It parses the correct HTTP body");
+  OzoneStringT body = ozoneString("field1=value1&field2=value2");
+  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&body, &request->body, "It parses the correct HTTP body");
 }
 
 int main(void) {

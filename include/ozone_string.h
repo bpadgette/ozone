@@ -4,23 +4,45 @@
 #include "ozone_allocator.h"
 #include "ozone_vector.h"
 
+OZONE_VECTOR_DECLARE_API(char)
+typedef charVectorT OzoneVectorCharT;
+
+#define ozoneVectorChar(_chars_, _encoding_)                                                                           \
+  ((OzoneVectorCharT) {                                                                                                \
+      .elements = _chars_,                                                                                             \
+      .length = sizeof(_chars_),                                                                                       \
+      .capacity = sizeof(_chars_),                                                                                     \
+      .capacity_increment = sizeof(_chars_),                                                                           \
+  })
+
 typedef enum OzoneStringEncoding {
   OZONE_STRING_ENCODING_UNKNOWN,
   OZONE_STRING_ENCODING_ISO_8859_1,
 } OzoneStringEncodingT;
 
 typedef struct OzoneString {
-  char* buffer;
-  size_t length;
+  OzoneVectorCharT vector;
   OzoneStringEncodingT encoding;
 } OzoneStringT;
 
 OZONE_VECTOR_DECLARE_API(OzoneStringT)
 
-#define ozoneString(_chars_, _encoding_)                                                                               \
-  ((OzoneStringT) { .buffer = _chars_, .length = sizeof(_chars_), .encoding = _encoding_ })
+#define ozoneStringEncoded(_chars_, _encoding_)                                                                        \
+  ((OzoneStringT) {                                                                                                    \
+      .vector = ((OzoneVectorCharT) {                                                                                  \
+          .elements = _chars_,                                                                                         \
+          .length = sizeof(_chars_),                                                                                   \
+          .capacity = sizeof(_chars_),                                                                                 \
+          .capacity_increment = sizeof(_chars_),                                                                       \
+      }),                                                                                                              \
+      .encoding = _encoding_,                                                                                          \
+  })
 
-#define ozoneCharArray(_chars_) ozoneString(_chars_, OZONE_STRING_ENCODING_ISO_8859_1)
+#define ozoneString(_chars_) ozoneStringEncoded(_chars_, OZONE_STRING_ENCODING_ISO_8859_1)
+#define ozoneStringLength(_string_) ((_string_)->vector.length)
+#define ozoneStringBuffer(_string_) ((_string_)->vector.elements)
+
+OzoneStringT ozoneStringCopy(OzoneAllocatorT* allocator, const OzoneStringT* original);
 
 /**
  * \returns 0 if equal, negative if left less than right, positive if left greater than right
@@ -28,13 +50,10 @@ OZONE_VECTOR_DECLARE_API(OzoneStringT)
 int ozoneStringCompare(const OzoneStringT* left, const OzoneStringT* right);
 
 /**
- * \returns pointer to new OzoneStringT, not exceeding the buffer_size and not including the first occurrence of *stop
+ * \returns  OzoneStringT, not exceeding the buffer_size and not including the first occurrence of *stop
  * and beyond. If stop is NULL, then it is ignored and this function will scan until buffer_size is reached.
  */
-OzoneStringT* ozoneStringScanBuffer(OzoneAllocatorT* allocator, char* buffer, size_t buffer_size,
+OzoneStringT ozoneStringScanBuffer(OzoneAllocatorT* allocator, char* buffer, size_t buffer_size,
     const OzoneStringT* stop, OzoneStringEncodingT encoding);
-
-#define ozoneCharArrayScanBuffer(_allocator_, _buffer_, _buffer_size_, _stop_)                                         \
-  ozoneStringScanBuffer(_allocator_, _buffer_, _buffer_size_, _stop_, OZONE_STRING_ENCODING_ISO_8859_1)
 
 #endif
