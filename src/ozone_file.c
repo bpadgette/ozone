@@ -28,7 +28,7 @@ OzoneStringTVectorT ozoneFileLoad(
 }
 
 OzoneStringTVectorT ozoneFileLoadFromPath(
-    OzoneAllocatorT* allocator, OzoneStringT* path, OzoneStringEncodingT encoding, size_t max_chunk_bytes) {
+    OzoneAllocatorT* allocator, const OzoneStringT* path, OzoneStringEncodingT encoding, size_t max_chunk_bytes) {
   FILE* file = fopen(path->buffer, "r");
   if (!file) {
     ozoneLogError("Could not open file %s", path->buffer);
