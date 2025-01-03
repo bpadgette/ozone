@@ -5,29 +5,16 @@
 #include <string.h>
 
 #define OZONE_VECTOR_DECLARE_API(_type_)                                                                               \
-  typedef struct Ozone##_type_##Vector {                                                                               \
-    Ozone##_type_* elements;                                                                                           \
+  typedef struct _type_##Vector {                                                                                      \
+    _type_* elements;                                                                                                  \
     size_t length;                                                                                                     \
     size_t capacity;                                                                                                   \
     size_t capacity_increment;                                                                                         \
-  } Ozone##_type_##VectorT;                                                                                            \
-  Ozone##_type_##VectorT* ozone##_type_##VectorCreate(OzoneAllocatorT* allocator, size_t capacity);                    \
-  void ozone##_type_##VectorPush(OzoneAllocatorT* allocator, Ozone##_type_##VectorT* vector, Ozone##_type_ element);
+  } _type_##VectorT;                                                                                                   \
+  void ozoneVectorPush##_type_(OzoneAllocatorT* allocator, _type_##VectorT* vector, _type_ element);
 
 #define OZONE_VECTOR_IMPLEMENT_API(_type_)                                                                             \
-  Ozone##_type_##VectorT* ozone##_type_##VectorCreate(OzoneAllocatorT* allocator, size_t capacity) {                   \
-    Ozone##_type_##VectorT* vector = ozoneAllocatorReserveOne(allocator, Ozone##_type_##VectorT);                      \
-    *vector = (Ozone##_type_##VectorT) {                                                                               \
-      .elements = ozoneAllocatorReserveMany(allocator, Ozone##_type_, capacity),                                       \
-      .length = 0,                                                                                                     \
-      .capacity = capacity,                                                                                            \
-      .capacity_increment = capacity,                                                                                  \
-    };                                                                                                                 \
-                                                                                                                       \
-    return vector;                                                                                                     \
-  }                                                                                                                    \
-                                                                                                                       \
-  void ozone##_type_##VectorPush(OzoneAllocatorT* allocator, Ozone##_type_##VectorT* vector, Ozone##_type_ element) {  \
+  void ozoneVectorPush##_type_(OzoneAllocatorT* allocator, _type_##VectorT* vector, _type_ element) {                  \
     if (vector->length < vector->capacity) {                                                                           \
       vector->elements[vector->length++] = element;                                                                    \
       return;                                                                                                          \
@@ -37,11 +24,18 @@
       vector->capacity_increment = 1;                                                                                  \
     }                                                                                                                  \
                                                                                                                        \
-    Ozone##_type_* old = vector->elements;                                                                             \
+    _type_* old = vector->elements;                                                                                    \
     vector->capacity = vector->capacity + vector->capacity_increment;                                                  \
-    vector->elements = ozoneAllocatorReserveMany(allocator, Ozone##_type_, vector->capacity);                          \
-    memcpy(vector->elements, old, sizeof(Ozone##_type_) * vector->length);                                             \
+    vector->elements = ozoneAllocatorReserveMany(allocator, _type_, vector->capacity);                                 \
+    memcpy(vector->elements, old, sizeof(_type_) * vector->length);                                                    \
     vector->elements[vector->length++] = element;                                                                      \
   }
 
+#define ozoneVector(_allocator_, _type_, _capacity_)                                                                   \
+  ((_type_##VectorT) {                                                                                                 \
+      .elements = ozoneAllocatorReserveMany(_allocator_, _type_, _capacity_),                                          \
+      .length = 0,                                                                                                     \
+      .capacity = _capacity_,                                                                                          \
+      .capacity_increment = _capacity_,                                                                                \
+  })
 #endif
