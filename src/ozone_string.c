@@ -2,6 +2,8 @@
 
 #include <string.h>
 
+OZONE_VECTOR_IMPLEMENT_API(OzoneStringT)
+
 int ozoneStringCompare(const OzoneStringT* left, const OzoneStringT* right) {
   if (!left && !right)
     return 0;

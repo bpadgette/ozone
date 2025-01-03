@@ -1,6 +1,8 @@
 #ifndef OZONE_STRING_H
 #define OZONE_STRING_H
+
 #include "ozone_allocator.h"
+#include "ozone_vector.h"
 
 typedef enum OzoneStringEncoding {
   OZONE_STRING_ENCODING_UNKNOWN,
@@ -13,8 +15,10 @@ typedef struct OzoneString {
   OzoneStringEncodingT encoding;
 } OzoneStringT;
 
+OZONE_VECTOR_DECLARE_API(OzoneStringT)
+
 #define ozoneString(_chars_, _encoding_)                                                                               \
-  (OzoneStringT) { .buffer = _chars_, .length = sizeof(_chars_), .encoding = _encoding_ }
+  ((OzoneStringT) { .buffer = _chars_, .length = sizeof(_chars_), .encoding = _encoding_ })
 
 #define ozoneCharArray(_chars_) ozoneString(_chars_, OZONE_STRING_ENCODING_ISO_8859_1)
 
