@@ -208,17 +208,17 @@ OzoneHTTPRequestT* ozoneHTTPParseSocketChunks(OzoneAllocatorT* allocator, const 
       allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString(" "), OZONE_STRING_ENCODING_ISO_8859_1);
   if (OZONE_HTTP_METHOD_UNKNOWN == (http_request->method = ozoneHTTPParseMethod(&method_string)))
     return NULL;
-  cursor += ozoneStringLength(&method_string);
+  cursor += ozoneStringLength(&method_string) + 1;
 
   http_request->target = ozoneStringScanBuffer(
       allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString(" "), OZONE_STRING_ENCODING_ISO_8859_1);
-  cursor += ozoneStringLength(&http_request->target);
+  cursor += ozoneStringLength(&http_request->target) + 1;
 
   OzoneStringT http_version_string = ozoneStringScanBuffer(
       allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString("\r\n"), OZONE_STRING_ENCODING_ISO_8859_1);
   if (OZONE_HTTP_VERSION_UNKNOWN == (http_request->version = ozoneHTTPParseVersion(&http_version_string)))
     return NULL;
-  cursor += ozoneStringLength(&http_version_string) + 1;
+  cursor += ozoneStringLength(&http_version_string) + 2;
 
   while (buffer + buffer_size > (cursor + 1) && cursor[0] != '\r') {
     OzoneStringT name = ozoneStringScanBuffer(
@@ -226,7 +226,7 @@ OzoneHTTPRequestT* ozoneHTTPParseSocketChunks(OzoneAllocatorT* allocator, const 
     if (!ozoneStringLength(&name))
       break;
 
-    cursor += ozoneStringLength(&name) + 1;
+    cursor += ozoneStringLength(&name) + 2;
 
     OzoneStringT value = ozoneStringScanBuffer(
         allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString("\r\n"), OZONE_STRING_ENCODING_ISO_8859_1);
@@ -234,7 +234,7 @@ OzoneHTTPRequestT* ozoneHTTPParseSocketChunks(OzoneAllocatorT* allocator, const 
       break;
 
     ozoneHTTPAppendHeader(allocator, &http_request->headers, &name, &value);
-    cursor += ozoneStringLength(&value) + 1;
+    cursor += ozoneStringLength(&value) + 2;
   }
 
   cursor += 2;
@@ -273,41 +273,43 @@ OzoneSocketChunkT* ozoneHTTPCreateSocketChunks(OzoneAllocatorT* allocator, Ozone
   OzoneStringT version = ozoneString("HTTP/1.0");
   OzoneStringT status = ozoneHTTPStatusString(http_response->code);
 
-  size_t buffer_size = ozoneStringLength(&version) + ozoneStringLength(&status) + 1;
+  size_t buffer_size = ozoneStringLength(&version) + ozoneStringLength(&status) + 3;
 
   for (size_t header_index = 0; header_index < http_response->headers.length; header_index++) {
     OzoneHTTPHeaderT* header = &http_response->headers.elements[header_index];
-    buffer_size += ozoneStringLength(&header->name) + 1 + ozoneStringLength(&header->value) + 1;
+    buffer_size += ozoneStringLength(&header->name) + 2 + ozoneStringLength(&header->value) + 2;
   }
 
   buffer_size += 2;
 
   if (ozoneStringLength(&http_response->body))
-    buffer_size += ozoneStringLength(&http_response->body) - 1;
+    buffer_size += ozoneStringLength(&http_response->body);
 
   OzoneSocketChunkT* socket_chunk = ozoneAllocatorReserveOne(allocator, OzoneSocketChunkT);
   socket_chunk->buffer = ozoneAllocatorReserveMany(allocator, char, buffer_size);
   socket_chunk->length = buffer_size;
 
   char* cursor = socket_chunk->buffer;
-  memcpy(cursor, ozoneStringBuffer(&version), ozoneStringLength(&version) - 1);
-  cursor[ozoneStringLength(&version) - 1] = ' ';
+
+  memcpy(cursor, ozoneStringBuffer(&version), ozoneStringLength(&version));
   cursor += ozoneStringLength(&version);
-  memcpy(cursor, ozoneStringBuffer(&status), ozoneStringLength(&status) - 1);
-  cursor[ozoneStringLength(&status) - 1] = '\r';
-  cursor[ozoneStringLength(&status)] = '\n';
-  cursor += ozoneStringLength(&status) + 1;
+  *(cursor++) = ' ';
+
+  memcpy(cursor, ozoneStringBuffer(&status), ozoneStringLength(&status));
+  cursor += ozoneStringLength(&status);
+  *(cursor++) = '\r';
+  *(cursor++) = '\n';
 
   for (size_t header_index = 0; header_index < http_response->headers.length; header_index++) {
     OzoneHTTPHeaderT* header = &http_response->headers.elements[header_index];
-    memcpy(cursor, ozoneStringBuffer(&header->name), ozoneStringLength(&header->name) - 1);
-    cursor[ozoneStringLength(&header->name) - 1] = ':';
-    cursor[ozoneStringLength(&header->name)] = ' ';
-    cursor += ozoneStringLength(&header->name) + 1;
-    memcpy(cursor, ozoneStringBuffer(&header->value), ozoneStringLength(&header->value) - 1);
-    cursor[ozoneStringLength(&header->value) - 1] = '\r';
-    cursor[ozoneStringLength(&header->value)] = '\n';
-    cursor += ozoneStringLength(&header->value) + 1;
+    memcpy(cursor, ozoneStringBuffer(&header->name), ozoneStringLength(&header->name));
+    cursor += ozoneStringLength(&header->name);
+    *(cursor++) = ':';
+    *(cursor++) = ' ';
+    memcpy(cursor, ozoneStringBuffer(&header->value), ozoneStringLength(&header->value));
+    cursor += ozoneStringLength(&header->value);
+    *(cursor++) = '\r';
+    *(cursor++) = '\n';
   }
 
   cursor[0] = '\r';
@@ -315,7 +317,7 @@ OzoneSocketChunkT* ozoneHTTPCreateSocketChunks(OzoneAllocatorT* allocator, Ozone
   cursor += 2;
 
   if (ozoneStringLength(&http_response->body)) {
-    memcpy(cursor, ozoneStringBuffer(&http_response->body), ozoneStringLength(&http_response->body) - 1);
+    memcpy(cursor, ozoneStringBuffer(&http_response->body), ozoneStringLength(&http_response->body));
   }
 
   return socket_chunk;
@@ -351,7 +353,7 @@ int ozoneHTTPEndPipeline(OzoneHTTPContextT* context) {
     if (!ozoneHTTPGetHeaderValue(&response->headers, ozoneString("Content-Length"))) {
       // todo: extract to helper
       char content_length[32] = { 0 };
-      snprintf(content_length, sizeof(content_length), "%ld", ozoneStringLength(&response->body) - 1);
+      snprintf(content_length, sizeof(content_length), "%ld", ozoneStringLength(&response->body));
 
       size_t length = 0;
       while (content_length[length++] && length < sizeof(content_length))

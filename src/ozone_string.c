@@ -6,12 +6,12 @@ OZONE_VECTOR_IMPLEMENT_API(char)
 OZONE_VECTOR_IMPLEMENT_API(OzoneStringT)
 
 OzoneStringT ozoneStringCopy(OzoneAllocatorT* allocator, const OzoneStringT* original) {
-  char* buffer = ozoneAllocatorReserveMany(allocator, char, ozoneStringLength(original));
-  memcpy(buffer, original->vector.elements, ozoneStringLength(original));
+  char* buffer = ozoneAllocatorReserveMany(allocator, char, ozoneStringLength(original) + 1);
+  memcpy(buffer, original->vector.elements, ozoneStringLength(original) + 1);
   return ((OzoneStringT) {
       .vector = ((OzoneVectorCharT) {
           .elements = buffer,
-          .length = ozoneStringLength(original),
+          .length = ozoneStringLength(original) + 1,
           .capacity = original->vector.capacity,
           .capacity_increment = original->vector.capacity_increment,
       }),
@@ -38,15 +38,15 @@ int ozoneStringCompare(const OzoneStringT* left, const OzoneStringT* right) {
   if (ozoneStringLength(left) > ozoneStringLength(right))
     return 1;
 
-  return memcmp(ozoneStringBuffer(left), ozoneStringBuffer(right), ozoneStringLength(left));
+  return memcmp(ozoneStringBuffer(left), ozoneStringBuffer(right), ozoneStringLength(left) + 1);
 }
 
 OzoneStringT ozoneStringScanBuffer(OzoneAllocatorT* allocator, char* buffer, size_t buffer_size,
     const OzoneStringT* stop, OzoneStringEncodingT encoding) {
   size_t scan_length = 0;
   while (scan_length < buffer_size) {
-    if (stop && (buffer_size - scan_length) >= ozoneStringLength(stop)
-        && !memcmp(buffer + scan_length, ozoneStringBuffer(stop), ozoneStringLength(stop) - 1)) {
+    if (stop && (buffer_size - scan_length) > ozoneStringLength(stop)
+        && !memcmp(buffer + scan_length, ozoneStringBuffer(stop), ozoneStringLength(stop))) {
       scan_length++;
       break;
     }
@@ -64,8 +64,8 @@ OzoneStringT ozoneStringScanBuffer(OzoneAllocatorT* allocator, char* buffer, siz
       .encoding = encoding,
   });
 
-  memcpy(ozoneStringBuffer(&string), buffer, ozoneStringLength(&string));
-  ozoneStringBuffer(&string)[ozoneStringLength(&string) - 1] = '\0';
+  memcpy(ozoneStringBuffer(&string), buffer, ozoneStringLength(&string) + 1);
+  ozoneStringBuffer(&string)[ozoneStringLength(&string)] = '\0';
 
   return string;
 }
