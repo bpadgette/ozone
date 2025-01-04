@@ -19,6 +19,31 @@ OzoneString ozoneStringCopy(OzoneAllocator* allocator, const OzoneString* origin
   });
 }
 
+OzoneString ozoneStringJoin(OzoneAllocator* allocator, const OzoneStringVector* vector, OzoneStringEncoding encoding) {
+  OzoneString* member;
+  size_t length = 1;
+  ozoneVectorForEach(member, vector) { length += ozoneStringLength(member); }
+
+  char* elements = ozoneAllocatorReserveMany(allocator, char, length);
+  char* cursor = &elements[0];
+  ozoneVectorForEach(member, vector) {
+    size_t member_length = ozoneStringLength(member);
+    memcpy(cursor, member->vector.elements, member_length);
+    cursor += member_length;
+  }
+  cursor[0] = '\0';
+
+  return (OzoneString) {
+    .vector = ((OzoneVectorChar) {
+        .elements = elements,
+        .length = length,
+        .capacity = length,
+        .capacity_increment = length,
+    }),
+    .encoding = encoding,
+  };
+}
+
 int ozoneStringCompare(const OzoneString* left, const OzoneString* right) {
   if (!left && !right)
     return 0;

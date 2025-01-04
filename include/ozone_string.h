@@ -50,6 +50,7 @@ OZONE_VECTOR_DECLARE_API(OzoneString)
   } while (0)
 
 OzoneString ozoneStringCopy(OzoneAllocator* allocator, const OzoneString* original);
+OzoneString ozoneStringJoin(OzoneAllocator* allocator, const OzoneStringVector* vector, OzoneStringEncoding encoding);
 
 /**
  * \returns 0 if equal, negative if left less than right, positive if left greater than right

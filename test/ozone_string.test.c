@@ -9,6 +9,15 @@ void shouldAppendToString(void) {
       &ozoneString("hello, world!!"), &string, "It appends a character to the string.");
 }
 
+void shouldJoinStrings(void) {
+  OzoneStringVector strings = ozoneVector(test_alloc, OzoneString, 2);
+  ozoneVectorPushOzoneString(test_alloc, &strings, ozoneString("hello"));
+  ozoneVectorPushOzoneString(test_alloc, &strings, ozoneString(", world!"));
+
+  OzoneString joined = ozoneStringJoin(test_alloc, &strings, OZONE_STRING_ENCODING_ISO_8859_1);
+  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&ozoneString("hello, world!"), &joined, "It joins two strings.");
+}
+
 void shouldScanStringBuffer(void) {
   char* string = "hello, world!";
   OzoneString scanned_stop_null = ozoneStringScanBuffer(test_alloc, string, 14, NULL, OZONE_STRING_ENCODING_ISO_8859_1);
@@ -28,6 +37,7 @@ void shouldScanStringBuffer(void) {
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(shouldAppendToString);
+  RUN_TEST(shouldJoinStrings);
   RUN_TEST(shouldScanStringBuffer);
   return UNITY_END();
 }
