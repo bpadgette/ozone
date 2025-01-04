@@ -3,7 +3,7 @@
 #include "ozone_file.h"
 
 void shouldLoadFileFromPath(void) {
-  OzoneStringTVectorT chunks = ozoneFileLoadFromPath(
+  OzoneStringVector chunks = ozoneFileLoadFromPath(
       test_alloc, &ozoneString("./test/resources/content.txt"), OZONE_STRING_ENCODING_ISO_8859_1, 100);
 
   TEST_ASSERT_EQUAL_MESSAGE(1, chunks.length, "It should load the whole file into a single chunk");
@@ -12,7 +12,7 @@ void shouldLoadFileFromPath(void) {
 }
 
 void shouldLoadFileChunksFromPath(void) {
-  OzoneStringTVectorT chunks = ozoneFileLoadFromPath(
+  OzoneStringVector chunks = ozoneFileLoadFromPath(
       test_alloc, &ozoneString("./test/resources/content.txt"), OZONE_STRING_ENCODING_ISO_8859_1, 10);
 
   TEST_ASSERT_EQUAL_MESSAGE(3, chunks.length, "It should load the whole file into 3 chunks");

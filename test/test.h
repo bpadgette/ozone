@@ -5,7 +5,7 @@
 #include "ozone_string.h"
 #include "unity.h"
 
-OzoneAllocatorT* test_alloc;
+OzoneAllocator* test_alloc;
 
 #define TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(expected, actual, message)                                              \
   do {                                                                                                                 \

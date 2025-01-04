@@ -4,11 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-OZONE_VECTOR_IMPLEMENT_API(OzoneHTTPHeaderT)
+OZONE_VECTOR_IMPLEMENT_API(OzoneHTTPHeader)
 
 #define OZONE_REMAINING_CURSOR_SIZE (buffer + buffer_size - cursor)
 
-OzoneHTTPVersionT ozoneHTTPParseVersion(const OzoneStringT* version_string) {
+OzoneHTTPVersion ozoneHTTPParseVersion(const OzoneString* version_string) {
   if (ozoneStringCompare(version_string, &ozoneString("HTTP/1.1")) == 0)
     return OZONE_HTTP_VERSION_1_1;
   if (ozoneStringCompare(version_string, &ozoneString("HTTP/1.0")) == 0)
@@ -18,7 +18,7 @@ OzoneHTTPVersionT ozoneHTTPParseVersion(const OzoneStringT* version_string) {
   return OZONE_HTTP_VERSION_UNKNOWN;
 }
 
-OzoneHTTPMethodT ozoneHTTPParseMethod(const OzoneStringT* method_string) {
+OzoneHTTPMethod ozoneHTTPParseMethod(const OzoneString* method_string) {
   if (ozoneStringCompare(method_string, &ozoneString("GET")) == 0)
     return OZONE_HTTP_METHOD_GET;
   if (ozoneStringCompare(method_string, &ozoneString("HEAD")) == 0)
@@ -42,7 +42,7 @@ OzoneHTTPMethodT ozoneHTTPParseMethod(const OzoneStringT* method_string) {
   return OZONE_HTTP_METHOD_UNKNOWN;
 }
 
-OzoneStringT ozoneHTTPStatusString(OzoneHTTPStatusCodeT status) {
+OzoneString ozoneHTTPStatusString(OzoneHTTPStatusCode status) {
   switch (status) {
   case 100:
     return ozoneString("100 Continue");
@@ -172,9 +172,9 @@ OzoneStringT ozoneHTTPStatusString(OzoneHTTPStatusCodeT status) {
   }
 }
 
-OzoneStringT* ozoneHTTPGetHeaderValue(OzoneHTTPHeaderTVectorT* headers, OzoneStringT name) {
+OzoneString* ozoneHTTPGetHeaderValue(OzoneHTTPHeaderVector* headers, OzoneString name) {
   for (size_t header_index = 0; header_index < headers->length; header_index++) {
-    OzoneHTTPHeaderT* header = &headers->elements[header_index];
+    OzoneHTTPHeader* header = &headers->elements[header_index];
     if (ozoneStringCompare(&header->name, &name) == 0)
       return &header->value;
   }
@@ -182,11 +182,11 @@ OzoneStringT* ozoneHTTPGetHeaderValue(OzoneHTTPHeaderTVectorT* headers, OzoneStr
   return NULL;
 }
 
-OzoneHTTPRequestT* ozoneHTTPParseSocketChunks(OzoneAllocatorT* allocator, const OzoneSocketChunkT* socket_request) {
+OzoneHTTPRequest* ozoneHTTPParseSocketChunks(OzoneAllocator* allocator, const OzoneSocketChunk* socket_request) {
   size_t buffer_size = 0;
 
   // todo: extract to helper
-  const OzoneSocketChunkT* chunk = socket_request;
+  const OzoneSocketChunk* chunk = socket_request;
   do {
     buffer_size += chunk->length;
   } while ((chunk = chunk->next));
@@ -201,10 +201,10 @@ OzoneHTTPRequestT* ozoneHTTPParseSocketChunks(OzoneAllocatorT* allocator, const 
   cursor = buffer;
   // end todo
 
-  OzoneHTTPRequestT* http_request = ozoneAllocatorReserveOne(allocator, OzoneHTTPRequestT);
-  *http_request = (OzoneHTTPRequestT) { 0 };
+  OzoneHTTPRequest* http_request = ozoneAllocatorReserveOne(allocator, OzoneHTTPRequest);
+  *http_request = (OzoneHTTPRequest) { 0 };
 
-  OzoneStringT method_string = ozoneStringScanBuffer(
+  OzoneString method_string = ozoneStringScanBuffer(
       allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString(" "), OZONE_STRING_ENCODING_ISO_8859_1);
   if (OZONE_HTTP_METHOD_UNKNOWN == (http_request->method = ozoneHTTPParseMethod(&method_string)))
     return NULL;
@@ -214,21 +214,21 @@ OzoneHTTPRequestT* ozoneHTTPParseSocketChunks(OzoneAllocatorT* allocator, const 
       allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString(" "), OZONE_STRING_ENCODING_ISO_8859_1);
   cursor += ozoneStringLength(&http_request->target) + 1;
 
-  OzoneStringT http_version_string = ozoneStringScanBuffer(
+  OzoneString http_version_string = ozoneStringScanBuffer(
       allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString("\r\n"), OZONE_STRING_ENCODING_ISO_8859_1);
   if (OZONE_HTTP_VERSION_UNKNOWN == (http_request->version = ozoneHTTPParseVersion(&http_version_string)))
     return NULL;
   cursor += ozoneStringLength(&http_version_string) + 2;
 
   while (buffer + buffer_size > (cursor + 1) && cursor[0] != '\r') {
-    OzoneStringT name = ozoneStringScanBuffer(
+    OzoneString name = ozoneStringScanBuffer(
         allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString(":"), OZONE_STRING_ENCODING_ISO_8859_1);
     if (!ozoneStringLength(&name))
       break;
 
     cursor += ozoneStringLength(&name) + 2;
 
-    OzoneStringT value = ozoneStringScanBuffer(
+    OzoneString value = ozoneStringScanBuffer(
         allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString("\r\n"), OZONE_STRING_ENCODING_ISO_8859_1);
     if (!ozoneStringLength(&value))
       break;
@@ -239,7 +239,7 @@ OzoneHTTPRequestT* ozoneHTTPParseSocketChunks(OzoneAllocatorT* allocator, const 
 
   cursor += 2;
 
-  OzoneStringT* content_length_string = ozoneHTTPGetHeaderValue(&http_request->headers, ozoneString("Content-Length"));
+  OzoneString* content_length_string = ozoneHTTPGetHeaderValue(&http_request->headers, ozoneString("Content-Length"));
   if (!content_length_string)
     return http_request;
 
@@ -255,8 +255,8 @@ OzoneHTTPRequestT* ozoneHTTPParseSocketChunks(OzoneAllocatorT* allocator, const 
   }
 
   cursor[content_length + 1] = '\0';
-  http_request->body = ((OzoneStringT) {
-      .vector = ((OzoneVectorCharT) {
+  http_request->body = ((OzoneString) {
+      .vector = ((OzoneVectorChar) {
           .elements = cursor,
           .length = content_length + 1,
           .capacity = content_length + 1,
@@ -268,15 +268,15 @@ OzoneHTTPRequestT* ozoneHTTPParseSocketChunks(OzoneAllocatorT* allocator, const 
   return http_request;
 }
 
-OzoneSocketChunkT* ozoneHTTPCreateSocketChunks(OzoneAllocatorT* allocator, OzoneHTTPResponseT* http_response) {
+OzoneSocketChunk* ozoneHTTPCreateSocketChunks(OzoneAllocator* allocator, OzoneHTTPResponse* http_response) {
   // todo: HTTP versioned response handling; upgrading and downgrading
-  OzoneStringT version = ozoneString("HTTP/1.0");
-  OzoneStringT status = ozoneHTTPStatusString(http_response->code);
+  OzoneString version = ozoneString("HTTP/1.0");
+  OzoneString status = ozoneHTTPStatusString(http_response->code);
 
   size_t buffer_size = ozoneStringLength(&version) + ozoneStringLength(&status) + 3;
 
   for (size_t header_index = 0; header_index < http_response->headers.length; header_index++) {
-    OzoneHTTPHeaderT* header = &http_response->headers.elements[header_index];
+    OzoneHTTPHeader* header = &http_response->headers.elements[header_index];
     buffer_size += ozoneStringLength(&header->name) + 2 + ozoneStringLength(&header->value) + 2;
   }
 
@@ -285,7 +285,7 @@ OzoneSocketChunkT* ozoneHTTPCreateSocketChunks(OzoneAllocatorT* allocator, Ozone
   if (ozoneStringLength(&http_response->body))
     buffer_size += ozoneStringLength(&http_response->body);
 
-  OzoneSocketChunkT* socket_chunk = ozoneAllocatorReserveOne(allocator, OzoneSocketChunkT);
+  OzoneSocketChunk* socket_chunk = ozoneAllocatorReserveOne(allocator, OzoneSocketChunk);
   socket_chunk->buffer = ozoneAllocatorReserveMany(allocator, char, buffer_size);
   socket_chunk->length = buffer_size;
 
@@ -301,7 +301,7 @@ OzoneSocketChunkT* ozoneHTTPCreateSocketChunks(OzoneAllocatorT* allocator, Ozone
   *(cursor++) = '\n';
 
   for (size_t header_index = 0; header_index < http_response->headers.length; header_index++) {
-    OzoneHTTPHeaderT* header = &http_response->headers.elements[header_index];
+    OzoneHTTPHeader* header = &http_response->headers.elements[header_index];
     memcpy(cursor, ozoneStringBuffer(&header->name), ozoneStringLength(&header->name));
     cursor += ozoneStringLength(&header->name);
     *(cursor++) = ':';
@@ -323,10 +323,10 @@ OzoneSocketChunkT* ozoneHTTPCreateSocketChunks(OzoneAllocatorT* allocator, Ozone
   return socket_chunk;
 }
 
-int ozoneHTTPBeginPipeline(OzoneHTTPContextT* context) {
+int ozoneHTTPBeginPipeline(OzoneHTTPContext* context) {
   context->parsed_request = ozoneHTTPParseSocketChunks(context->allocator, context->raw_request);
-  context->parsed_response = ozoneAllocatorReserveOne(context->allocator, OzoneHTTPResponseT);
-  *context->parsed_response = (OzoneHTTPResponseT) { 0 };
+  context->parsed_response = ozoneAllocatorReserveOne(context->allocator, OzoneHTTPResponse);
+  *context->parsed_response = (OzoneHTTPResponse) { 0 };
 
   ozoneLogInfo("%s",
       ozoneStringScanBuffer(context->allocator, context->raw_request->buffer, context->raw_request->length,
@@ -336,11 +336,11 @@ int ozoneHTTPBeginPipeline(OzoneHTTPContextT* context) {
   return 0;
 }
 
-int ozoneHTTPEndPipeline(OzoneHTTPContextT* context) {
+int ozoneHTTPEndPipeline(OzoneHTTPContext* context) {
   if (!context->parsed_response)
     return 0;
 
-  OzoneHTTPResponseT* response = context->parsed_response;
+  OzoneHTTPResponse* response = context->parsed_response;
 
   if (!response->code)
     response->code = ozoneStringLength(&response->body) ? 200 : 204;
@@ -361,8 +361,8 @@ int ozoneHTTPEndPipeline(OzoneHTTPContextT* context) {
       // end todo
 
       ozoneHTTPAppendHeader(context->allocator, &response->headers, &ozoneString("Content-Length"),
-          &((OzoneStringT) {
-              .vector = ((OzoneVectorCharT) {
+          &((OzoneString) {
+              .vector = ((OzoneVectorChar) {
                   .elements = content_length,
                   .length = length,
                   .capacity = length,
@@ -382,18 +382,18 @@ int ozoneHTTPEndPipeline(OzoneHTTPContextT* context) {
   return 0;
 }
 
-int ozoneHTTPServe(OzoneHTTPConfigT config) {
+int ozoneHTTPServe(OzoneHTTPConfig config) {
   size_t http_pipeline_count = 2 + config.handler_pipeline_count;
-  OzoneSocketHandlerT** http_pipeline
-      = ozoneAllocatorReserveMany(config.allocator, OzoneSocketHandlerT*, http_pipeline_count);
-  http_pipeline[0] = (OzoneSocketHandlerT*)ozoneHTTPBeginPipeline;
+  OzoneSocketHandler** http_pipeline
+      = ozoneAllocatorReserveMany(config.allocator, OzoneSocketHandler*, http_pipeline_count);
+  http_pipeline[0] = (OzoneSocketHandler*)ozoneHTTPBeginPipeline;
   for (size_t handler_index = 0; handler_index < config.handler_pipeline_count; handler_index++) {
-    http_pipeline[handler_index + 1] = (OzoneSocketHandlerT*)config.handler_pipeline[handler_index];
+    http_pipeline[handler_index + 1] = (OzoneSocketHandler*)config.handler_pipeline[handler_index];
   }
-  http_pipeline[http_pipeline_count - 1] = (OzoneSocketHandlerT*)ozoneHTTPEndPipeline;
+  http_pipeline[http_pipeline_count - 1] = (OzoneSocketHandler*)ozoneHTTPEndPipeline;
 
   ozoneLogInfo("Serving at http://localhost:%d", config.port);
-  return ozoneSocketServeTCP((OzoneSocketConfigT) {
+  return ozoneSocketServeTCP((OzoneSocketConfig) {
       .handler_pipeline = http_pipeline,
       .handler_pipeline_count = http_pipeline_count,
       .port = config.port,

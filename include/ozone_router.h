@@ -4,37 +4,37 @@
 #include "ozone_http.h"
 #include "ozone_string.h"
 
-typedef struct OzoneRouterHTTPConfig {
-  OzoneHTTPMethodT method;
-  OzoneStringT target_pattern;
-} OzoneRouterHTTPConfigT;
+typedef struct OzoneRouterHTTPConfigStruct {
+  OzoneHTTPMethod method;
+  OzoneString target_pattern;
+} OzoneRouterHTTPConfig;
 
-typedef struct OzoneRouterApplicationContext {
-  OzoneRouterHTTPConfigT* route_configs;
-  OzoneHTTPHandlerT*** route_handler_pipelines;
+typedef struct OzoneRouterApplicationContextStruct {
+  OzoneRouterHTTPConfig* route_configs;
+  OzoneHTTPHandler*** route_handler_pipelines;
   size_t* route_handler_pipelines_counts;
   size_t route_count;
-} OzoneRouterApplicationContextT;
+} OzoneRouterApplicationContext;
 
-typedef struct OzoneRouterContext OZONE_SOCKET_CONTEXT_FIELDS(
-    OzoneHTTPRequestT, OzoneHTTPResponseT, OzoneRouterApplicationContextT) OzoneRouterContextT;
+typedef struct OzoneRouterContextStruct OZONE_SOCKET_CONTEXT_FIELDS(
+    OzoneHTTPRequest, OzoneHTTPResponse, OzoneRouterApplicationContext) OzoneRouterContext;
 
-int ozoneRouter(OzoneRouterContextT* context);
+int ozoneRouter(OzoneRouterContext* context);
 
-typedef struct OzoneRouterHTTPEndpoint {
-  OzoneRouterHTTPConfigT config;
-  OzoneHTTPHandlerT** handler_pipeline;
+typedef struct OzoneRouterHTTPEndpointStruct {
+  OzoneRouterHTTPConfig config;
+  OzoneHTTPHandler** handler_pipeline;
   size_t handler_pipeline_count;
-} OzoneRouterHTTPEndpointT;
+} OzoneRouterHTTPEndpoint;
 
-typedef struct OzoneRouterConfig {
-  OzoneRouterHTTPEndpointT* endpoints;
+typedef struct OzoneRouterConfigStruct {
+  OzoneRouterHTTPEndpoint* endpoints;
   size_t endpoints_count;
-} OzoneRouterConfigT;
+} OzoneRouterConfig;
 
 #define ozoneRouterConfig(_endpoints_)                                                                                 \
-  (OzoneRouterConfigT) {                                                                                               \
-    .endpoints = _endpoints_, .endpoints_count = sizeof(_endpoints_) / sizeof(OzoneRouterHTTPEndpointT)                \
+  (OzoneRouterConfig) {                                                                                                \
+    .endpoints = _endpoints_, .endpoints_count = sizeof(_endpoints_) / sizeof(OzoneRouterHTTPEndpoint)                 \
   }
 
 #endif

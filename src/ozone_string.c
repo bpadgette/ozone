@@ -3,13 +3,13 @@
 #include <string.h>
 
 OZONE_VECTOR_IMPLEMENT_API(char)
-OZONE_VECTOR_IMPLEMENT_API(OzoneStringT)
+OZONE_VECTOR_IMPLEMENT_API(OzoneString)
 
-OzoneStringT ozoneStringCopy(OzoneAllocatorT* allocator, const OzoneStringT* original) {
+OzoneString ozoneStringCopy(OzoneAllocator* allocator, const OzoneString* original) {
   char* buffer = ozoneAllocatorReserveMany(allocator, char, ozoneStringLength(original) + 1);
   memcpy(buffer, original->vector.elements, ozoneStringLength(original) + 1);
-  return ((OzoneStringT) {
-      .vector = ((OzoneVectorCharT) {
+  return ((OzoneString) {
+      .vector = ((OzoneVectorChar) {
           .elements = buffer,
           .length = ozoneStringLength(original) + 1,
           .capacity = original->vector.capacity,
@@ -19,7 +19,7 @@ OzoneStringT ozoneStringCopy(OzoneAllocatorT* allocator, const OzoneStringT* ori
   });
 }
 
-int ozoneStringCompare(const OzoneStringT* left, const OzoneStringT* right) {
+int ozoneStringCompare(const OzoneString* left, const OzoneString* right) {
   if (!left && !right)
     return 0;
   if (!right)
@@ -41,8 +41,8 @@ int ozoneStringCompare(const OzoneStringT* left, const OzoneStringT* right) {
   return memcmp(ozoneStringBuffer(left), ozoneStringBuffer(right), ozoneStringLength(left) + 1);
 }
 
-OzoneStringT ozoneStringScanBuffer(OzoneAllocatorT* allocator, char* buffer, size_t buffer_size,
-    const OzoneStringT* stop, OzoneStringEncodingT encoding) {
+OzoneString ozoneStringScanBuffer(OzoneAllocator* allocator, char* buffer, size_t buffer_size, const OzoneString* stop,
+    OzoneStringEncoding encoding) {
   size_t scan_length = 0;
   while (scan_length < buffer_size) {
     if (stop && (buffer_size - scan_length) > ozoneStringLength(stop)
@@ -54,8 +54,8 @@ OzoneStringT ozoneStringScanBuffer(OzoneAllocatorT* allocator, char* buffer, siz
     scan_length++;
   }
 
-  OzoneStringT string = ((OzoneStringT) {
-      .vector = ((OzoneVectorCharT) {
+  OzoneString string = ((OzoneString) {
+      .vector = ((OzoneVectorChar) {
           .elements = ozoneAllocatorReserveMany(allocator, char, scan_length),
           .length = scan_length,
           .capacity = scan_length,

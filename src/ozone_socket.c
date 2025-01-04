@@ -20,7 +20,7 @@ void ozoneSocketSignalAction(int signum) {
   }
 }
 
-int ozoneSocketServeTCP(OzoneSocketConfigT config) {
+int ozoneSocketServeTCP(OzoneSocketConfig config) {
   int socket_fd = socket(AF_INET6, SOCK_STREAM, 0);
   if (socket_fd == -1) {
     ozoneLogError("Failed to get AF_INET6 SOCK_STREAM socket file descriptor, returning EACCES");
@@ -48,7 +48,7 @@ int ozoneSocketServeTCP(OzoneSocketConfigT config) {
 
   ozoneLogDebug("Listening for TCP connections on port %d with a %ld member handler_pipeline", config.port,
       config.handler_pipeline_count);
-  OzoneAllocatorT* handler_allocator = ozoneAllocatorCreate(OZONE_SOCKET_INITIAL_ALLOCATION);
+  OzoneAllocator* handler_allocator = ozoneAllocatorCreate(OZONE_SOCKET_INITIAL_ALLOCATION);
 
   struct sigaction signal_actions = { .sa_handler = &ozoneSocketSignalAction };
   sigaction(SIGINT, &signal_actions, NULL);
@@ -62,8 +62,8 @@ int ozoneSocketServeTCP(OzoneSocketConfigT config) {
     }
 
     ozoneAllocatorClear(handler_allocator);
-    OzoneSocketChunkT request_chunks = { 0 };
-    OzoneSocketChunkT* current_chunk = &request_chunks;
+    OzoneSocketChunk request_chunks = { 0 };
+    OzoneSocketChunk* current_chunk = &request_chunks;
     int read_status = 0;
     do {
       ozoneLogTrace("read accepted_socket_fd returned %d", read_status);
@@ -79,16 +79,16 @@ int ozoneSocketServeTCP(OzoneSocketConfigT config) {
       }
 
       if (current_chunk->length) {
-        current_chunk->next = ozoneAllocatorReserveOne(handler_allocator, OzoneSocketChunkT);
+        current_chunk->next = ozoneAllocatorReserveOne(handler_allocator, OzoneSocketChunk);
         current_chunk = current_chunk->next;
-        *current_chunk = (OzoneSocketChunkT) { 0 };
+        *current_chunk = (OzoneSocketChunk) { 0 };
       }
 
       current_chunk->buffer = ozoneAllocatorReserveMany(handler_allocator, char, OZONE_SOCKET_REQUEST_CHUNK_SIZE);
       current_chunk->length = OZONE_SOCKET_REQUEST_CHUNK_SIZE;
     } while ((read_status = read(accepted_socket_fd, current_chunk->buffer, current_chunk->length)));
 
-    OzoneSocketContextT handler_arg = {
+    OzoneSocketContext handler_arg = {
       .allocator = handler_allocator,
       .raw_request = &request_chunks,
       .raw_response = NULL,

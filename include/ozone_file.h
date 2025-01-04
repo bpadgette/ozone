@@ -6,9 +6,9 @@
 
 #include <stdio.h>
 
-OzoneStringTVectorT ozoneFileLoad(
-    OzoneAllocatorT* allocator, FILE* file, OzoneStringEncodingT encoding, size_t max_chunk_bytes);
-OzoneStringTVectorT ozoneFileLoadFromPath(
-    OzoneAllocatorT* allocator, const OzoneStringT* path, OzoneStringEncodingT encoding, size_t max_chunk_bytes);
+OzoneStringVector ozoneFileLoad(
+    OzoneAllocator* allocator, FILE* file, OzoneStringEncoding encoding, size_t max_chunk_bytes);
+OzoneStringVector ozoneFileLoadFromPath(
+    OzoneAllocator* allocator, const OzoneString* path, OzoneStringEncoding encoding, size_t max_chunk_bytes);
 
 #endif

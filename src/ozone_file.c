@@ -2,9 +2,9 @@
 
 #include "ozone_log.h"
 
-OzoneStringTVectorT ozoneFileLoad(
-    OzoneAllocatorT* allocator, FILE* file, OzoneStringEncodingT encoding, size_t max_chunk_bytes) {
-  OzoneStringTVectorT vector = (OzoneStringTVectorT) { 0 };
+OzoneStringVector ozoneFileLoad(
+    OzoneAllocator* allocator, FILE* file, OzoneStringEncoding encoding, size_t max_chunk_bytes) {
+  OzoneStringVector vector = (OzoneStringVector) { 0 };
   size_t bytes_read = 0;
   size_t read_status = 0;
 
@@ -12,9 +12,9 @@ OzoneStringTVectorT ozoneFileLoad(
   while ((read_status = fread(cursor, 1, max_chunk_bytes - 1, file))) {
     bytes_read += read_status;
     cursor[read_status] = '\0';
-    ozoneVectorPushOzoneStringT(allocator, &vector,
-        (OzoneStringT) {
-            (OzoneVectorCharT) {
+    ozoneVectorPushOzoneString(allocator, &vector,
+        (OzoneString) {
+            (OzoneVectorChar) {
                 .elements = cursor,
                 .length = read_status + 1,
                 .capacity = read_status + 1,
@@ -31,16 +31,16 @@ OzoneStringTVectorT ozoneFileLoad(
   return vector;
 }
 
-OzoneStringTVectorT ozoneFileLoadFromPath(
-    OzoneAllocatorT* allocator, const OzoneStringT* path, OzoneStringEncodingT encoding, size_t max_chunk_bytes) {
+OzoneStringVector ozoneFileLoadFromPath(
+    OzoneAllocator* allocator, const OzoneString* path, OzoneStringEncoding encoding, size_t max_chunk_bytes) {
   FILE* file = fopen(ozoneStringBuffer(path), "r");
   if (!file) {
     ozoneLogError("Could not open file %s", ozoneStringBuffer(path));
-    return (OzoneStringTVectorT) { 0 };
+    return (OzoneStringVector) { 0 };
   }
 
   ozoneLogDebug("Opened file %s", ozoneStringBuffer(path));
-  OzoneStringTVectorT vector = ozoneFileLoad(allocator, file, encoding, max_chunk_bytes);
+  OzoneStringVector vector = ozoneFileLoad(allocator, file, encoding, max_chunk_bytes);
   fclose(file);
 
   return vector;

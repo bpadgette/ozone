@@ -2,33 +2,33 @@
 #define OZONE_SOCKET_H
 #include "ozone_allocator.h"
 
-typedef struct OzoneSocketChunk {
+typedef struct OzoneSocketChunkStruct {
   char* buffer;
   size_t length;
-  struct OzoneSocketChunk* next;
-} OzoneSocketChunkT;
+  struct OzoneSocketChunkStruct* next;
+} OzoneSocketChunk;
 
 #define OZONE_SOCKET_CONTEXT_FIELDS(_parsed_request_type_, _parsed_response_type_, _app_context_type_)                 \
   {                                                                                                                    \
-    OzoneAllocatorT* allocator;                                                                                        \
-    const OzoneSocketChunkT* raw_request;                                                                              \
-    OzoneSocketChunkT* raw_response;                                                                                   \
+    OzoneAllocator* allocator;                                                                                         \
+    const OzoneSocketChunk* raw_request;                                                                               \
+    OzoneSocketChunk* raw_response;                                                                                    \
     _parsed_request_type_* parsed_request;                                                                             \
     _parsed_response_type_* parsed_response;                                                                           \
     _app_context_type_* application;                                                                                   \
   }
 
-typedef struct OzoneSocketContext OZONE_SOCKET_CONTEXT_FIELDS(void, void, void) OzoneSocketContextT;
+typedef struct OzoneSocketContextStruct OZONE_SOCKET_CONTEXT_FIELDS(void, void, void) OzoneSocketContext;
 
-typedef int(OzoneSocketHandlerT)(OzoneSocketContextT* context);
+typedef int(OzoneSocketHandler)(OzoneSocketContext* context);
 
-typedef struct OzoneSocketConfig {
+typedef struct OzoneSocketConfigStruct {
   unsigned short int port;
-  OzoneSocketHandlerT** handler_pipeline;
+  OzoneSocketHandler** handler_pipeline;
   size_t handler_pipeline_count;
   void* application;
-} OzoneSocketConfigT;
+} OzoneSocketConfig;
 
-int ozoneSocketServeTCP(OzoneSocketConfigT config);
+int ozoneSocketServeTCP(OzoneSocketConfig config);
 
 #endif

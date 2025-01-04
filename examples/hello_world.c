@@ -5,22 +5,22 @@ ozoneHTTPHandler(before, {
 });
 
 ozoneHTTPHandler(home, { res->body = ozoneString("Hello, world!"); });
-OzoneHTTPHandlerT* home_stack[] = { before, home };
+OzoneHTTPHandler* home_stack[] = { before, home };
 
 ozoneHTTPHandler(badRequest, {
   res->body = ozoneString("I will not");
   res->code = 400;
 });
-OzoneHTTPHandlerT* bad_request_stack[] = { before, badRequest };
+OzoneHTTPHandler* bad_request_stack[] = { before, badRequest };
 
 int main() {
-  OzoneRouterHTTPEndpointT endpoints[] = {
+  OzoneRouterHTTPEndpoint endpoints[] = {
     ozoneHTTPEndpoint(GET, "/", home_stack),
     ozoneHTTPEndpoint(GET, "/use-javascript", bad_request_stack),
     ozoneHTTPEndpoint(POST, "/just-write-it-in-rust", bad_request_stack),
   };
 
-  OzoneAppConfigT config = {
+  OzoneAppConfig config = {
     .allocator = ozoneAllocatorCreate(4096),
     .port = 8080,
     .router = ozoneRouterConfig(endpoints),

@@ -1,6 +1,6 @@
 #include "ozone_router.h"
 
-int ozoneRouter(OzoneRouterContextT* context) {
+int ozoneRouter(OzoneRouterContext* context) {
   size_t route_index = 0;
   for (; route_index < context->application->route_count; route_index++) {
     if (context->parsed_request->method != context->application->route_configs[route_index].method)
@@ -20,10 +20,10 @@ int ozoneRouter(OzoneRouterContextT* context) {
     return 0;
   }
 
-  OzoneHTTPHandlerT** handler_pipeline = context->application->route_handler_pipelines[route_index];
+  OzoneHTTPHandler** handler_pipeline = context->application->route_handler_pipelines[route_index];
   size_t handler_pipeline_count = context->application->route_handler_pipelines_counts[route_index];
   for (size_t handler_index = 0; handler_index < handler_pipeline_count; handler_index++) {
-    handler_pipeline[handler_index]((OzoneHTTPContextT*)context);
+    handler_pipeline[handler_index]((OzoneHTTPContext*)context);
   }
 
   return 0;
