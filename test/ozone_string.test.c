@@ -2,6 +2,13 @@
 
 #include "ozone_string.h"
 
+void shouldAppendToString(void) {
+  OzoneStringT string = ozoneString("hello, world!");
+  ozoneStringAppendChar(test_alloc, &string, '!');
+  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
+      &ozoneString("hello, world!!"), &string, "It appends a character to the string.");
+}
+
 void shouldScanStringBuffer(void) {
   OzoneStringT string = ozoneString("hello, world!");
   OzoneStringT scanned_stop_null = ozoneStringScanBuffer(
@@ -20,6 +27,7 @@ void shouldScanStringBuffer(void) {
 
 int main(void) {
   UNITY_BEGIN();
+  RUN_TEST(shouldAppendToString);
   RUN_TEST(shouldScanStringBuffer);
   return UNITY_END();
 }

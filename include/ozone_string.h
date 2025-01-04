@@ -41,6 +41,12 @@ OZONE_VECTOR_DECLARE_API(OzoneStringT)
 #define ozoneString(_chars_) ozoneStringEncoded(_chars_, OZONE_STRING_ENCODING_ISO_8859_1)
 #define ozoneStringLength(_string_) ((_string_)->vector.length)
 #define ozoneStringBuffer(_string_) ((_string_)->vector.elements)
+#define ozoneStringBufferAt(_string_, _index_) ((_string_)->vector.elements[_index_])
+#define ozoneStringAppendChar(_allocator_, _string_, _char_)                                                           \
+  do {                                                                                                                 \
+    ozoneVectorPushchar(_allocator_, &(_string_)->vector, '\0');                                                       \
+    (_string_)->vector.elements[(_string_)->vector.length - 2] = _char_;                                               \
+  } while (0)
 
 OzoneStringT ozoneStringCopy(OzoneAllocatorT* allocator, const OzoneStringT* original);
 
