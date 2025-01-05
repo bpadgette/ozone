@@ -204,31 +204,31 @@ OzoneHTTPRequest* ozoneHTTPParseSocketChunks(OzoneAllocator* allocator, const Oz
   OzoneHTTPRequest* http_request = ozoneAllocatorReserveOne(allocator, OzoneHTTPRequest);
   *http_request = (OzoneHTTPRequest) { 0 };
 
-  OzoneString method_string = ozoneStringScanBuffer(
+  OzoneString method_string = ozoneStringFromBuffer(
       allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString(" "), OZONE_STRING_ENCODING_ISO_8859_1);
   if (OZONE_HTTP_METHOD_UNKNOWN == (http_request->method = ozoneHTTPParseMethod(&method_string)))
     return NULL;
   cursor += ozoneStringLength(&method_string) + 1;
 
-  http_request->target = ozoneStringScanBuffer(
+  http_request->target = ozoneStringFromBuffer(
       allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString(" "), OZONE_STRING_ENCODING_ISO_8859_1);
   cursor += ozoneStringLength(&http_request->target) + 1;
 
-  OzoneString http_version_string = ozoneStringScanBuffer(
+  OzoneString http_version_string = ozoneStringFromBuffer(
       allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString("\r\n"), OZONE_STRING_ENCODING_ISO_8859_1);
   if (OZONE_HTTP_VERSION_UNKNOWN == (http_request->version = ozoneHTTPParseVersion(&http_version_string)))
     return NULL;
   cursor += ozoneStringLength(&http_version_string) + 2;
 
   while (buffer + buffer_size > (cursor + 1) && cursor[0] != '\r') {
-    OzoneString name = ozoneStringScanBuffer(
+    OzoneString name = ozoneStringFromBuffer(
         allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString(":"), OZONE_STRING_ENCODING_ISO_8859_1);
     if (!ozoneStringLength(&name))
       break;
 
     cursor += ozoneStringLength(&name) + 2;
 
-    OzoneString value = ozoneStringScanBuffer(
+    OzoneString value = ozoneStringFromBuffer(
         allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString("\r\n"), OZONE_STRING_ENCODING_ISO_8859_1);
     if (!ozoneStringLength(&value))
       break;
@@ -260,7 +260,6 @@ OzoneHTTPRequest* ozoneHTTPParseSocketChunks(OzoneAllocator* allocator, const Oz
           .elements = cursor,
           .length = content_length + 1,
           .capacity = content_length + 1,
-          .capacity_increment = content_length + 1,
       }),
       .encoding = OZONE_STRING_ENCODING_ISO_8859_1,
   });
@@ -329,7 +328,7 @@ int ozoneHTTPBeginPipeline(OzoneHTTPContext* context) {
   *context->parsed_response = (OzoneHTTPResponse) { 0 };
 
   ozoneLogInfo("%s",
-      ozoneStringScanBuffer(context->allocator, context->raw_request->buffer, context->raw_request->length,
+      ozoneStringFromBuffer(context->allocator, context->raw_request->buffer, context->raw_request->length,
           &ozoneString("\r"), OZONE_STRING_ENCODING_ISO_8859_1)
           .vector.elements);
 
@@ -366,7 +365,6 @@ int ozoneHTTPEndPipeline(OzoneHTTPContext* context) {
                   .elements = content_length,
                   .length = length,
                   .capacity = length,
-                  .capacity_increment = length,
               }),
               .encoding = OZONE_STRING_ENCODING_ISO_8859_1,
           }));
@@ -375,7 +373,7 @@ int ozoneHTTPEndPipeline(OzoneHTTPContext* context) {
 
   context->raw_response = ozoneHTTPCreateSocketChunks(context->allocator, response);
   ozoneLogInfo("%s",
-      ozoneStringScanBuffer(context->allocator, context->raw_response->buffer, context->raw_response->length,
+      ozoneStringFromBuffer(context->allocator, context->raw_response->buffer, context->raw_response->length,
           &ozoneString("\r"), OZONE_STRING_ENCODING_ISO_8859_1)
           .vector.elements);
 

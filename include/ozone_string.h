@@ -7,14 +7,6 @@
 OZONE_VECTOR_DECLARE_API(char)
 typedef charVector OzoneVectorChar;
 
-#define ozoneVectorChar(_chars_, _encoding_)                                                                           \
-  ((OzoneVectorChar) {                                                                                                 \
-      .elements = _chars_,                                                                                             \
-      .length = sizeof(_chars_),                                                                                       \
-      .capacity = sizeof(_chars_),                                                                                     \
-      .capacity_increment = sizeof(_chars_),                                                                           \
-  })
-
 typedef enum OzoneStringEncoding {
   OZONE_STRING_ENCODING_UNKNOWN,
   OZONE_STRING_ENCODING_ISO_8859_1,
@@ -33,7 +25,6 @@ OZONE_VECTOR_DECLARE_API(OzoneString)
           .elements = _chars_,                                                                                         \
           .length = sizeof(_chars_),                                                                                   \
           .capacity = sizeof(_chars_),                                                                                 \
-          .capacity_increment = sizeof(_chars_),                                                                       \
       }),                                                                                                              \
       .encoding = _encoding_,                                                                                          \
   })
@@ -43,14 +34,18 @@ OZONE_VECTOR_DECLARE_API(OzoneString)
   ((_string_)->vector.length > 0 ? (_string_)->vector.length - 1 : (_string_)->vector.length)
 #define ozoneStringBuffer(_string_) ((_string_)->vector.elements)
 #define ozoneStringBufferAt(_string_, _index_) ((_string_)->vector.elements[_index_])
-#define ozoneStringAppendChar(_allocator_, _string_, _char_)                                                           \
-  do {                                                                                                                 \
-    ozoneVectorPushchar(_allocator_, &(_string_)->vector, '\0');                                                       \
-    (_string_)->vector.elements[(_string_)->vector.length - 2] = _char_;                                               \
-  } while (0)
 
+void ozoneStringAppend(OzoneAllocator* allocator, OzoneString* string, char byte);
+void ozoneStringClear(OzoneString* string);
+char ozoneStringPop(OzoneString* string);
+OzoneString* ozoneStringCreate(OzoneAllocator* allocator, size_t capacity);
 OzoneString ozoneStringCopy(OzoneAllocator* allocator, const OzoneString* original);
 OzoneString ozoneStringJoin(OzoneAllocator* allocator, const OzoneStringVector* vector, OzoneStringEncoding encoding);
+
+/**
+ * \returns -1 if not found, or the index of the first occurrence of the search string.
+ */
+int ozoneStringFindFirst(const OzoneString* string, const OzoneString* search);
 
 /**
  * \returns 0 if equal, negative if left less than right, positive if left greater than right
@@ -58,10 +53,10 @@ OzoneString ozoneStringJoin(OzoneAllocator* allocator, const OzoneStringVector* 
 int ozoneStringCompare(const OzoneString* left, const OzoneString* right);
 
 /**
- * \returns  OzoneString, not exceeding the buffer_size and not including the first occurrence of *stop
- * and beyond. If stop is NULL, then it is ignored and this function will scan until buffer_size is reached.
+ * \returns  OzoneString, not exceeding the buffer_size and not scanning beyond the first occurrence of *end.
+ * If end is NULL then this function will scan until buffer_size is reached.
  */
-OzoneString ozoneStringScanBuffer(
-    OzoneAllocator* allocator, char* buffer, size_t buffer_size, const OzoneString* stop, OzoneStringEncoding encoding);
+OzoneString ozoneStringFromBuffer(
+    OzoneAllocator* allocator, char* buffer, size_t buffer_size, const OzoneString* end, OzoneStringEncoding encoding);
 
 #endif

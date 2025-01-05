@@ -1,9 +1,53 @@
 #include "ozone_string.h"
 
+#include <stdio.h>
 #include <string.h>
-
 OZONE_VECTOR_IMPLEMENT_API(char)
 OZONE_VECTOR_IMPLEMENT_API(OzoneString)
+
+void ozoneStringAppend(OzoneAllocator* allocator, OzoneString* string, char byte) {
+  if (!ozoneStringLength(string) && byte != '\0') {
+    char* elements = ozoneAllocatorReserveMany(allocator, char, 2);
+    elements[0] = byte;
+    elements[1] = '\0';
+    string->vector = (OzoneVectorChar) { .capacity = 2, .length = 2, .elements = elements };
+    return;
+  }
+
+  ozoneVectorPushchar(allocator, &string->vector, '\0');
+  string->vector.elements[string->vector.length - 2] = byte;
+}
+
+void ozoneStringClear(OzoneString* string) {
+  if (!string || !string->vector.length)
+    return;
+
+  string->vector.length = 0;
+  memset(&string->vector.elements[0], '\0', string->vector.capacity);
+}
+
+char ozoneStringPop(OzoneString* string) {
+  if (string->vector.length < 2)
+    return '\0';
+
+  size_t last = string->vector.length - 2;
+  char popped = string->vector.elements[last];
+  string->vector.elements[last] = '\0';
+  string->vector.length--;
+
+  return popped;
+}
+
+OzoneString* ozoneStringCreate(OzoneAllocator* allocator, size_t capacity) {
+  char* elements = ozoneAllocatorReserveMany(allocator, char, capacity);
+  memset(elements, '\0', capacity);
+
+  OzoneString* string = ozoneAllocatorReserveOne(allocator, OzoneString);
+  *string = (OzoneString) { .encoding = OZONE_STRING_ENCODING_ISO_8859_1,
+    .vector = (OzoneVectorChar) { .capacity = capacity, .length = 1, .elements = elements } };
+
+  return string;
+}
 
 OzoneString ozoneStringCopy(OzoneAllocator* allocator, const OzoneString* original) {
   char* buffer = ozoneAllocatorReserveMany(allocator, char, ozoneStringLength(original) + 1);
@@ -13,7 +57,6 @@ OzoneString ozoneStringCopy(OzoneAllocator* allocator, const OzoneString* origin
           .elements = buffer,
           .length = ozoneStringLength(original) + 1,
           .capacity = original->vector.capacity,
-          .capacity_increment = original->vector.capacity_increment,
       }),
       .encoding = original->encoding,
   });
@@ -38,7 +81,6 @@ OzoneString ozoneStringJoin(OzoneAllocator* allocator, const OzoneStringVector* 
         .elements = elements,
         .length = length,
         .capacity = length,
-        .capacity_increment = length,
     }),
     .encoding = encoding,
   };
@@ -66,25 +108,35 @@ int ozoneStringCompare(const OzoneString* left, const OzoneString* right) {
   return memcmp(ozoneStringBuffer(left), ozoneStringBuffer(right), ozoneStringLength(left) + 1);
 }
 
-OzoneString ozoneStringScanBuffer(OzoneAllocator* allocator, char* buffer, size_t buffer_size, const OzoneString* stop,
-    OzoneStringEncoding encoding) {
-  size_t scan_length = 0;
-  while (scan_length < buffer_size) {
-    if (stop && (buffer_size - scan_length) > ozoneStringLength(stop)
-        && !memcmp(buffer + scan_length, ozoneStringBuffer(stop), ozoneStringLength(stop))) {
-      scan_length++;
-      break;
-    }
+int ozoneStringFindFirst(const OzoneString* string, const OzoneString* search) {
+  if (!search || !string)
+    return -1;
 
-    scan_length++;
+  for (size_t string_index = 0; string_index < ozoneStringLength(string); string_index++) {
+    if (!memcmp(ozoneStringBuffer(string) + string_index, ozoneStringBuffer(search), ozoneStringLength(search))) {
+      return (int)string_index;
+    }
   }
+
+  return -1;
+}
+
+OzoneString ozoneStringFromBuffer(
+    OzoneAllocator* allocator, char* buffer, size_t buffer_size, const OzoneString* end, OzoneStringEncoding encoding) {
+  int location = ozoneStringFindFirst(
+      &(OzoneString) {
+          .encoding = encoding,
+          .vector = (OzoneVectorChar) { .elements = buffer, .length = buffer_size, .capacity = buffer_size },
+      },
+      end);
+
+  size_t string_length = location == -1 ? buffer_size : ((size_t)location + 1);
 
   OzoneString string = ((OzoneString) {
       .vector = ((OzoneVectorChar) {
-          .elements = ozoneAllocatorReserveMany(allocator, char, scan_length),
-          .length = scan_length,
-          .capacity = scan_length,
-          .capacity_increment = scan_length,
+          .elements = ozoneAllocatorReserveMany(allocator, char, string_length + 1),
+          .length = string_length,
+          .capacity = string_length,
       }),
       .encoding = encoding,
   });

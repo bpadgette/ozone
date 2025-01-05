@@ -18,7 +18,6 @@ OzoneStringVector ozoneFileLoad(
                 .elements = cursor,
                 .length = read_status + 1,
                 .capacity = read_status + 1,
-                .capacity_increment = read_status + 1,
             },
             .encoding = encoding,
         });
