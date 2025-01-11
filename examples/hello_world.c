@@ -13,6 +13,9 @@ int before(OzoneAppEvent* event, OzoneAppContext* context) {
 
 int home(OzoneAppEvent* event, OzoneAppContext* context) {
   ozoneStringPushKeyValue(
+      event->allocator, &context->templates.arguments, &ozoneString("title"), &ozoneString(SERVER_NAME));
+
+  ozoneStringPushKeyValue(
       event->allocator,
       &context->templates.arguments,
       &ozoneString("body"),
