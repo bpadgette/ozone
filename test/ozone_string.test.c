@@ -10,12 +10,10 @@ void shouldAppendToString(void) {
 }
 
 void shouldJoinStrings(void) {
-  OzoneStringVector strings = ozoneVector(test_alloc, OzoneString, 2);
-  ozoneVectorPushOzoneString(test_alloc, &strings, ozoneString("hello"));
-  ozoneVectorPushOzoneString(test_alloc, &strings, ozoneString(", world!"));
+  OzoneString hello = ozoneString("hello");
+  ozoneStringConcatenate(test_alloc, &hello, &ozoneString(", world!"));
 
-  OzoneString joined = ozoneStringJoin(test_alloc, &strings, OZONE_STRING_ENCODING_ISO_8859_1);
-  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&ozoneString("hello, world!"), &joined, "It joins two strings.");
+  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&ozoneString("hello, world!"), &hello, "It joins two strings.");
 }
 
 void shouldFindInString(void) {
@@ -28,16 +26,14 @@ void shouldFindInString(void) {
 
 void shouldScanStringBuffer(void) {
   char* string = "hello, world!";
-  OzoneString scanned_stop_null = ozoneStringFromBuffer(test_alloc, string, 14, NULL, OZONE_STRING_ENCODING_ISO_8859_1);
+  OzoneString scanned_stop_null = ozoneStringFromBuffer(test_alloc, string, 14, NULL);
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
       &ozoneString("hello, world!"), &scanned_stop_null, "It scans the full buffer when stop is NULL.");
 
-  OzoneString scanned_stop_e
-      = ozoneStringFromBuffer(test_alloc, string, 14, &ozoneString("e"), OZONE_STRING_ENCODING_ISO_8859_1);
+  OzoneString scanned_stop_e = ozoneStringFromBuffer(test_alloc, string, 14, &ozoneString("e"));
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&ozoneString("h"), &scanned_stop_e, "It scans only up to the stop character.");
 
-  OzoneString scanned_stop_space
-      = ozoneStringFromBuffer(test_alloc, string, 14, &ozoneString(", world"), OZONE_STRING_ENCODING_ISO_8859_1);
+  OzoneString scanned_stop_space = ozoneStringFromBuffer(test_alloc, string, 14, &ozoneString(", world"));
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
       &ozoneString("hello"), &scanned_stop_space, "It scans only up to the stop string.");
 }

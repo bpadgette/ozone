@@ -9,7 +9,9 @@
 #include <unistd.h>
 
 #define OZONE_SOCKET_REQUEST_CHUNK_SIZE 1024
-#define OZONE_SOCKET_INITIAL_ALLOCATION 32 * 1024
+#define OZONE_SOCKET_INITIAL_ALLOCATION 8 * 1024
+
+OZONE_VECTOR_IMPLEMENT_API(OzoneSocketHandlerRef)
 
 int ozone_socket_shutdown = 0;
 void ozoneSocketSignalAction(int signum) {
@@ -46,8 +48,10 @@ int ozoneSocketServeTCP(OzoneSocketConfig config) {
     return ECONNABORTED;
   }
 
-  ozoneLogDebug("Listening for TCP connections on port %d with a %ld member handler_pipeline", config.port,
-      config.handler_pipeline_count);
+  ozoneLogDebug(
+      "Listening for TCP connections on port %d with a %ld member handler_pipeline",
+      config.port,
+      ozoneVectorLength(&config.handler_pipeline));
   OzoneAllocator* handler_allocator = ozoneAllocatorCreate(OZONE_SOCKET_INITIAL_ALLOCATION);
 
   struct sigaction signal_actions = { .sa_handler = &ozoneSocketSignalAction };
@@ -88,19 +92,17 @@ int ozoneSocketServeTCP(OzoneSocketConfig config) {
       current_chunk->length = OZONE_SOCKET_REQUEST_CHUNK_SIZE;
     } while ((read_status = read(accepted_socket_fd, current_chunk->buffer, current_chunk->length)));
 
-    OzoneSocketContext handler_arg = {
+    OzoneSocketEvent event = {
       .allocator = handler_allocator,
-      .raw_request = &request_chunks,
-      .raw_response = NULL,
-      .application = config.application,
+      .raw_socket_request = &request_chunks,
+      .raw_socket_response = NULL,
     };
 
-    for (size_t handler_index = 0; handler_index < config.handler_pipeline_count; handler_index++) {
-      config.handler_pipeline[handler_index](&handler_arg);
-    }
+    OzoneSocketHandlerRef* handler;
+    ozoneVectorForEach(handler, &config.handler_pipeline) { (*handler)(&event, config.handler_context); }
 
     int write_status = 0;
-    current_chunk = handler_arg.raw_response;
+    current_chunk = event.raw_socket_response;
     while (current_chunk) {
       write_status = write(accepted_socket_fd, current_chunk->buffer, current_chunk->length);
       if (write_status == -1) {

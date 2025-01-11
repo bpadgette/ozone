@@ -7,14 +7,13 @@
 
 OzoneAllocator* ozoneAllocatorCreate(size_t size) {
   OzoneAllocator* allocator = (OzoneAllocator*)malloc(size + sizeof(OzoneAllocator));
-  ozoneLogTrace("Allocated %ld bytes with malloc, %ld usable as allocation space", size + sizeof(OzoneAllocator), size);
+  ozoneLogDebug("Allocated %ld bytes with malloc, %ld usable as allocation space", size + sizeof(OzoneAllocator), size);
   if (!allocator)
     return NULL;
 
   *allocator = (OzoneAllocator) { .cursor = ozoneAllocatorGetRegionStart(allocator),
-    .end = ozoneAllocatorGetRegionStart(allocator) + (uintptr_t)size,
-    .previous = NULL,
-    .next = NULL };
+                                  .end = ozoneAllocatorGetRegionStart(allocator) + (uintptr_t)size,
+                                  .next = NULL };
 
   return allocator;
 }
@@ -73,7 +72,6 @@ uintptr_t ozoneAllocatorReserveBytes(OzoneAllocator* allocator, size_t size) {
 
   OzoneAllocator* new_region = ozoneAllocatorCreate(fmax(size, ozoneAllocatorGetRegionCapacity(allocator)));
 
-  new_region->previous = allocator_iterator;
   new_region->cursor += size;
   allocator_iterator->next = new_region;
 
@@ -87,7 +85,9 @@ void ozoneAllocatorClear(OzoneAllocator* allocator) {
   ozoneLogTrace("Clearing %ld bytes", ozoneAllocatorGetTotalCapacity(allocator));
   OzoneAllocator* allocator_iterator = allocator;
   do {
-    memset((void*)ozoneAllocatorGetRegionStart(allocator_iterator), 0,
+    memset(
+        (void*)ozoneAllocatorGetRegionStart(allocator_iterator),
+        0,
         ozoneAllocatorGetRegionCapacity(allocator_iterator));
     allocator_iterator->cursor = ozoneAllocatorGetRegionStart(allocator_iterator);
   } while ((allocator_iterator = allocator_iterator->next));

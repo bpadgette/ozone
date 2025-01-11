@@ -2,36 +2,39 @@
 
 #include "ozone_log.h"
 
-OzoneStringVector ozoneFileLoad(
-    OzoneAllocator* allocator, FILE* file, OzoneStringEncoding encoding, size_t max_chunk_bytes) {
+OzoneStringVector ozoneFileLoad(OzoneAllocator* allocator, FILE* file, size_t max_chunk_bytes) {
   OzoneStringVector vector = (OzoneStringVector) { 0 };
   size_t bytes_read = 0;
-  size_t read_status = 0;
 
-  char* cursor = ozoneAllocatorReserveMany(allocator, char, max_chunk_bytes);
-  while ((read_status = fread(cursor, 1, max_chunk_bytes - 1, file))) {
-    bytes_read += read_status;
+  for (;;) {
+    char* cursor = ozoneAllocatorReserveMany(allocator, char, max_chunk_bytes);
+    size_t read_status = fread(cursor, 1, max_chunk_bytes - 1, file);
+    if (!read_status)
+      break;
+
     cursor[read_status] = '\0';
-    ozoneVectorPushOzoneString(allocator, &vector,
+    pushOzoneString(
+        allocator,
+        &vector,
         (OzoneString) {
-            (OzoneVectorChar) {
+            (OzoneByteVector) {
                 .elements = cursor,
                 .length = read_status + 1,
                 .capacity = read_status + 1,
             },
-            .encoding = encoding,
         });
 
-    cursor = ozoneAllocatorReserveMany(allocator, char, max_chunk_bytes);
+    bytes_read += read_status;
+    if (read_status != max_chunk_bytes - 1)
+      break;
   };
 
-  ozoneLogDebug("Loaded %ld bytes", bytes_read);
+  ozoneLogDebug("Loaded %ld bytes into %ld chunks", bytes_read, ozoneVectorLength(&vector));
 
   return vector;
 }
 
-OzoneStringVector ozoneFileLoadFromPath(
-    OzoneAllocator* allocator, const OzoneString* path, OzoneStringEncoding encoding, size_t max_chunk_bytes) {
+OzoneStringVector ozoneFileLoadFromPath(OzoneAllocator* allocator, const OzoneString* path, size_t max_chunk_bytes) {
   FILE* file = fopen(ozoneStringBuffer(path), "r");
   if (!file) {
     ozoneLogError("Could not open file %s", ozoneStringBuffer(path));
@@ -39,7 +42,7 @@ OzoneStringVector ozoneFileLoadFromPath(
   }
 
   ozoneLogDebug("Opened file %s", ozoneStringBuffer(path));
-  OzoneStringVector vector = ozoneFileLoad(allocator, file, encoding, max_chunk_bytes);
+  OzoneStringVector vector = ozoneFileLoad(allocator, file, max_chunk_bytes);
   fclose(file);
 
   return vector;

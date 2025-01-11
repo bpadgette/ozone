@@ -80,11 +80,11 @@ $(BUILD_EXAMPLES)%: $(TARGET_LIB)
 	$(shell $(MKDIR) $(BUILD_EXAMPLES))	$(CC) $(CFLAGS) $(EXAMPLES)$*.c $< $(CLIBS) -o $@
 
 $(BUILD_EXAMPLES)%.debug: $(TARGET_DEBUG_LIB)
-	$(shell $(MKDIR) $(BUILD_EXAMPLES)) && $(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g $(EXAMPLES)$*.c $< $(CLIBS) -o $@
+	$(shell $(MKDIR) $(BUILD_EXAMPLES)) $(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g $(EXAMPLES)$*.c $< $(CLIBS) -o $@
 
 build-examples: $(patsubst $(EXAMPLES)%.c, $(BUILD_EXAMPLES)%, $(wildcard *, $(EXAMPLES)*.c))
 
-ex-%: $(BUILD_EXAMPLES)%
+%: $(BUILD_EXAMPLES)%
 	$(BUILD_EXAMPLES)$*
 
 ##############################################################################
@@ -111,4 +111,4 @@ clean:
 all: build build-debug build-examples test
 
 .DELETE_ON_ERROR:
-.PHONY: format format-check build build-debug build-examples test clean install uninstall all
+.PHONY: Makefile format format-check build build-debug build-examples test clean install uninstall all

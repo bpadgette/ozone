@@ -1,18 +1,27 @@
 # ozone
 
-Minimal dependency, C-based web framework.
+Ozone is a minimal dependency, C-based web framework.
 
-# Getting Started
+# Contents
 
-## Hello, World!
+- [Getting Started](#getting-started)
+  - [Hello, World!](#hello-world)
+  - [Tests & Examples](#tests-and-examples)
+- [Build & Install](#build-and-install)
+  - [Build Options](#build-options)
+- [Features](#features)
+
+# Getting Started <a name="getting-started"></a>
+
+## Hello, World! <a name="hello-world"></a>
 
 Build and run `./examples/hello_world.c` with:
 
 ```bash
-make ex-hello_world
+make hello_world
 ```
 
-## Tests & Other Examples
+## Tests & Examples <a name="tests-and-examples"></a>
 
 Learn more about ozone by running the unit tests and programs in `./test` and `./examples`.
 
@@ -28,7 +37,7 @@ Build all of the examples to `./build/examples` with:
 make build-examples
 ```
 
-# Build & Install
+# Build & Install <a name="build-and-install"></a>
 
 Build the shared library, `libozone.so`.
 
@@ -48,7 +57,7 @@ Uninstall with:
 make uninstall
 ```
 
-## Build options
+## Build Options <a name="build-options"></a>
 
 ### Compile-time Flags
 
@@ -56,3 +65,9 @@ make uninstall
 | ----------------- | -------- | ------------------------------------------- |
 | `OZONE_LOG_DEBUG` | disabled | Enables debug-level logging                 |
 | `OZONE_LOG_TRACE` | disabled | Enables trace-level and debug-level logging |
+
+# Features <a name="features"></a>
+
+## HTTP Pipelines
+
+## Template Processor
