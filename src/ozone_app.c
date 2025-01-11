@@ -3,35 +3,45 @@
 #include "ozone_log.h"
 #include "ozone_router.h"
 
-int ozoneAppServe(OzoneAppConfigT config) {
-  OzoneHTTPConfigT http_config = { 0 };
-  http_config.allocator = config.allocator;
-  http_config.port = config.port;
+OZONE_VECTOR_IMPLEMENT_API(OzoneAppEndpoint)
 
-  ozoneLogInfo("Registering %ld routes", config.router.endpoints_count);
+void ozoneAppSetResponseHeader(OzoneAppEvent* event, const OzoneString* name, const OzoneString* value) {
+  ozoneStringPushKeyValue(event->allocator, &event->response->headers, name, value);
+}
 
-  OzoneRouterApplicationContextT* app = ozoneAllocatorReserveOne(config.allocator, OzoneRouterApplicationContextT);
+int ozoneAppHandler(OzoneHTTPEvent* event, OzoneAppContext* context) {
+  clearOzoneStringKeyValue(&context->templates.arguments);
+  context->router.handler_context = context;
+  return ozoneRouter(event, &context->router);
+}
 
-  app->route_configs
-      = ozoneAllocatorReserveMany(config.allocator, OzoneRouterHTTPConfigT, config.router.endpoints_count);
-  app->route_handler_pipelines
-      = ozoneAllocatorReserveMany(config.allocator, OzoneHTTPHandlerT**, config.router.endpoints_count);
-  app->route_handler_pipelines_counts
-      = ozoneAllocatorReserveMany(config.allocator, size_t, config.router.endpoints_count);
+int ozoneAppServe(
+    OzoneAllocator* allocator,
+    unsigned short int port,
+    const OzoneAppEndpointVector* endpoints,
+    const OzoneTemplatesComponentVector* templates) {
+  ozoneLogInfo("Registering %ld routes", ozoneVectorLength(endpoints));
 
-  app->route_count = config.router.endpoints_count;
-  for (size_t route_index = 0; route_index < config.router.endpoints_count; route_index++) {
-    app->route_configs[route_index] = config.router.endpoints[route_index].config;
-    app->route_handler_pipelines[route_index]
-        = (OzoneHTTPHandlerT**)config.router.endpoints[route_index].handler_pipeline;
-    app->route_handler_pipelines_counts[route_index] = config.router.endpoints[route_index].handler_pipeline_count;
-  }
+  OzoneSocketHandlerRef app_stack[] = {
+    (OzoneSocketHandlerRef)ozoneAppHandler,
+  };
 
-  http_config.application = (void*)app;
+  OzoneAppContext context = (OzoneAppContext) {
+      .router = (OzoneRouterConfig) {
+          .endpoints = (const OzoneRouterHTTPEndpointVector*)endpoints,
+          .handler_context = NULL,
+      },
+      .templates = (OzoneTemplatesConfig) {
+        .arguments = ((OzoneStringKeyValueVector) { 0 }),
+        .components = *templates
+      },
+  };
 
-  OzoneHTTPHandlerT* handler_pipeline[] = { (OzoneHTTPHandlerT*)ozoneRouter };
-  http_config.handler_pipeline = handler_pipeline;
-  http_config.handler_pipeline_count = 1;
+  OzoneHTTPConfig http_config = {
+    .port = port,
+    .handler_pipeline = ozoneVector(OzoneSocketHandlerRef, app_stack),
+    .handler_context = &context,
+  };
 
-  return ozoneHTTPServe(http_config);
+  return ozoneHTTPServe(allocator, http_config);
 }

@@ -1,36 +1,73 @@
 #ifndef OZONE_STRING_H
 #define OZONE_STRING_H
+
 #include "ozone_allocator.h"
+#include "ozone_vector.h"
 
-typedef enum OzoneStringEncoding {
-  OZONE_STRING_ENCODING_UNKNOWN,
-  OZONE_STRING_ENCODING_ISO_8859_1,
-} OzoneStringEncodingT;
+typedef char OzoneByte;
+OZONE_VECTOR_DECLARE_API(OzoneByte)
 
-typedef struct OzoneString {
-  char* buffer;
-  size_t length;
-  OzoneStringEncodingT encoding;
-} OzoneStringT;
+typedef struct OzoneStringStruct {
+  OzoneByteVector vector;
+} OzoneString;
 
-#define ozoneString(_chars_, _encoding_)                                                                               \
-  (OzoneStringT) { .buffer = _chars_, .length = sizeof(_chars_), .encoding = _encoding_ }
+OZONE_VECTOR_DECLARE_API(OzoneString)
 
-#define ozoneCharArray(_chars_) ozoneString(_chars_, OZONE_STRING_ENCODING_ISO_8859_1)
+#define ozoneString(_chars_)                                                                                           \
+  ((OzoneString) {                                                                                                     \
+      .vector = ((OzoneByteVector) {                                                                                   \
+          .elements = _chars_,                                                                                         \
+          .length = sizeof(_chars_),                                                                                   \
+          .capacity = sizeof(_chars_),                                                                                 \
+      }),                                                                                                              \
+  })
+
+#define ozoneStringLength(_string_)                                                                                    \
+  (ozoneVectorLength(&(_string_)->vector) > 0 ? ozoneVectorLength(&(_string_)->vector) - 1                             \
+                                              : ozoneVectorLength(&(_string_)->vector))
+#define ozoneStringBuffer(_string_) ((_string_)->vector.elements)
+#define ozoneStringBufferAt(_string_, _index_) ((_string_)->vector.elements[_index_])
+#define ozoneStringBufferEnd(_string_) ((_string_)->vector.elements[ozoneStringLength(_string_) - 1])
+
+void ozoneStringAppend(OzoneAllocator* allocator, OzoneString* string, char byte);
+void ozoneStringClear(OzoneString* string);
+char ozoneStringPop(OzoneString* string);
+char ozoneStringShift(OzoneString* string);
+OzoneString* ozoneStringCreate(OzoneAllocator* allocator, size_t capacity);
+OzoneString ozoneStringCopy(OzoneAllocator* allocator, const OzoneString* original);
+void ozoneStringConcatenate(OzoneAllocator* allocator, OzoneString* destination, const OzoneString* source);
+
+/**
+ * \returns -1 if not found, or the index of the first occurrence of the search string.
+ */
+int ozoneStringFindFirst(const OzoneString* string, const OzoneString* search);
 
 /**
  * \returns 0 if equal, negative if left less than right, positive if left greater than right
  */
-int ozoneStringCompare(const OzoneStringT* left, const OzoneStringT* right);
+int ozoneStringCompare(const OzoneString* left, const OzoneString* right);
 
 /**
- * \returns pointer to new OzoneStringT, not exceeding the buffer_size and not including the first occurrence of *stop
- * and beyond. If stop is NULL, then it is ignored and this function will scan until buffer_size is reached.
+ * \returns  OzoneString, not exceeding the buffer_size and not scanning beyond the first occurrence of *end.
+ * If end is NULL then this function will scan until buffer_size is reached.
  */
-OzoneStringT* ozoneStringScanBuffer(OzoneAllocatorT* allocator, char* buffer, size_t buffer_size,
-    const OzoneStringT* stop, OzoneStringEncodingT encoding);
+OzoneString ozoneStringFromBuffer(OzoneAllocator* allocator, char* buffer, size_t buffer_size, const OzoneString* end);
 
-#define ozoneCharArrayScanBuffer(_allocator_, _buffer_, _buffer_size_, _stop_)                                         \
-  ozoneStringScanBuffer(_allocator_, _buffer_, _buffer_size_, _stop_, OZONE_STRING_ENCODING_ISO_8859_1)
+typedef struct OzoneStringKeyValueStruct {
+  OzoneString key;
+  OzoneString value;
+} OzoneStringKeyValue;
+
+OZONE_VECTOR_DECLARE_API(OzoneStringKeyValue)
+
+OzoneString* ozoneStringKeyValueVectorFind(const OzoneStringKeyValueVector* vector, const OzoneString* key);
+#define ozoneStringPushKeyValue(_allocator_, _vector_, _key_, _value_)                                                 \
+  pushOzoneStringKeyValue(                                                                                             \
+      _allocator_,                                                                                                     \
+      _vector_,                                                                                                        \
+      ((OzoneStringKeyValue) {                                                                                         \
+          .key = ozoneStringCopy(_allocator_, _key_),                                                                  \
+          .value = ozoneStringCopy(_allocator_, _value_),                                                              \
+      }));
 
 #endif

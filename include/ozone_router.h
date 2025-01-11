@@ -4,37 +4,23 @@
 #include "ozone_http.h"
 #include "ozone_string.h"
 
-typedef struct OzoneRouterHTTPConfig {
-  OzoneHTTPMethodT method;
-  OzoneStringT target_pattern;
-} OzoneRouterHTTPConfigT;
+typedef struct OzoneRouterHTTPConfigStruct {
+  OzoneHTTPMethod method;
+  OzoneString target_pattern;
+} OzoneRouterHTTPConfig;
 
-typedef struct OzoneRouterApplicationContext {
-  OzoneRouterHTTPConfigT* route_configs;
-  OzoneHTTPHandlerT*** route_handler_pipelines;
-  size_t* route_handler_pipelines_counts;
-  size_t route_count;
-} OzoneRouterApplicationContextT;
+typedef struct OzoneRouterHTTPEndpointStruct {
+  OzoneRouterHTTPConfig config;
+  OzoneSocketHandlerRefVector handler_pipeline;
+} OzoneRouterHTTPEndpoint;
 
-typedef struct OzoneRouterContext OZONE_SOCKET_CONTEXT_FIELDS(
-    OzoneHTTPRequestT, OzoneHTTPResponseT, OzoneRouterApplicationContextT) OzoneRouterContextT;
+OZONE_VECTOR_DECLARE_API(OzoneRouterHTTPEndpoint)
 
-int ozoneRouter(OzoneRouterContextT* context);
+typedef struct OzoneRouterConfigStruct {
+  const OzoneRouterHTTPEndpointVector* endpoints;
+  void* handler_context;
+} OzoneRouterConfig;
 
-typedef struct OzoneRouterHTTPEndpoint {
-  OzoneRouterHTTPConfigT config;
-  OzoneHTTPHandlerT** handler_pipeline;
-  size_t handler_pipeline_count;
-} OzoneRouterHTTPEndpointT;
-
-typedef struct OzoneRouterConfig {
-  OzoneRouterHTTPEndpointT* endpoints;
-  size_t endpoints_count;
-} OzoneRouterConfigT;
-
-#define ozoneRouterConfig(_endpoints_)                                                                                 \
-  (OzoneRouterConfigT) {                                                                                               \
-    .endpoints = _endpoints_, .endpoints_count = sizeof(_endpoints_) / sizeof(OzoneRouterHTTPEndpointT)                \
-  }
+int ozoneRouter(OzoneHTTPEvent* event, OzoneRouterConfig* config);
 
 #endif

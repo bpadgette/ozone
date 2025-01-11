@@ -4,7 +4,7 @@
 
 void shouldReserveAndClearSingleRegion(void) {
   size_t size = 1024;
-  OzoneAllocatorT* alloc = ozoneAllocatorCreate(size);
+  OzoneAllocator* alloc = ozoneAllocatorCreate(size);
   char* allocation = ozoneAllocatorReserveMany(alloc, char, size);
 
   TEST_ASSERT_MESSAGE(ozoneAllocatorGetTotalCapacity(alloc) == size, "It allocates capacity equal to size");
@@ -22,7 +22,7 @@ void shouldReserveAndClearSingleRegion(void) {
 
 void shouldReserveAndClearMultipleRegions(void) {
   size_t size = 1024;
-  OzoneAllocatorT* alloc = ozoneAllocatorCreate(size);
+  OzoneAllocator* alloc = ozoneAllocatorCreate(size);
 
   char* allocation = ozoneAllocatorReserveMany(alloc, char, size);
   char* second_allocation = ozoneAllocatorReserveMany(alloc, char, size);

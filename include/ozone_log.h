@@ -11,18 +11,27 @@
     struct tm* now = localtime(&seconds);                                                                              \
     struct timeval now_ms;                                                                                             \
     gettimeofday(&now_ms, NULL);                                                                                       \
-    fprintf(file,                                                                                                      \
+    fprintf(                                                                                                           \
+        file,                                                                                                          \
         "{"                                                                                                            \
         "\"level\":\"" level "\","                                                                                     \
         "\"timestamp\":\"%04d-%02d-%02d %02d:%02d:%02d.%03ld\","                                                       \
         "\"message\":\"",                                                                                              \
-        now->tm_year + 1900, now->tm_mon + 1, now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec,                    \
+        now->tm_year + 1900,                                                                                           \
+        now->tm_mon + 1,                                                                                               \
+        now->tm_mday,                                                                                                  \
+        now->tm_hour,                                                                                                  \
+        now->tm_min,                                                                                                   \
+        now->tm_sec,                                                                                                   \
         now_ms.tv_usec / 1000);                                                                                        \
     fprintf(file, ##__VA_ARGS__);                                                                                      \
-    fprintf(file,                                                                                                      \
+    fprintf(                                                                                                           \
+        file,                                                                                                          \
         "\","                                                                                                          \
         "\"location\":\"(%s) %s:%d\"}\r\n",                                                                            \
-        __func__, basename(__FILE__), __LINE__);                                                                       \
+        __func__,                                                                                                      \
+        basename(__FILE__),                                                                                            \
+        __LINE__);                                                                                                     \
     fflush(file);                                                                                                      \
   } while (0)
 

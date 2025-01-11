@@ -2,30 +2,28 @@
 
 #include "ozone_vector.h"
 
-typedef int DummyT;
-OZONE_VECTOR_DECLARE_API(DummyT, dummy)
-OZONE_VECTOR_DEFINE_API(DummyT, dummy)
+typedef int OzoneDummy;
+OZONE_VECTOR_DECLARE_API(OzoneDummy)
+OZONE_VECTOR_IMPLEMENT_API(OzoneDummy)
 
 void shouldCreateAndPushToVector(void) {
-  DummyTVectorT* vector = dummyVectorCreate(test_alloc, 3);
-  TEST_ASSERT_EQUAL_MESSAGE(3, vector->capacity, "It sets the capacity to the correct value");
-  TEST_ASSERT_EQUAL_MESSAGE(3, vector->capacity_increment, "It sets the capacity increment to the correct value");
-  TEST_ASSERT_EQUAL_MESSAGE(0, vector->length, "It sets the length to the correct value");
-  TEST_ASSERT_NOT_NULL_MESSAGE(vector->elements, "It reserves the vector's elements");
+  OzoneDummyVector vector = (OzoneDummyVector) { 0 };
+  TEST_ASSERT_EQUAL_MESSAGE(0, ozoneVectorLength(&vector), "It sets the length to the correct value");
 
-  dummyVectorPush(test_alloc, vector, 7);
-  dummyVectorPush(test_alloc, vector, 14);
-  dummyVectorPush(test_alloc, vector, 21);
-  dummyVectorPush(test_alloc, vector, 28);
+  pushOzoneDummy(test_alloc, &vector, 7);
+  pushOzoneDummy(test_alloc, &vector, 14);
+  pushOzoneDummy(test_alloc, &vector, 21);
+  pushOzoneDummy(test_alloc, &vector, 28);
+  pushOzoneDummy(test_alloc, &vector, 35);
 
-  TEST_ASSERT_EQUAL_MESSAGE(6, vector->capacity, "It sets the capacity to the correct value");
-  TEST_ASSERT_EQUAL_MESSAGE(3, vector->capacity_increment, "It sets the capacity increment to the correct value");
-  TEST_ASSERT_EQUAL_MESSAGE(4, vector->length, "It sets the length to the correct value");
+  TEST_ASSERT_EQUAL_MESSAGE(8, vector.capacity, "It sets the capacity to the correct value");
+  TEST_ASSERT_EQUAL_MESSAGE(5, ozoneVectorLength(&vector), "It sets the length to the correct value");
 
-  TEST_ASSERT_EQUAL_MESSAGE(7, vector->elements[0], "It sets the element to the correct value");
-  TEST_ASSERT_EQUAL_MESSAGE(14, vector->elements[1], "It sets the element to the correct value");
-  TEST_ASSERT_EQUAL_MESSAGE(21, vector->elements[2], "It sets the element to the correct value");
-  TEST_ASSERT_EQUAL_MESSAGE(28, vector->elements[3], "It sets the element to the correct value");
+  TEST_ASSERT_EQUAL_MESSAGE(7, ozoneVectorAt(&vector, 0), "It sets the element to the correct value");
+  TEST_ASSERT_EQUAL_MESSAGE(14, ozoneVectorAt(&vector, 1), "It sets the element to the correct value");
+  TEST_ASSERT_EQUAL_MESSAGE(21, ozoneVectorAt(&vector, 2), "It sets the element to the correct value");
+  TEST_ASSERT_EQUAL_MESSAGE(28, ozoneVectorAt(&vector, 3), "It sets the element to the correct value");
+  TEST_ASSERT_EQUAL_MESSAGE(35, ozoneVectorAt(&vector, 4), "It sets the element to the correct value");
 }
 
 int main(void) {

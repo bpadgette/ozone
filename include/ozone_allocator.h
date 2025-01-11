@@ -3,28 +3,28 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef struct OzoneAllocator {
+typedef struct OzoneAllocatorStruct {
   uintptr_t cursor;
   uintptr_t end;
-  struct OzoneAllocator* previous;
-  struct OzoneAllocator* next;
-} OzoneAllocatorT;
+  struct OzoneAllocatorStruct* next;
+} OzoneAllocator;
 
-OzoneAllocatorT* ozoneAllocatorCreate(size_t initial_allocation_size);
-void ozoneAllocatorDelete(OzoneAllocatorT* allocator);
+OzoneAllocator* ozoneAllocatorCreate(size_t initial_allocation_size);
+void ozoneAllocatorDelete(OzoneAllocator* _allocator_);
 
-#define ozoneAllocatorGetRegionStart(allocator) (sizeof(OzoneAllocatorT) + (uintptr_t)allocator)
-#define ozoneAllocatorGetRegionCapacity(allocator) (size_t)(allocator->end - ozoneAllocatorGetRegionStart(allocator))
-size_t ozoneAllocatorGetTotalCapacity(OzoneAllocatorT* allocator);
+#define ozoneAllocatorGetRegionStart(_allocator_) (sizeof(OzoneAllocator) + (uintptr_t)_allocator_)
+#define ozoneAllocatorGetRegionCapacity(_allocator_)                                                                   \
+  (size_t)((_allocator_)->end - ozoneAllocatorGetRegionStart(_allocator_))
+size_t ozoneAllocatorGetTotalCapacity(OzoneAllocator* _allocator_);
 
-#define ozoneAllocatorGetRegionFree(allocator) (size_t)(allocator->end - allocator->cursor)
-size_t ozoneAllocatorGetTotalFree(OzoneAllocatorT* allocator);
+#define ozoneAllocatorGetRegionFree(_allocator_) (size_t)(_allocator_->end - _allocator_->cursor)
+size_t ozoneAllocatorGetTotalFree(OzoneAllocator* _allocator_);
 
-void ozoneAllocatorClear(OzoneAllocatorT* allocator);
+void ozoneAllocatorClear(OzoneAllocator* _allocator_);
 
-uintptr_t ozoneAllocatorReserveBytes(OzoneAllocatorT* allocator, size_t size);
-#define ozoneAllocatorReserveOne(allocator, type) (type*)ozoneAllocatorReserveBytes(allocator, 1 * sizeof(type))
-#define ozoneAllocatorReserveMany(allocator, type, count)                                                              \
-  (type*)ozoneAllocatorReserveBytes(allocator, count * sizeof(type))
+uintptr_t ozoneAllocatorReserveBytes(OzoneAllocator* _allocator_, size_t size);
+#define ozoneAllocatorReserveOne(_allocator_, type) (type*)ozoneAllocatorReserveBytes(_allocator_, 1 * sizeof(type))
+#define ozoneAllocatorReserveMany(_allocator_, type, count)                                                            \
+  (type*)ozoneAllocatorReserveBytes(_allocator_, count * sizeof(type))
 
 #endif

@@ -56,7 +56,6 @@ build-debug: $(TARGET_DEBUG_LIB)
 ##############################################################################
 # Testing
 #
-TEST_LIB_INCLUDES := $(LIB)Unity-2.6.0/src/
 TEST_LIB_SOURCE  := $(LIB)Unity-2.6.0/src/
 $(TEST_LIB_SOURCE):
 	$(DOWNLOAD_TARBALL) https://github.com/ThrowTheSwitch/Unity/archive/refs/tags/v2.6.0.tar.gz | $(UNTAR_INTO) $(LIB)
@@ -66,7 +65,7 @@ $(TEST_LIB): $(TEST_LIB_SOURCE)
 	$(CC) $(CFLAGS) -c $(TEST_LIB_SOURCE)unity.c $(CLIBS) -o $@
 
 $(BUILD)%.test: $(TEST)%.test.c $(DEBUG_OBJECTS) $(TEST_LIB)
-	$(CC) $(CFLAGS) $(foreach inc, $(TEST_LIB_INCLUDES), -I$(inc)) -g $^ $(CLIBS) -o $@
+	$(CC) $(CFLAGS) -I$(TEST_LIB_SOURCE) -g $^ $(CLIBS) -o $@
 	$@
 
 test: $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
@@ -81,11 +80,11 @@ $(BUILD_EXAMPLES)%: $(TARGET_LIB)
 	$(shell $(MKDIR) $(BUILD_EXAMPLES))	$(CC) $(CFLAGS) $(EXAMPLES)$*.c $< $(CLIBS) -o $@
 
 $(BUILD_EXAMPLES)%.debug: $(TARGET_DEBUG_LIB)
-	$(shell $(MKDIR) $(BUILD_EXAMPLES)) && $(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g $(EXAMPLES)$*.c $< $(CLIBS) -o $@
+	$(shell $(MKDIR) $(BUILD_EXAMPLES)) $(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g $(EXAMPLES)$*.c $< $(CLIBS) -o $@
 
 build-examples: $(patsubst $(EXAMPLES)%.c, $(BUILD_EXAMPLES)%, $(wildcard *, $(EXAMPLES)*.c))
 
-ex-%: $(BUILD_EXAMPLES)%
+%: $(BUILD_EXAMPLES)%
 	$(BUILD_EXAMPLES)$*
 
 ##############################################################################
@@ -112,4 +111,4 @@ clean:
 all: build build-debug build-examples test
 
 .DELETE_ON_ERROR:
-.PHONY: format format-check build build-debug build-examples test clean install uninstall all
+.PHONY: Makefile format format-check build build-debug build-examples test clean install uninstall all

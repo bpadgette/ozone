@@ -4,3 +4,8 @@ BasedOnStyle: Webkit
 ColumnLimit: 120
 BreakBeforeBraces: Attach
 IndentWidth: 2
+
+# When function arguments do not fit on the same line, break to new lines
+AlignAfterOpenBracket: AlwaysBreak
+BinPackArguments: false
+BinPackParameters: false
