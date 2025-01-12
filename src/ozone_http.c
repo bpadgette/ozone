@@ -190,7 +190,6 @@ OzoneHTTPRequest* ozoneHTTPParseSocketChunks(OzoneAllocator* allocator, const Oz
   // end todo
 
   OzoneHTTPRequest* http_request = ozoneAllocatorReserveOne(allocator, OzoneHTTPRequest);
-  *http_request = (OzoneHTTPRequest) { 0 };
 
   OzoneString method_string = ozoneStringFromBuffer(allocator, cursor, OZONE_REMAINING_CURSOR_SIZE, &ozoneString(" "));
   if (OZONE_HTTP_METHOD_UNKNOWN == (http_request->method = ozoneHTTPParseMethod(&method_string)))
@@ -311,7 +310,6 @@ int ozoneHTTPBeginPipeline(OzoneHTTPEvent* event, void* context) {
 
   event->request = ozoneHTTPParseSocketChunks(event->allocator, event->raw_socket_request);
   event->response = ozoneAllocatorReserveOne(event->allocator, OzoneHTTPResponse);
-  *event->response = (OzoneHTTPResponse) { 0 };
 
   ozoneLogInfo(
       "%s",
@@ -374,7 +372,6 @@ int ozoneHTTPEndPipeline(OzoneHTTPEvent* event, void* context) {
 
 int ozoneHTTPServe(OzoneAllocator* allocator, OzoneHTTPConfig config) {
   OzoneSocketHandlerRefVector* http_pipeline = ozoneAllocatorReserveOne(allocator, OzoneSocketHandlerRefVector);
-  *http_pipeline = (OzoneSocketHandlerRefVector) { 0 };
 
   pushOzoneSocketHandlerRef(allocator, http_pipeline, (OzoneSocketHandlerRef)ozoneHTTPBeginPipeline);
 

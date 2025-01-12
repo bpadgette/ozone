@@ -43,13 +43,8 @@
                                                                                                                        \
       _type_* old = vector->elements;                                                                                  \
       vector->elements = ozoneAllocatorReserveMany(allocator, _type_, vector->capacity);                               \
-      if (old)                                                                                                         \
+      if (old && vector->length)                                                                                       \
         memcpy(vector->elements, old, sizeof(_type_) * vector->length);                                                \
-                                                                                                                       \
-      memset(                                                                                                          \
-          vector->elements + sizeof(_type_) * vector->length,                                                          \
-          0,                                                                                                           \
-          sizeof(_type_) * (vector->capacity - vector->length));                                                       \
     }                                                                                                                  \
                                                                                                                        \
     vector->elements[vector->length++] = element;                                                                      \
