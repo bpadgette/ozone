@@ -8,6 +8,7 @@ DOWNLOAD_TARBALL  := curl -s -L
 FORMAT            := clang-format -i
 FORMAT_CHECK      := clang-format -i -Werror --dry-run
 FORMAT_TARGETS    := **/*.c **/*.h
+MEMCHECK          := valgrind --leak-check=full -s
 MKDIR             := mkdir -p
 UNTAR_INTO        := tar xz -C
 
@@ -82,7 +83,11 @@ $(BUILD_EXAMPLES)%: $(TARGET_LIB)
 $(BUILD_EXAMPLES)%.debug: $(TARGET_DEBUG_LIB)
 	$(shell $(MKDIR) $(BUILD_EXAMPLES)) $(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g $(EXAMPLES)$*.c $< $(CLIBS) -o $@
 
+%.memcheck: $(BUILD_EXAMPLES)%.debug
+	$(MEMCHECK) $(BUILD_EXAMPLES)$*.debug
+
 build-examples: $(patsubst $(EXAMPLES)%.c, $(BUILD_EXAMPLES)%, $(wildcard *, $(EXAMPLES)*.c))
+build-examples-debug: $(patsubst $(EXAMPLES)%.c, $(BUILD_EXAMPLES)%.debug, $(wildcard *, $(EXAMPLES)*.c))
 
 %: $(BUILD_EXAMPLES)%
 	$(BUILD_EXAMPLES)$*
@@ -111,4 +116,4 @@ clean:
 all: build build-debug build-examples test
 
 .DELETE_ON_ERROR:
-.PHONY: Makefile format format-check build build-debug build-examples test clean install uninstall all
+.PHONY: Makefile format format-check build build-debug build-examples build-examples-debug test clean install uninstall all

@@ -57,7 +57,6 @@ char ozoneStringShift(OzoneString* string) {
 
 OzoneString* ozoneStringCreate(OzoneAllocator* allocator, size_t capacity) {
   char* elements = ozoneAllocatorReserveMany(allocator, char, capacity);
-  memset(elements, '\0', capacity);
 
   OzoneString* string = ozoneAllocatorReserveOne(allocator, OzoneString);
   *string = (OzoneString) { .vector = (OzoneByteVector) { .capacity = capacity, .length = 0, .elements = elements } };

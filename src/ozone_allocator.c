@@ -15,6 +15,8 @@ OzoneAllocator* ozoneAllocatorCreate(size_t size) {
                                   .end = ozoneAllocatorGetRegionStart(allocator) + (uintptr_t)size,
                                   .next = NULL };
 
+  memset((void*)ozoneAllocatorGetRegionStart(allocator), 0, ozoneAllocatorGetRegionCapacity(allocator));
+
   return allocator;
 }
 
