@@ -9,13 +9,12 @@
 
 OZONE_VECTOR_IMPLEMENT_API(OzoneTemplatesComponent)
 
-OzoneTemplatesComponent ozoneTemplatesComponentCreate(
+OzoneTemplatesComponent* ozoneTemplatesComponentCreate(
     OzoneAllocator* allocator, const OzoneString* component_name, const OzoneStringVector* source) {
-  OzoneStringVector blocks = (OzoneStringVector) { 0 };
-  OzoneByteVector block_classes = (OzoneByteVector) { 0 };
+  OzoneStringVector* blocks = ozoneAllocatorReserveOne(allocator, OzoneStringVector);
+  OzoneString* block_classes = ozoneAllocatorReserveOne(allocator, OzoneString);
 
-  OzoneString* token = ozoneStringCreate(allocator, 128);
-  *token = ozoneString("");
+  OzoneString* token = ozoneString(allocator, "");
 
   int parsing = OZONE_TEMPLATES_PARSING_CONTENT;
   OzoneString* source_chunk;
@@ -26,8 +25,8 @@ OzoneTemplatesComponent ozoneTemplatesComponentCreate(
       case OZONE_TEMPLATES_PARSING_CONTENT: {
         if (cursor == '{' && ozoneStringBufferEnd(token) == '{') {
           ozoneStringPop(token);
-          pushOzoneString(allocator, &blocks, ozoneStringCopy(allocator, token));
-          pushOzoneByte(allocator, &block_classes, OZONE_TEMPLATES_BLOCK_CLASS_CONTENT);
+          ozoneVectorPushOzoneString(allocator, blocks, ozoneStringCopy(allocator, token));
+          ozoneStringAppend(allocator, block_classes, OZONE_TEMPLATES_BLOCK_CLASS_CONTENT);
           ozoneStringClear(token);
           parsing = OZONE_TEMPLATES_PARSING_PARAMETER_WHITESPACE;
         } else {
@@ -56,8 +55,8 @@ OzoneTemplatesComponent ozoneTemplatesComponentCreate(
       case OZONE_TEMPLATES_PARSING_PARAMETER_WHITESPACE_AFTER_NAME: {
         if (cursor == '}' && ozoneStringBufferEnd(token) == '}') {
           ozoneStringPop(token);
-          pushOzoneString(allocator, &blocks, ozoneStringCopy(allocator, token));
-          pushOzoneByte(allocator, &block_classes, OZONE_TEMPLATES_BLOCK_CLASS_NAMED);
+          ozoneVectorPushOzoneString(allocator, blocks, ozoneStringCopy(allocator, token));
+          ozoneStringAppend(allocator, block_classes, OZONE_TEMPLATES_BLOCK_CLASS_NAMED);
           ozoneStringClear(token);
           parsing = OZONE_TEMPLATES_PARSING_CONTENT;
         } else if (cursor == '}') {
@@ -70,41 +69,44 @@ OzoneTemplatesComponent ozoneTemplatesComponentCreate(
   }
 
   if (ozoneStringLength(token)) {
-    pushOzoneString(allocator, &blocks, *token);
-    pushOzoneByte(allocator, &block_classes, OZONE_TEMPLATES_BLOCK_CLASS_CONTENT);
+    ozoneVectorPushOzoneString(allocator, blocks, token);
+    ozoneStringAppend(allocator, block_classes, OZONE_TEMPLATES_BLOCK_CLASS_CONTENT);
   }
 
-  return (OzoneTemplatesComponent) {
+  OzoneTemplatesComponent* component = ozoneAllocatorReserveOne(allocator, OzoneTemplatesComponent);
+  *component = (OzoneTemplatesComponent) {
     .name = ozoneStringCopy(allocator, component_name),
     .blocks = blocks,
     .block_classes = block_classes,
   };
+
+  return component;
 }
 
-OzoneTemplatesComponent ozoneTemplatesComponentFromFile(OzoneAllocator* allocator, const OzoneString* source_path) {
-  OzoneStringVector source = ozoneFileLoadFromPath(allocator, source_path, 256);
-  return ozoneTemplatesComponentCreate(allocator, source_path, &source);
+OzoneTemplatesComponent* ozoneTemplatesComponentFromFile(OzoneAllocator* allocator, const OzoneString* source_path) {
+  OzoneStringVector* source = ozoneFileLoadFromPath(allocator, source_path, 256);
+  return ozoneTemplatesComponentCreate(allocator, source_path, source);
 }
 
-OzoneString ozoneTemplatesComponentRender(
-    OzoneAllocator* allocator, const OzoneTemplatesComponent* component, const OzoneStringKeyValueVector* arguments) {
-  OzoneString rendered = ozoneString("");
+OzoneString* ozoneTemplatesComponentRender(
+    OzoneAllocator* allocator, const OzoneTemplatesComponent* component, const OzoneStringMap* arguments) {
+  OzoneString* rendered = ozoneString(allocator, "");
   OzoneString* block;
-  ozoneVectorForEach(block, &component->blocks) {
-    switch (ozoneVectorAt(&component->block_classes, ozoneVectorIndex(&component->blocks, block))) {
+  ozoneVectorForEach(block, component->blocks) {
+    switch (ozoneStringBufferAt(component->block_classes, ozoneVectorIndex(component->blocks, block))) {
     case OZONE_TEMPLATES_BLOCK_CLASS_CONTENT: {
-      ozoneStringConcatenate(allocator, &rendered, block);
+      ozoneStringConcatenate(allocator, rendered, block);
       break;
     }
     case OZONE_TEMPLATES_BLOCK_CLASS_NAMED: {
       if (!arguments)
         break;
 
-      OzoneString* argument = ozoneStringKeyValueVectorFind(arguments, block);
+      const OzoneString* argument = ozoneStringMapFindValue(arguments, block);
       if (!argument)
         break;
 
-      ozoneStringConcatenate(allocator, &rendered, argument);
+      ozoneStringConcatenate(allocator, rendered, argument);
       break;
     }
     }
@@ -113,13 +115,13 @@ OzoneString ozoneTemplatesComponentRender(
   return rendered;
 }
 
-OzoneString
-ozoneTemplatesRender(OzoneAllocator* allocator, OzoneTemplatesConfig* config, const OzoneString* component_name) {
+OzoneString*
+ozoneTemplatesRender(OzoneAllocator* allocator, const OzoneTemplatesConfig* config, const OzoneString* component_name) {
   OzoneTemplatesComponent* component;
-  ozoneVectorForEach(component, &config->components) {
-    if (!ozoneStringCompare(component_name, &component->name))
-      return ozoneTemplatesComponentRender(allocator, component, &config->arguments);
+  ozoneVectorForEach(component, config->components) {
+    if (!ozoneStringCompare(component_name, component->name))
+      return ozoneTemplatesComponentRender(allocator, component, config->arguments);
   }
 
-  return ozoneString("");
+  return NULL;
 }

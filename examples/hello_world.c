@@ -5,31 +5,35 @@
 
 int before(OzoneAppEvent* event, OzoneAppContext* context) {
   (void)context;
-  ozoneAppSetResponseHeader(event, &ozoneString("Content-Type"), &ozoneString("text/html"));
-  ozoneAppSetResponseHeader(event, &ozoneString("X-Server-Name"), &ozoneString(SERVER_NAME));
+  ozoneAppSetResponseHeader(event, &ozoneStringConstant("Content-Type"), &ozoneStringConstant("text/html"));
+  ozoneAppSetResponseHeader(event, &ozoneStringConstant("X-Server-Name"), &ozoneStringConstant(SERVER_NAME));
 
   return 0;
 }
 
 int home(OzoneAppEvent* event, OzoneAppContext* context) {
-  ozoneStringPushKeyValue(
-      event->allocator, &context->templates.arguments, &ozoneString("title"), &ozoneString(SERVER_NAME));
-
-  ozoneStringPushKeyValue(
+  ozoneStringMapInsert(
       event->allocator,
-      &context->templates.arguments,
-      &ozoneString("body"),
-      &ozoneString("<h1>ozone</h1>"
-                   "<p>Ozone is a minimal dependency, C-based web framework.</p>"));
+      &context->templates->arguments,
+      &ozoneStringConstant("title"),
+      &ozoneStringConstant(SERVER_NAME));
 
-  event->response->body = ozoneTemplatesRender(event->allocator, &context->templates, &ozoneString(HOME_TEMPLATE));
+  ozoneStringMapInsert(
+      event->allocator,
+      &context->templates->arguments,
+      &ozoneStringConstant("body"),
+      &ozoneStringConstant("<h1>ozone</h1>"
+                           "<p>Ozone is a minimal dependency, C-based web framework.</p>"));
+
+  event->response->body
+      = ozoneTemplatesRender(event->allocator, context->templates, &ozoneStringConstant(HOME_TEMPLATE));
 
   return 0;
 }
 
 int refuse(OzoneAppEvent* event, OzoneAppContext* context) {
   (void)context;
-  event->response->body = ozoneString("No.");
+  event->response->body = ozoneStringCopy(event->allocator, &ozoneStringConstant("No."));
   event->response->code = 400;
   return 0;
 }
@@ -47,9 +51,12 @@ int main() {
   };
 
   OzoneTemplatesComponent templates[] = {
-    ozoneTemplatesComponentFromFile(allocator, &ozoneString(HOME_TEMPLATE)),
+    *ozoneTemplatesComponentFromFile(allocator, &ozoneStringConstant(HOME_TEMPLATE)),
   };
 
   return ozoneAppServe(
-      allocator, 8080, &ozoneVector(OzoneAppEndpoint, endpoints), &ozoneVector(OzoneTemplatesComponent, templates));
+      allocator,
+      8080,
+      &ozoneVectorFromArray(OzoneAppEndpoint, endpoints),
+      &ozoneVectorFromArray(OzoneTemplatesComponent, templates));
 }

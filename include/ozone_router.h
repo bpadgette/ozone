@@ -6,12 +6,12 @@
 
 typedef struct OzoneRouterHTTPConfigStruct {
   OzoneHTTPMethod method;
-  OzoneString target_pattern;
+  OzoneString* target_pattern;
 } OzoneRouterHTTPConfig;
 
 typedef struct OzoneRouterHTTPEndpointStruct {
-  OzoneRouterHTTPConfig config;
-  OzoneSocketHandlerRefVector handler_pipeline;
+  OzoneRouterHTTPConfig* config;
+  OzoneSocketHandlerRefVector* handler_pipeline;
 } OzoneRouterHTTPEndpoint;
 
 OZONE_VECTOR_DECLARE_API(OzoneRouterHTTPEndpoint)

@@ -6,42 +6,42 @@
 OZONE_VECTOR_IMPLEMENT_API(OzoneAppEndpoint)
 
 void ozoneAppSetResponseHeader(OzoneAppEvent* event, const OzoneString* name, const OzoneString* value) {
-  ozoneStringPushKeyValue(event->allocator, &event->response->headers, name, value);
+  ozoneStringMapInsert(event->allocator, &event->response->headers, name, value);
 }
 
-int ozoneAppHandler(OzoneHTTPEvent* event, OzoneAppContext* context) {
-  clearOzoneStringKeyValue(&context->templates.arguments);
-  context->router.handler_context = context;
-  return ozoneRouter(event, &context->router);
+int ozoneAppBeginPipeline(OzoneHTTPEvent* event, OzoneAppContext* context) {
+  context->templates->arguments = NULL;
+  context->router->handler_context = context;
+
+  return ozoneRouter(event, context->router);
 }
 
 int ozoneAppServe(
     OzoneAllocator* allocator,
     unsigned short int port,
-    const OzoneAppEndpointVector* endpoints,
-    const OzoneTemplatesComponentVector* templates) {
+    OzoneAppEndpointVector* endpoints,
+    OzoneTemplatesComponentVector* templates) {
   ozoneLogInfo("Registering %ld routes", ozoneVectorLength(endpoints));
 
-  OzoneSocketHandlerRef app_stack[] = {
-    (OzoneSocketHandlerRef)ozoneAppHandler,
-  };
+  OzoneRouterConfig* router_config = ozoneAllocatorReserveOne(allocator, OzoneRouterConfig);
+  router_config->endpoints = (const OzoneRouterHTTPEndpointVector*)endpoints;
 
-  OzoneAppContext context = (OzoneAppContext) {
-      .router = (OzoneRouterConfig) {
-          .endpoints = (const OzoneRouterHTTPEndpointVector*)endpoints,
-          .handler_context = NULL,
-      },
-      .templates = (OzoneTemplatesConfig) {
-        .arguments = ((OzoneStringKeyValueVector) { 0 }),
-        .components = *templates
-      },
+  OzoneTemplatesConfig* templates_config = ozoneAllocatorReserveOne(allocator, OzoneTemplatesConfig);
+  templates_config->components = templates;
+
+  OzoneAppContext* context = ozoneAllocatorReserveOne(allocator, OzoneAppContext);
+  context->router = router_config;
+  context->templates = templates_config;
+
+  OzoneSocketHandlerRef app_stack[] = {
+    (OzoneSocketHandlerRef)ozoneAppBeginPipeline,
   };
 
   OzoneHTTPConfig http_config = {
     .port = port,
-    .handler_pipeline = ozoneVector(OzoneSocketHandlerRef, app_stack),
-    .handler_context = &context,
+    .handler_pipeline = &ozoneVectorFromArray(OzoneSocketHandlerRef, app_stack),
+    .handler_context = context,
   };
 
-  return ozoneHTTPServe(allocator, http_config);
+  return ozoneHTTPServe(allocator, &http_config);
 }
