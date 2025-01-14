@@ -11,8 +11,8 @@ OZONE_VECTOR_IMPLEMENT_API(OzoneTemplatesComponent)
 
 OzoneTemplatesComponent* ozoneTemplatesComponentCreate(
     OzoneAllocator* allocator, const OzoneString* component_name, const OzoneStringVector* source) {
-  OzoneStringVector* blocks = ozoneAllocatorReserveOne(allocator, OzoneStringVector);
-  OzoneString* block_classes = ozoneAllocatorReserveOne(allocator, OzoneString);
+  OzoneStringVector blocks = (OzoneStringVector) { 0 };
+  OzoneString block_classes = (OzoneString) { 0 };
 
   OzoneString* token = ozoneString(allocator, "");
 
@@ -25,8 +25,8 @@ OzoneTemplatesComponent* ozoneTemplatesComponentCreate(
       case OZONE_TEMPLATES_PARSING_CONTENT: {
         if (cursor == '{' && ozoneStringBufferEnd(token) == '{') {
           ozoneStringPop(token);
-          ozoneVectorPushOzoneString(allocator, blocks, ozoneStringCopy(allocator, token));
-          ozoneStringAppend(allocator, block_classes, OZONE_TEMPLATES_BLOCK_CLASS_CONTENT);
+          ozoneVectorPushOzoneString(allocator, &blocks, ozoneStringCopy(allocator, token));
+          ozoneStringAppend(allocator, &block_classes, OZONE_TEMPLATES_BLOCK_CLASS_CONTENT);
           ozoneStringClear(token);
           parsing = OZONE_TEMPLATES_PARSING_PARAMETER_WHITESPACE;
         } else {
@@ -55,8 +55,8 @@ OzoneTemplatesComponent* ozoneTemplatesComponentCreate(
       case OZONE_TEMPLATES_PARSING_PARAMETER_WHITESPACE_AFTER_NAME: {
         if (cursor == '}' && ozoneStringBufferEnd(token) == '}') {
           ozoneStringPop(token);
-          ozoneVectorPushOzoneString(allocator, blocks, ozoneStringCopy(allocator, token));
-          ozoneStringAppend(allocator, block_classes, OZONE_TEMPLATES_BLOCK_CLASS_NAMED);
+          ozoneVectorPushOzoneString(allocator, &blocks, ozoneStringCopy(allocator, token));
+          ozoneStringAppend(allocator, &block_classes, OZONE_TEMPLATES_BLOCK_CLASS_NAMED);
           ozoneStringClear(token);
           parsing = OZONE_TEMPLATES_PARSING_CONTENT;
         } else if (cursor == '}') {
@@ -69,13 +69,13 @@ OzoneTemplatesComponent* ozoneTemplatesComponentCreate(
   }
 
   if (ozoneStringLength(token)) {
-    ozoneVectorPushOzoneString(allocator, blocks, token);
-    ozoneStringAppend(allocator, block_classes, OZONE_TEMPLATES_BLOCK_CLASS_CONTENT);
+    ozoneVectorPushOzoneString(allocator, &blocks, token);
+    ozoneStringAppend(allocator, &block_classes, OZONE_TEMPLATES_BLOCK_CLASS_CONTENT);
   }
 
   OzoneTemplatesComponent* component = ozoneAllocatorReserveOne(allocator, OzoneTemplatesComponent);
   *component = (OzoneTemplatesComponent) {
-    .name = ozoneStringCopy(allocator, component_name),
+    .name = *ozoneStringCopy(allocator, component_name),
     .blocks = blocks,
     .block_classes = block_classes,
   };
@@ -92,8 +92,8 @@ OzoneString* ozoneTemplatesComponentRender(
     OzoneAllocator* allocator, const OzoneTemplatesComponent* component, const OzoneStringMap* arguments) {
   OzoneString* rendered = ozoneString(allocator, "");
   OzoneString* block;
-  ozoneVectorForEach(block, component->blocks) {
-    switch (ozoneStringBufferAt(component->block_classes, ozoneVectorIndex(component->blocks, block))) {
+  ozoneVectorForEach(block, &component->blocks) {
+    switch (ozoneStringBufferAt(&component->block_classes, ozoneVectorIndex(&component->blocks, block))) {
     case OZONE_TEMPLATES_BLOCK_CLASS_CONTENT: {
       ozoneStringConcatenate(allocator, rendered, block);
       break;
@@ -118,9 +118,9 @@ OzoneString* ozoneTemplatesComponentRender(
 OzoneString*
 ozoneTemplatesRender(OzoneAllocator* allocator, const OzoneTemplatesConfig* config, const OzoneString* component_name) {
   OzoneTemplatesComponent* component;
-  ozoneVectorForEach(component, config->components) {
-    if (!ozoneStringCompare(component_name, component->name))
-      return ozoneTemplatesComponentRender(allocator, component, config->arguments);
+  ozoneVectorForEach(component, &config->components) {
+    if (!ozoneStringCompare(component_name, &component->name))
+      return ozoneTemplatesComponentRender(allocator, component, &config->arguments);
   }
 
   return NULL;

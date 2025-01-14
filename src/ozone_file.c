@@ -20,7 +20,7 @@ OzoneStringVector* ozoneFileLoad(OzoneAllocator* allocator, FILE* file, size_t m
     byte_vector->elements = cursor;
 
     OzoneString* string = ozoneAllocatorReserveOne(allocator, OzoneString);
-    string->vector = byte_vector;
+    string->vector = *byte_vector;
 
     ozoneVectorPushOzoneString(allocator, vector, string);
 

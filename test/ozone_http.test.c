@@ -20,27 +20,27 @@ void shouldParseSocketChunksAsHTTPRequest(void) {
 
   TEST_ASSERT_EQUAL_MESSAGE(OZONE_HTTP_METHOD_POST, request->method, "It parses the correct HTTP method");
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
-      &ozoneStringConstant("/users"), request->target, "It parses the correct HTTP target");
+      &ozoneStringConstant("/users"), &request->target, "It parses the correct HTTP target");
 
   TEST_ASSERT_EQUAL_MESSAGE(OZONE_HTTP_VERSION_1_1, request->version, "It parses the correct HTTP version");
 
-  const OzoneString* header = ozoneStringMapFindValue(request->headers, &ozoneStringConstant("Host"));
+  const OzoneString* header = ozoneStringMapFindValue(&request->headers, &ozoneStringConstant("Host"));
   TEST_ASSERT_NOT_NULL_MESSAGE(header, "It returns a Host header");
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
       &ozoneStringConstant("example.com"), header, "It parses the correct Host value");
 
-  header = ozoneStringMapFindValue(request->headers, &ozoneStringConstant("Content-Type"));
+  header = ozoneStringMapFindValue(&request->headers, &ozoneStringConstant("Content-Type"));
   TEST_ASSERT_NOT_NULL_MESSAGE(header, "It returns a Content-Type header");
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
       &ozoneStringConstant("application/x-www-form-urlencoded"), header, "It parses the correct Content-Type value");
 
-  header = ozoneStringMapFindValue(request->headers, &ozoneStringConstant("Content-Length"));
+  header = ozoneStringMapFindValue(&request->headers, &ozoneStringConstant("Content-Length"));
   TEST_ASSERT_NOT_NULL_MESSAGE(header, "It returns a Content-Length header");
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
       &ozoneStringConstant("27"), header, "It parses the correct Content-Length value");
 
   OzoneString body = ozoneStringConstant("field1=value1&field2=value2");
-  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&body, request->body, "It parses the correct HTTP body");
+  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&body, &request->body, "It parses the correct HTTP body");
 }
 
 int main(void) {

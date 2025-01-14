@@ -6,9 +6,9 @@
 #include "ozone_string.h"
 
 typedef struct OzoneTemplatesComponentStruct {
-  OzoneString* name;
-  OzoneStringVector* blocks;
-  OzoneString* block_classes;
+  OzoneString name;
+  OzoneStringVector blocks;
+  OzoneString block_classes;
 } OzoneTemplatesComponent;
 
 #define OZONE_TEMPLATES_BLOCK_CLASS_CONTENT 1
@@ -24,8 +24,8 @@ OzoneString* ozoneTemplatesComponentRender(
     OzoneAllocator* allocator, const OzoneTemplatesComponent* component, const OzoneStringMap* arguments);
 
 typedef struct OzoneTemplatesConfigStruct {
-  OzoneStringMap* arguments;
-  OzoneTemplatesComponentVector* components;
+  OzoneStringMap arguments;
+  OzoneTemplatesComponentVector components;
 } OzoneTemplatesConfig;
 
 OzoneString*

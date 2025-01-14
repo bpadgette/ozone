@@ -14,26 +14,27 @@ int before(OzoneAppEvent* event, OzoneAppContext* context) {
 int home(OzoneAppEvent* event, OzoneAppContext* context) {
   ozoneStringMapInsert(
       event->allocator,
-      &context->templates->arguments,
+      &context->templates.arguments,
       &ozoneStringConstant("title"),
       &ozoneStringConstant(SERVER_NAME));
 
   ozoneStringMapInsert(
       event->allocator,
-      &context->templates->arguments,
+      &context->templates.arguments,
       &ozoneStringConstant("body"),
       &ozoneStringConstant("<h1>ozone</h1>"
                            "<p>Ozone is a minimal dependency, C-based web framework.</p>"));
 
   event->response->body
-      = ozoneTemplatesRender(event->allocator, context->templates, &ozoneStringConstant(HOME_TEMPLATE));
+      = *ozoneTemplatesRender(event->allocator, &context->templates, &ozoneStringConstant(HOME_TEMPLATE));
 
   return 0;
 }
 
 int refuse(OzoneAppEvent* event, OzoneAppContext* context) {
   (void)context;
-  event->response->body = ozoneStringCopy(event->allocator, &ozoneStringConstant("No."));
+
+  event->response->body = *ozoneString(event->allocator, "No.");
   event->response->code = 400;
   return 0;
 }

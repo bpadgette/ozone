@@ -10,10 +10,12 @@ void ozoneAppSetResponseHeader(OzoneAppEvent* event, const OzoneString* name, co
 }
 
 int ozoneAppBeginPipeline(OzoneHTTPEvent* event, OzoneAppContext* context) {
-  context->templates->arguments = NULL;
-  context->router->handler_context = context;
+  ozoneLogTrace(
+      "Beginning app pipeline, %ld hot bytes in event allocator", ozoneAllocatorGetTotalFree(event->allocator));
+  context->templates.arguments = (OzoneStringMap) { 0 };
+  context->router.handler_context = context;
 
-  return ozoneRouter(event, context->router);
+  return ozoneRouter(event, &context->router);
 }
 
 int ozoneAppServe(
@@ -23,24 +25,25 @@ int ozoneAppServe(
     OzoneTemplatesComponentVector* templates) {
   ozoneLogInfo("Registering %ld routes", ozoneVectorLength(endpoints));
 
-  OzoneRouterConfig* router_config = ozoneAllocatorReserveOne(allocator, OzoneRouterConfig);
-  router_config->endpoints = (const OzoneRouterHTTPEndpointVector*)endpoints;
+  OzoneTemplatesConfig templates_config = (OzoneTemplatesConfig) { 0 };
+  templates_config.components = *templates;
 
-  OzoneTemplatesConfig* templates_config = ozoneAllocatorReserveOne(allocator, OzoneTemplatesConfig);
-  templates_config->components = templates;
-
-  OzoneAppContext* context = ozoneAllocatorReserveOne(allocator, OzoneAppContext);
-  context->router = router_config;
-  context->templates = templates_config;
+  OzoneAppContext context = (OzoneAppContext) {
+    .router = ((OzoneRouterConfig) {
+        .endpoints = (*(OzoneRouterHTTPEndpointVector*)endpoints),
+        .handler_context = NULL,
+    }),
+    .templates = templates_config,
+  };
 
   OzoneSocketHandlerRef app_stack[] = {
     (OzoneSocketHandlerRef)ozoneAppBeginPipeline,
   };
 
-  OzoneHTTPConfig http_config = {
+  OzoneHTTPConfig http_config = (OzoneHTTPConfig) {
     .port = port,
-    .handler_pipeline = &ozoneVectorFromArray(OzoneSocketHandlerRef, app_stack),
-    .handler_context = context,
+    .handler_pipeline = ozoneVectorFromArray(OzoneSocketHandlerRef, app_stack),
+    .handler_context = &context,
   };
 
   return ozoneHTTPServe(allocator, &http_config);

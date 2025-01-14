@@ -8,14 +8,14 @@ typedef char OzoneByte;
 OZONE_VECTOR_DECLARE_API(OzoneByte)
 
 typedef struct OzoneStringStruct {
-  OzoneByteVector* vector;
+  OzoneByteVector vector;
 } OzoneString;
 
 OZONE_VECTOR_DECLARE_API(OzoneString)
 
 #define ozoneStringConstant(_chars_)                                                                                   \
   ((OzoneString) {                                                                                                     \
-      .vector = &((OzoneByteVector) {                                                                                  \
+      .vector = ((OzoneByteVector) {                                                                                   \
           .elements = _chars_,                                                                                         \
           .length = sizeof(_chars_),                                                                                   \
           .capacity = sizeof(_chars_),                                                                                 \
@@ -25,10 +25,10 @@ OZONE_VECTOR_DECLARE_API(OzoneString)
 #define ozoneString(_allocator_, _chars_) ozoneStringCopy(_allocator_, &ozoneStringConstant((_chars_)))
 
 #define ozoneStringLength(_string_)                                                                                    \
-  (ozoneVectorLength((_string_)->vector) > 0 ? ozoneVectorLength((_string_)->vector) - 1 : 0)
-#define ozoneStringBuffer(_string_) ((_string_)->vector->elements)
-#define ozoneStringBufferAt(_string_, _index_) ((_string_)->vector->elements[_index_])
-#define ozoneStringBufferEnd(_string_) ((_string_)->vector->elements[ozoneStringLength(_string_) - 1])
+  (ozoneVectorLength(&(_string_)->vector) > 0 ? ozoneVectorLength(&(_string_)->vector) - 1 : 0)
+#define ozoneStringBuffer(_string_) ((_string_)->vector.elements)
+#define ozoneStringBufferAt(_string_, _index_) ((_string_)->vector.elements[_index_])
+#define ozoneStringBufferEnd(_string_) ((_string_)->vector.elements[ozoneStringLength(_string_) - 1])
 
 void ozoneStringAppend(OzoneAllocator* allocator, OzoneString* string, char byte);
 void ozoneStringClear(OzoneString* string);

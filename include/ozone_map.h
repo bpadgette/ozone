@@ -4,13 +4,12 @@
 #include "ozone_string.h"
 
 typedef struct OzoneStringMapStruct {
-  OzoneStringVector* keys;
-  OzoneStringVector* values;
+  OzoneStringVector keys;
+  OzoneStringVector values;
 } OzoneStringMap;
 
-OzoneStringMap* ozoneStringMapCreate(OzoneAllocator* allocator);
 const OzoneString* ozoneStringMapFindValue(const OzoneStringMap* map, const OzoneString* key);
 void ozoneStringMapInsert(
-    OzoneAllocator* allocator, OzoneStringMap** map, const OzoneString* key, const OzoneString* value);
+    OzoneAllocator* allocator, OzoneStringMap* map, const OzoneString* key, const OzoneString* value);
 
 #endif

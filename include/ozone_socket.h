@@ -8,8 +8,8 @@
 #define OZONE_SOCKET_EVENT_FIELDS(_request_type_, _response_type_)                                                     \
   {                                                                                                                    \
     OzoneAllocator* allocator;                                                                                         \
-    const OzoneStringVector* raw_socket_request;                                                                       \
-    OzoneStringVector* raw_socket_response;                                                                            \
+    OzoneStringVector raw_socket_request;                                                                              \
+    OzoneStringVector raw_socket_response;                                                                             \
     _request_type_* request;                                                                                           \
     _response_type_* response;                                                                                         \
   }
@@ -22,7 +22,7 @@ OZONE_VECTOR_DECLARE_API(OzoneSocketHandlerRef)
 
 typedef struct OzoneSocketConfigStruct {
   unsigned short int port;
-  OzoneSocketHandlerRefVector* handler_pipeline;
+  OzoneSocketHandlerRefVector handler_pipeline;
   void* handler_context;
 } OzoneSocketConfig;
 
