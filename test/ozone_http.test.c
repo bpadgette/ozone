@@ -12,8 +12,7 @@
   "field1=value1&field2=value2"
 
 void shouldParseSocketChunksAsHTTPRequest(void) {
-  OzoneString raw[] = { ozoneStringConstant(EXAMPLE_HTTP_REQUEST) };
-  OzoneStringVector chunks = ozoneVectorFromArray(OzoneString, raw);
+  OzoneStringVector chunks = ozoneVectorFromElements(OzoneString, ozoneStringConstant(EXAMPLE_HTTP_REQUEST));
 
   OzoneHTTPRequest* request = ozoneHTTPParseSocketRequest(test_alloc, &chunks);
   TEST_ASSERT_NOT_NULL_MESSAGE(request, "It returns an HTTP request");

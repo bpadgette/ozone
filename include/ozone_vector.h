@@ -20,6 +20,13 @@
       .capacity = sizeof(_array_) / sizeof(_type_),                                                                    \
   })
 
+#define ozoneVectorFromElements(_type_, ...)                                                                           \
+  ((_type_##Vector) {                                                                                                  \
+      .elements = ((_type_[]) { __VA_ARGS__ }),                                                                        \
+      .length = sizeof(((_type_[]) { __VA_ARGS__ })) / sizeof(_type_),                                                 \
+      .capacity = sizeof(((_type_[]) { __VA_ARGS__ })) / sizeof(_type_),                                               \
+  })
+
 #define ozoneVectorLength(_vector_) ((_vector_)->length)
 #define ozoneVectorAt(_vector_, _index_) ((_vector_)->elements[_index_])
 #define ozoneVectorBegin(_vector_) ((_vector_)->elements)

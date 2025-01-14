@@ -12,16 +12,14 @@ typedef OzoneHTTPEvent OzoneAppEvent;
 typedef OzoneRouterHTTPEndpoint OzoneAppEndpoint;
 OZONE_VECTOR_DECLARE_API(OzoneAppEndpoint)
 
-#define ozoneAppEndpoint(_method_, _path_, _handler_pipeline_)                                                         \
+#define ozoneAppEndpoint(_method_, _path_, ...)                                                                        \
   (OzoneAppEndpoint) {                                                                                                 \
     .config = ((OzoneRouterHTTPConfig) {                                                                               \
         .method = OZONE_HTTP_METHOD_##_method_,                                                                        \
         .target_pattern = ozoneStringConstant(_path_),                                                                 \
     }),                                                                                                                \
-    .handler_pipeline = ozoneVectorFromArray(OzoneSocketHandlerRef, _handler_pipeline_),                               \
+    .handler_pipeline = ozoneVectorFromArray(OzoneSocketHandlerRef, ((OzoneAppHandler*[]) { __VA_ARGS__ }))            \
   }
-
-void ozoneAppSetResponseHeader(OzoneAppEvent* event, const OzoneString* name, const OzoneString* value);
 
 typedef struct OzoneAppContextStruct {
   OzoneRouterConfig router;
@@ -30,10 +28,14 @@ typedef struct OzoneAppContextStruct {
 
 typedef int(OzoneAppHandler)(OzoneAppEvent* event, OzoneAppContext* context);
 
-int ozoneAppServe(
-    OzoneAllocator* allocator,
-    unsigned short int port,
-    OzoneAppEndpointVector* endpoints,
-    OzoneTemplatesComponentVector* templates);
+int ozoneAppServe(unsigned short int port, OzoneAppEndpointVector* endpoints, OzoneStringVector* template_paths);
+
+void ozoneAppRenderResponseBody(
+    OzoneAppEvent* event,
+    const OzoneAppContext* context,
+    const OzoneString* component_name,
+    const OzoneStringMap* arguments);
+
+void ozoneAppSetResponseHeader(OzoneAppEvent* event, const OzoneString* name, const OzoneString* value);
 
 #endif

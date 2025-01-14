@@ -24,11 +24,7 @@ OzoneString* ozoneTemplatesComponentRender(
     OzoneAllocator* allocator, const OzoneTemplatesComponent* component, const OzoneStringMap* arguments);
 
 typedef struct OzoneTemplatesConfigStruct {
-  OzoneStringMap arguments;
   OzoneTemplatesComponentVector components;
 } OzoneTemplatesConfig;
-
-OzoneString*
-ozoneTemplatesRender(OzoneAllocator* allocator, const OzoneTemplatesConfig* config, const OzoneString* component_name);
 
 #endif

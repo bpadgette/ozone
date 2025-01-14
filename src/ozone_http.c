@@ -410,8 +410,5 @@ int ozoneHTTPServe(OzoneAllocator* allocator, OzoneHTTPConfig* config) {
     .handler_context = config->handler_context,
   };
 
-  int return_code = ozoneSocketServeTCP(&socket_config);
-  ozoneAllocatorDelete(allocator);
-
-  return return_code;
+  return ozoneSocketServeTCP(&socket_config);
 }

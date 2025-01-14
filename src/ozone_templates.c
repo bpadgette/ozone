@@ -114,14 +114,3 @@ OzoneString* ozoneTemplatesComponentRender(
 
   return rendered;
 }
-
-OzoneString*
-ozoneTemplatesRender(OzoneAllocator* allocator, const OzoneTemplatesConfig* config, const OzoneString* component_name) {
-  OzoneTemplatesComponent* component;
-  ozoneVectorForEach(component, &config->components) {
-    if (!ozoneStringCompare(component_name, &component->name))
-      return ozoneTemplatesComponentRender(allocator, component, &config->arguments);
-  }
-
-  return NULL;
-}
