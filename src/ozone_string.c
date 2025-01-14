@@ -5,22 +5,25 @@
 
 OZONE_VECTOR_IMPLEMENT_API(OzoneByte)
 OZONE_VECTOR_IMPLEMENT_API(OzoneString)
-OZONE_VECTOR_IMPLEMENT_API(OzoneStringKeyValue)
 
 void ozoneStringAppend(OzoneAllocator* allocator, OzoneString* string, char byte) {
-  if (byte == '\0')
+  if (!string || byte == '\0')
     return;
 
   if (!ozoneStringLength(string)) {
-    char* elements = ozoneAllocatorReserveMany(allocator, char, 2);
-    elements[0] = byte;
-    elements[1] = '\0';
-    string->vector = (OzoneByteVector) { .capacity = 2, .length = 2, .elements = elements };
+    OzoneByteVector* vector = ozoneAllocatorReserveOne(allocator, OzoneByteVector);
+    vector->length = 2;
+    vector->capacity = 2;
+    vector->elements = ozoneAllocatorReserveMany(allocator, char, vector->capacity);
+    vector->elements[0] = byte;
+
+    string->vector = *vector;
     return;
   }
 
-  pushOzoneByte(allocator, &string->vector, '\0');
-  string->vector.elements[ozoneVectorLength(&string->vector) - 2] = byte;
+  char* end = "\0";
+  ozoneVectorPushOzoneByte(allocator, &string->vector, end);
+  string->vector.elements[string->vector.length - 2] = byte;
 }
 
 void ozoneStringClear(OzoneString* string) {
@@ -55,25 +58,18 @@ char ozoneStringShift(OzoneString* string) {
   return shifted;
 }
 
-OzoneString* ozoneStringCreate(OzoneAllocator* allocator, size_t capacity) {
-  char* elements = ozoneAllocatorReserveMany(allocator, char, capacity);
+OzoneString* ozoneStringCopy(OzoneAllocator* allocator, const OzoneString* original) {
+  OzoneByteVector* vector = ozoneAllocatorReserveOne(allocator, OzoneByteVector);
+  vector->elements = ozoneAllocatorReserveMany(allocator, char, original->vector.capacity);
+  vector->capacity = original->vector.capacity;
+  vector->length = original->vector.length;
 
-  OzoneString* string = ozoneAllocatorReserveOne(allocator, OzoneString);
-  *string = (OzoneString) { .vector = (OzoneByteVector) { .capacity = capacity, .length = 0, .elements = elements } };
+  memcpy(vector->elements, original->vector.elements, vector->capacity);
 
-  return string;
-}
+  OzoneString* copy = ozoneAllocatorReserveOne(allocator, OzoneString);
+  copy->vector = *vector;
 
-OzoneString ozoneStringCopy(OzoneAllocator* allocator, const OzoneString* original) {
-  char* buffer = ozoneAllocatorReserveMany(allocator, char, ozoneStringLength(original) + 1);
-  memcpy(buffer, original->vector.elements, ozoneStringLength(original) + 1);
-  return ((OzoneString) {
-      .vector = ((OzoneByteVector) {
-          .elements = buffer,
-          .length = ozoneStringLength(original) + 1,
-          .capacity = original->vector.capacity,
-      }),
-  });
+  return copy;
 }
 
 void ozoneStringConcatenate(OzoneAllocator* allocator, OzoneString* destination, const OzoneString* source) {
@@ -110,35 +106,17 @@ int ozoneStringFindFirst(const OzoneString* string, const OzoneString* search) {
   return -1;
 }
 
-OzoneString ozoneStringFromBuffer(OzoneAllocator* allocator, char* buffer, size_t buffer_size, const OzoneString* end) {
-  int location = ozoneStringFindFirst(
-      &(OzoneString) {
-          .vector = (OzoneByteVector) { .elements = buffer, .length = buffer_size, .capacity = buffer_size },
-      },
-      end);
+OzoneString* ozoneStringFromBuffer(OzoneAllocator* allocator, char* buffer, size_t buffer_size) {
+  OzoneByteVector vector = (OzoneByteVector) {
+    .elements = ozoneAllocatorReserveMany(allocator, char, buffer_size + 1),
+    .length = buffer_size,
+    .capacity = buffer_size,
+  };
 
-  size_t string_length = location == -1 ? buffer_size : ((size_t)location + 1);
+  memcpy(vector.elements, buffer, buffer_size);
 
-  OzoneString string = ((OzoneString) {
-      .vector = ((OzoneByteVector) {
-          .elements = ozoneAllocatorReserveMany(allocator, char, string_length + 1),
-          .length = string_length,
-          .capacity = string_length,
-      }),
-  });
-
-  memcpy(ozoneStringBuffer(&string), buffer, ozoneStringLength(&string) + 1);
-  ozoneStringBuffer(&string)[ozoneStringLength(&string)] = '\0';
+  OzoneString* string = ozoneAllocatorReserveOne(allocator, OzoneString);
+  string->vector = vector;
 
   return string;
-}
-
-OzoneString* ozoneStringKeyValueVectorFind(const OzoneStringKeyValueVector* vector, const OzoneString* key) {
-  OzoneStringKeyValue* pair;
-  ozoneVectorForEach(pair, vector) {
-    if (ozoneStringCompare(&pair->key, key) == 0)
-      return &pair->value;
-  }
-
-  return NULL;
 }

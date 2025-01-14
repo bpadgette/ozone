@@ -17,14 +17,15 @@ void ozoneAllocatorDelete(OzoneAllocator* _allocator_);
   (size_t)((_allocator_)->end - ozoneAllocatorGetRegionStart(_allocator_))
 size_t ozoneAllocatorGetTotalCapacity(OzoneAllocator* _allocator_);
 
-#define ozoneAllocatorGetRegionFree(_allocator_) (size_t)(_allocator_->end - _allocator_->cursor)
+#define ozoneAllocatorGetRegionFree(_allocator_) (size_t)((_allocator_)->end - (_allocator_)->cursor)
 size_t ozoneAllocatorGetTotalFree(OzoneAllocator* _allocator_);
 
 void ozoneAllocatorClear(OzoneAllocator* _allocator_);
 
 uintptr_t ozoneAllocatorReserveBytes(OzoneAllocator* _allocator_, size_t size);
-#define ozoneAllocatorReserveOne(_allocator_, type) (type*)ozoneAllocatorReserveBytes(_allocator_, 1 * sizeof(type))
-#define ozoneAllocatorReserveMany(_allocator_, type, count)                                                            \
-  (type*)ozoneAllocatorReserveBytes(_allocator_, count * sizeof(type))
+#define ozoneAllocatorReserveOne(_allocator_, _type_)                                                                  \
+  (_type_*)ozoneAllocatorReserveBytes(_allocator_, 1 * sizeof(_type_))
+#define ozoneAllocatorReserveMany(_allocator_, _type_, _count_)                                                        \
+  (_type_*)ozoneAllocatorReserveBytes(_allocator_, _count_ * sizeof(_type_))
 
 #endif

@@ -13,7 +13,7 @@ typedef struct OzoneStringStruct {
 
 OZONE_VECTOR_DECLARE_API(OzoneString)
 
-#define ozoneString(_chars_)                                                                                           \
+#define ozoneStringConstant(_chars_)                                                                                   \
   ((OzoneString) {                                                                                                     \
       .vector = ((OzoneByteVector) {                                                                                   \
           .elements = _chars_,                                                                                         \
@@ -22,9 +22,10 @@ OZONE_VECTOR_DECLARE_API(OzoneString)
       }),                                                                                                              \
   })
 
+#define ozoneString(_allocator_, _chars_) ozoneStringCopy(_allocator_, &ozoneStringConstant((_chars_)))
+
 #define ozoneStringLength(_string_)                                                                                    \
-  (ozoneVectorLength(&(_string_)->vector) > 0 ? ozoneVectorLength(&(_string_)->vector) - 1                             \
-                                              : ozoneVectorLength(&(_string_)->vector))
+  (ozoneVectorLength(&(_string_)->vector) > 0 ? ozoneVectorLength(&(_string_)->vector) - 1 : 0)
 #define ozoneStringBuffer(_string_) ((_string_)->vector.elements)
 #define ozoneStringBufferAt(_string_, _index_) ((_string_)->vector.elements[_index_])
 #define ozoneStringBufferEnd(_string_) ((_string_)->vector.elements[ozoneStringLength(_string_) - 1])
@@ -33,8 +34,7 @@ void ozoneStringAppend(OzoneAllocator* allocator, OzoneString* string, char byte
 void ozoneStringClear(OzoneString* string);
 char ozoneStringPop(OzoneString* string);
 char ozoneStringShift(OzoneString* string);
-OzoneString* ozoneStringCreate(OzoneAllocator* allocator, size_t capacity);
-OzoneString ozoneStringCopy(OzoneAllocator* allocator, const OzoneString* original);
+OzoneString* ozoneStringCopy(OzoneAllocator* allocator, const OzoneString* original);
 void ozoneStringConcatenate(OzoneAllocator* allocator, OzoneString* destination, const OzoneString* source);
 
 /**
@@ -47,27 +47,6 @@ int ozoneStringFindFirst(const OzoneString* string, const OzoneString* search);
  */
 int ozoneStringCompare(const OzoneString* left, const OzoneString* right);
 
-/**
- * \returns  OzoneString, not exceeding the buffer_size and not scanning beyond the first occurrence of *end.
- * If end is NULL then this function will scan until buffer_size is reached.
- */
-OzoneString ozoneStringFromBuffer(OzoneAllocator* allocator, char* buffer, size_t buffer_size, const OzoneString* end);
-
-typedef struct OzoneStringKeyValueStruct {
-  OzoneString key;
-  OzoneString value;
-} OzoneStringKeyValue;
-
-OZONE_VECTOR_DECLARE_API(OzoneStringKeyValue)
-
-OzoneString* ozoneStringKeyValueVectorFind(const OzoneStringKeyValueVector* vector, const OzoneString* key);
-#define ozoneStringPushKeyValue(_allocator_, _vector_, _key_, _value_)                                                 \
-  pushOzoneStringKeyValue(                                                                                             \
-      _allocator_,                                                                                                     \
-      _vector_,                                                                                                        \
-      ((OzoneStringKeyValue) {                                                                                         \
-          .key = ozoneStringCopy(_allocator_, _key_),                                                                  \
-          .value = ozoneStringCopy(_allocator_, _value_),                                                              \
-      }));
+OzoneString* ozoneStringFromBuffer(OzoneAllocator* allocator, char* buffer, size_t buffer_size);
 
 #endif

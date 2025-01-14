@@ -2,19 +2,14 @@
 #define OZONE_SOCKET_H
 
 #include "ozone_allocator.h"
+#include "ozone_string.h"
 #include "ozone_vector.h"
-
-typedef struct OzoneSocketChunkStruct {
-  char* buffer;
-  size_t length;
-  struct OzoneSocketChunkStruct* next;
-} OzoneSocketChunk;
 
 #define OZONE_SOCKET_EVENT_FIELDS(_request_type_, _response_type_)                                                     \
   {                                                                                                                    \
     OzoneAllocator* allocator;                                                                                         \
-    const OzoneSocketChunk* raw_socket_request;                                                                        \
-    OzoneSocketChunk* raw_socket_response;                                                                             \
+    OzoneStringVector raw_socket_request;                                                                              \
+    OzoneStringVector raw_socket_response;                                                                             \
     _request_type_* request;                                                                                           \
     _response_type_* response;                                                                                         \
   }
@@ -31,6 +26,6 @@ typedef struct OzoneSocketConfigStruct {
   void* handler_context;
 } OzoneSocketConfig;
 
-int ozoneSocketServeTCP(OzoneSocketConfig config);
+int ozoneSocketServeTCP(OzoneSocketConfig* config);
 
 #endif

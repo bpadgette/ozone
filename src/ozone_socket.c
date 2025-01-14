@@ -9,20 +9,19 @@
 #include <unistd.h>
 
 #define OZONE_SOCKET_REQUEST_CHUNK_SIZE 1024
-#define OZONE_SOCKET_INITIAL_ALLOCATION 8 * 1024
+#define OZONE_SOCKET_INITIAL_ALLOCATION 4 * OZONE_SOCKET_REQUEST_CHUNK_SIZE
 
 OZONE_VECTOR_IMPLEMENT_API(OzoneSocketHandlerRef)
 
 int ozone_socket_shutdown = 0;
 void ozoneSocketSignalAction(int signum) {
   if (signum == SIGINT) {
-    ozoneLogInfo("Received SIGINT, will shutdown");
+    ozoneLogError("Received SIGINT, will shutdown");
     ozone_socket_shutdown = 1;
-    fflush(stdout);
   }
 }
 
-int ozoneSocketServeTCP(OzoneSocketConfig config) {
+int ozoneSocketServeTCP(OzoneSocketConfig* config) {
   int socket_fd = socket(AF_INET6, SOCK_STREAM, 0);
   if (socket_fd == -1) {
     ozoneLogError("Failed to get AF_INET6 SOCK_STREAM socket file descriptor, returning EACCES");
@@ -32,7 +31,7 @@ int ozoneSocketServeTCP(OzoneSocketConfig config) {
   struct sockaddr_in6 host_addr = { 0 };
   int host_addrlen = sizeof(host_addr);
   host_addr.sin6_family = AF_INET6;
-  host_addr.sin6_port = htons(config.port);
+  host_addr.sin6_port = htons(config->port);
 
   // todo: review socket options, consider SO_LINGER
   const int socket_option_one = 1;
@@ -50,8 +49,8 @@ int ozoneSocketServeTCP(OzoneSocketConfig config) {
 
   ozoneLogDebug(
       "Listening for TCP connections on port %d with a %ld member handler_pipeline",
-      config.port,
-      ozoneVectorLength(&config.handler_pipeline));
+      config->port,
+      ozoneVectorLength(&config->handler_pipeline));
   OzoneAllocator* handler_allocator = ozoneAllocatorCreate(OZONE_SOCKET_INITIAL_ALLOCATION);
 
   struct sigaction signal_actions = { .sa_handler = &ozoneSocketSignalAction };
@@ -66,53 +65,52 @@ int ozoneSocketServeTCP(OzoneSocketConfig config) {
     }
 
     ozoneAllocatorClear(handler_allocator);
-    OzoneSocketChunk request_chunks = { 0 };
-    OzoneSocketChunk* current_chunk = &request_chunks;
-    int read_status = 0;
-    do {
-      ozoneLogTrace("read accepted_socket_fd returned %d", read_status);
-      if (read_status == -1) {
-        ozoneLogError(
-            "Could not read part of TCP connection request, read accepted_socket_fd returned %d", read_status);
-        break;
-      }
-
-      if (read_status != 0 && (size_t)read_status < current_chunk->length) {
-        current_chunk->length = (size_t)read_status;
-        break;
-      }
-
-      if (current_chunk->length) {
-        current_chunk->next = ozoneAllocatorReserveOne(handler_allocator, OzoneSocketChunk);
-        current_chunk = current_chunk->next;
-        *current_chunk = (OzoneSocketChunk) { 0 };
-      }
-
-      current_chunk->buffer = ozoneAllocatorReserveMany(handler_allocator, char, OZONE_SOCKET_REQUEST_CHUNK_SIZE);
-      current_chunk->length = OZONE_SOCKET_REQUEST_CHUNK_SIZE;
-    } while ((read_status = read(accepted_socket_fd, current_chunk->buffer, current_chunk->length)));
 
     OzoneSocketEvent event = {
       .allocator = handler_allocator,
-      .raw_socket_request = &request_chunks,
-      .raw_socket_response = NULL,
+      .raw_socket_request = ((OzoneStringVector) { 0 }),
+      .raw_socket_response = ((OzoneStringVector) { 0 }),
     };
 
+    int read_status = 0;
+    do {
+      size_t capacity = OZONE_SOCKET_REQUEST_CHUNK_SIZE + 1;
+      OzoneByteVector vector = (OzoneByteVector) {
+        .capacity = capacity,
+        .elements = ozoneAllocatorReserveMany(handler_allocator, char, capacity),
+        .length = capacity,
+      };
+
+      read_status = read(accepted_socket_fd, vector.elements, vector.capacity);
+
+      ozoneLogDebug("read accepted_socket_fd returned %d", read_status);
+      if (read_status < 0)
+        ozoneLogError(
+            "Could not read part of TCP connection request, read accepted_socket_fd returned %d", read_status);
+
+      if (read_status > 0) {
+        vector.length = (size_t)read_status;
+        OzoneString string = (OzoneString) {
+          .vector = vector,
+        };
+
+        ozoneVectorPushOzoneString(handler_allocator, &event.raw_socket_request, &string);
+      }
+    } while (read_status >= OZONE_SOCKET_REQUEST_CHUNK_SIZE);
+
     OzoneSocketHandlerRef* handler;
-    ozoneVectorForEach(handler, &config.handler_pipeline) { (*handler)(&event, config.handler_context); }
+    ozoneVectorForEach(handler, &config->handler_pipeline) { (*handler)(&event, config->handler_context); }
 
     int write_status = 0;
-    current_chunk = event.raw_socket_response;
-    while (current_chunk) {
-      write_status = write(accepted_socket_fd, current_chunk->buffer, current_chunk->length);
+    OzoneString* chunk;
+    ozoneVectorForEach(chunk, &event.raw_socket_response) {
+      write_status = write(accepted_socket_fd, ozoneStringBuffer(chunk), ozoneStringLength(chunk));
       if (write_status == -1) {
         ozoneLogError(
             "Could not write part of TCP connection response, write accepted_socket_fd returned %d", write_status);
         break;
       }
-
-      current_chunk = current_chunk->next;
-    };
+    }
 
     close(accepted_socket_fd);
   }

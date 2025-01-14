@@ -8,22 +8,18 @@
 #include "ozone_string.h"
 #include "ozone_templates.h"
 
+typedef OzoneHTTPEvent OzoneAppEvent;
 typedef OzoneRouterHTTPEndpoint OzoneAppEndpoint;
-
-#define ozoneAppEndpoint(_method_, _target_pattern_, _handler_pipeline_)                                               \
-  ((OzoneAppEndpoint) {                                                                                                \
-      .config = ((OzoneRouterHTTPConfig) {                                                                             \
-          .method = OZONE_HTTP_METHOD_##_method_,                                                                      \
-          .target_pattern = ozoneString(_target_pattern_),                                                             \
-      }),                                                                                                              \
-      .handler_pipeline = ozoneVector(OzoneSocketHandlerRef, _handler_pipeline_),                                      \
-  })
-
 OZONE_VECTOR_DECLARE_API(OzoneAppEndpoint)
 
-typedef OzoneHTTPEvent OzoneAppEvent;
-
-void ozoneAppSetResponseHeader(OzoneAppEvent* event, const OzoneString* name, const OzoneString* value);
+#define ozoneAppEndpoint(_method_, _path_, ...)                                                                        \
+  (OzoneAppEndpoint) {                                                                                                 \
+    .config = ((OzoneRouterHTTPConfig) {                                                                               \
+        .method = OZONE_HTTP_METHOD_##_method_,                                                                        \
+        .target_pattern = ozoneStringConstant(_path_),                                                                 \
+    }),                                                                                                                \
+    .handler_pipeline = ozoneVectorFromArray(OzoneSocketHandlerRef, ((OzoneAppHandler*[]) { __VA_ARGS__ }))            \
+  }
 
 typedef struct OzoneAppContextStruct {
   OzoneRouterConfig router;
@@ -31,12 +27,15 @@ typedef struct OzoneAppContextStruct {
 } OzoneAppContext;
 
 typedef int(OzoneAppHandler)(OzoneAppEvent* event, OzoneAppContext* context);
-typedef OzoneAppHandler* OzoneAppHandlerRef;
 
-int ozoneAppServe(
-    OzoneAllocator* allocator,
-    unsigned short int port,
-    const OzoneAppEndpointVector* endpoints,
-    const OzoneTemplatesComponentVector* templates);
+int ozoneAppServe(unsigned short int port, OzoneAppEndpointVector* endpoints, OzoneStringVector* template_paths);
+
+void ozoneAppRenderResponseBody(
+    OzoneAppEvent* event,
+    const OzoneAppContext* context,
+    const OzoneString* component_name,
+    const OzoneStringMap* arguments);
+
+void ozoneAppSetResponseHeader(OzoneAppEvent* event, const OzoneString* name, const OzoneString* value);
 
 #endif

@@ -10,32 +10,38 @@
     size_t length;                                                                                                     \
     size_t capacity;                                                                                                   \
   } _type_##Vector;                                                                                                    \
-  void clear##_type_(_type_##Vector* vector);                                                                          \
-  void push##_type_(OzoneAllocator* allocator, _type_##Vector* vector, _type_ element);                                \
-  void join##_type_(OzoneAllocator* allocator, _type_##Vector* destination, _type_##Vector* source);
+  void ozoneVectorClear##_type_(_type_##Vector* vector);                                                               \
+  void ozoneVectorPush##_type_(OzoneAllocator* allocator, _type_##Vector* vector, _type_* element);
 
-#define ozoneVector(_type_, _array_)                                                                                   \
+#define ozoneVectorFromArray(_type_, _array_)                                                                          \
   ((_type_##Vector) {                                                                                                  \
       .elements = (_type_*)_array_,                                                                                    \
       .length = sizeof(_array_) / sizeof(_type_),                                                                      \
       .capacity = sizeof(_array_) / sizeof(_type_),                                                                    \
   })
 
+#define ozoneVectorFromElements(_type_, ...)                                                                           \
+  ((_type_##Vector) {                                                                                                  \
+      .elements = ((_type_[]) { __VA_ARGS__ }),                                                                        \
+      .length = sizeof(((_type_[]) { __VA_ARGS__ })) / sizeof(_type_),                                                 \
+      .capacity = sizeof(((_type_[]) { __VA_ARGS__ })) / sizeof(_type_),                                               \
+  })
+
 #define ozoneVectorLength(_vector_) ((_vector_)->length)
 #define ozoneVectorAt(_vector_, _index_) ((_vector_)->elements[_index_])
-#define ozoneVectorBegin(_vector_) ((_vector_)->elements ? &(_vector_)->elements[0] : NULL)
+#define ozoneVectorBegin(_vector_) ((_vector_)->elements)
 #define ozoneVectorIndex(_vector_, _iterator_) ((_iterator_) - ozoneVectorBegin(_vector_))
 #define ozoneVectorEnd(_vector_) (ozoneVectorBegin(_vector_) + ozoneVectorLength(_vector_))
 #define ozoneVectorForEach(_iterator_, _vector_)                                                                       \
   for (_iterator_ = ozoneVectorBegin(_vector_); _iterator_ < ozoneVectorEnd(_vector_); _iterator_++)
 
 #define OZONE_VECTOR_IMPLEMENT_API(_type_)                                                                             \
-  void clear##_type_(_type_##Vector* vector) {                                                                         \
+  void ozoneVectorClear##_type_(_type_##Vector* vector) {                                                              \
     memset(vector->elements, 0, sizeof(_type_) * (vector->capacity));                                                  \
     vector->capacity = 0;                                                                                              \
     vector->length = 0;                                                                                                \
   }                                                                                                                    \
-  void push##_type_(OzoneAllocator* allocator, _type_##Vector* vector, _type_ element) {                               \
+  void ozoneVectorPush##_type_(OzoneAllocator* allocator, _type_##Vector* vector, _type_* element) {                   \
     if (vector->length >= vector->capacity) {                                                                          \
       vector->capacity *= 2;                                                                                           \
       if (vector->capacity < 1)                                                                                        \
@@ -47,13 +53,7 @@
         memcpy(vector->elements, old, sizeof(_type_) * vector->length);                                                \
     }                                                                                                                  \
                                                                                                                        \
-    vector->elements[vector->length++] = element;                                                                      \
-  }                                                                                                                    \
-  void join##_type_(OzoneAllocator* allocator, _type_##Vector* destination, _type_##Vector* source) {                  \
-    if (!destination || !source || !source->length)                                                                    \
-      return;                                                                                                          \
-    _type_* iterator;                                                                                                  \
-    ozoneVectorForEach(iterator, source) { push##_type_(allocator, destination, *iterator); }                          \
+    vector->elements[vector->length++] = *element;                                                                     \
   }
 
 #endif

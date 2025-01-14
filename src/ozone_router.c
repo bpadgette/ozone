@@ -1,8 +1,13 @@
 #include "ozone_router.h"
 
 int ozoneRouter(OzoneHTTPEvent* event, OzoneRouterConfig* config) {
+  if (!config) {
+    event->response->code = 502;
+    return 0;
+  }
+
   OzoneRouterHTTPEndpoint* endpoint;
-  ozoneVectorForEach(endpoint, config->endpoints) {
+  ozoneVectorForEach(endpoint, &config->endpoints) {
     if (event->request->method != endpoint->config.method)
       continue;
 

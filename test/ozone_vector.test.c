@@ -10,11 +10,16 @@ void shouldCreateAndPushToVector(void) {
   OzoneDummyVector vector = (OzoneDummyVector) { 0 };
   TEST_ASSERT_EQUAL_MESSAGE(0, ozoneVectorLength(&vector), "It sets the length to the correct value");
 
-  pushOzoneDummy(test_alloc, &vector, 7);
-  pushOzoneDummy(test_alloc, &vector, 14);
-  pushOzoneDummy(test_alloc, &vector, 21);
-  pushOzoneDummy(test_alloc, &vector, 28);
-  pushOzoneDummy(test_alloc, &vector, 35);
+  int el_0 = 7;
+  int el_1 = 14;
+  int el_2 = 21;
+  int el_3 = 28;
+  int el_4 = 35;
+  ozoneVectorPushOzoneDummy(test_alloc, &vector, &el_0);
+  ozoneVectorPushOzoneDummy(test_alloc, &vector, &el_1);
+  ozoneVectorPushOzoneDummy(test_alloc, &vector, &el_2);
+  ozoneVectorPushOzoneDummy(test_alloc, &vector, &el_3);
+  ozoneVectorPushOzoneDummy(test_alloc, &vector, &el_4);
 
   TEST_ASSERT_EQUAL_MESSAGE(8, vector.capacity, "It sets the capacity to the correct value");
   TEST_ASSERT_EQUAL_MESSAGE(5, ozoneVectorLength(&vector), "It sets the length to the correct value");

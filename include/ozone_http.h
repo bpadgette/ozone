@@ -2,6 +2,7 @@
 #define OZONE_HTTP
 
 #include "ozone_allocator.h"
+#include "ozone_map.h"
 #include "ozone_socket.h"
 #include "ozone_string.h"
 
@@ -29,20 +30,20 @@ typedef enum OzoneHTTPMethod {
 OzoneHTTPMethod ozoneHTTPParseMethod(const OzoneString* method_string);
 
 typedef unsigned short int OzoneHTTPStatusCode;
-OzoneString ozoneHTTPStatusString(OzoneHTTPStatusCode status);
+OzoneString* ozoneHTTPStatusText(OzoneAllocator* allocator, OzoneHTTPStatusCode status);
 
 typedef struct OzoneHTTPRequestStruct {
   OzoneHTTPMethod method;
   OzoneString target;
   OzoneHTTPVersion version;
-  OzoneStringKeyValueVector headers;
+  OzoneStringMap headers;
   OzoneString body;
 } OzoneHTTPRequest;
 
 typedef struct OzoneHTTPResponseStruct {
   OzoneHTTPVersion version;
   OzoneHTTPStatusCode code;
-  OzoneStringKeyValueVector headers;
+  OzoneStringMap headers;
   OzoneString body;
 } OzoneHTTPResponse;
 
@@ -50,8 +51,8 @@ typedef struct OzoneHTTPEventStruct OZONE_SOCKET_EVENT_FIELDS(OzoneHTTPRequest, 
 
 typedef int(OzoneHTTPHandler)(OzoneHTTPEvent* event, void* application);
 
-OzoneHTTPRequest* ozoneHTTPParseSocketChunks(OzoneAllocator* allocator, const OzoneSocketChunk* socket_request);
-OzoneSocketChunk* ozoneHTTPCreateSocketChunks(OzoneAllocator* allocator, OzoneHTTPResponse* http_response);
+OzoneHTTPRequest* ozoneHTTPParseSocketRequest(OzoneAllocator* allocator, const OzoneStringVector* socket_request);
+OzoneStringVector* ozoneHTTPRenderResponse(OzoneAllocator* allocator, OzoneHTTPResponse* http_response);
 
 typedef struct OzoneHTTPConfigStruct {
   unsigned short int port;
@@ -59,6 +60,6 @@ typedef struct OzoneHTTPConfigStruct {
   void* handler_context;
 } OzoneHTTPConfig;
 
-int ozoneHTTPServe(OzoneAllocator* allocator, OzoneHTTPConfig config);
+int ozoneHTTPServe(OzoneAllocator* allocator, OzoneHTTPConfig* config);
 
 #endif
