@@ -1,6 +1,7 @@
 #include "ozone_string.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 OZONE_VECTOR_IMPLEMENT_API(OzoneByte)
@@ -119,4 +120,19 @@ OzoneString* ozoneStringFromBuffer(OzoneAllocator* allocator, char* buffer, size
   string->vector = vector;
 
   return string;
+}
+
+OzoneString* ozoneStringFromInteger(OzoneAllocator* allocator, long int input) {
+  char integer_buffer[32] = { 0 };
+  snprintf(integer_buffer, sizeof(integer_buffer), "%ld", input);
+  OzoneString* integer_string = ozoneStringFromBuffer(allocator, integer_buffer, sizeof(integer_buffer));
+
+  while (!ozoneStringBufferEnd(integer_string))
+    ozoneStringPop(integer_string);
+
+  return integer_string;
+}
+
+long int ozoneStringToInteger(const OzoneString* input) {
+  return input ? strtol(ozoneStringBuffer(input), NULL, 10) : 0;
 }
