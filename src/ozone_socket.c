@@ -8,8 +8,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#define OZONE_SOCKET_REQUEST_CHUNK_SIZE 1024
-#define OZONE_SOCKET_INITIAL_ALLOCATION 4 * OZONE_SOCKET_REQUEST_CHUNK_SIZE
+#define OZONE_SOCKET_REQUEST_CHUNK_SIZE 8192
 
 OZONE_VECTOR_IMPLEMENT_API(OzoneSocketHandlerRef)
 
@@ -51,7 +50,7 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config) {
       "Listening for TCP connections on port %d with a %ld member handler_pipeline",
       config->port,
       ozoneVectorLength(&config->handler_pipeline));
-  OzoneAllocator* handler_allocator = ozoneAllocatorCreate(OZONE_SOCKET_INITIAL_ALLOCATION);
+  OzoneAllocator* handler_allocator = ozoneAllocatorCreate(1024 + OZONE_SOCKET_REQUEST_CHUNK_SIZE);
 
   struct sigaction signal_actions = { .sa_handler = &ozoneSocketSignalAction };
   sigaction(SIGINT, &signal_actions, NULL);

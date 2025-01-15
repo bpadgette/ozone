@@ -184,6 +184,7 @@ OzoneHTTPRequest* ozoneHTTPParseSocketRequest(OzoneAllocator* allocator, const O
 
   OzoneString* token = ozoneString(allocator, "");
   OzoneString* header_name = ozoneString(allocator, "");
+  size_t content_length = 0;
 
   int parsing = OZONE_HTTP_PARSING_METHOD;
   OzoneString* chunk;
@@ -267,19 +268,27 @@ OzoneHTTPRequest* ozoneHTTPParseSocketRequest(OzoneAllocator* allocator, const O
       }
       case OZONE_HTTP_PARSING_HEADER_FINAL_LINE_RETURN: {
         if (cursor == '\n') {
+          const OzoneString* content_length_header
+              = ozoneStringMapFindValue(&http_request->headers, &ozoneStringConstant("Content-Length"));
+          if (!content_length_header || ozoneStringToInteger(content_length_header) <= 0)
+            return http_request;
+
+          content_length = (size_t)ozoneStringToInteger(content_length_header);
           parsing = OZONE_HTTP_PARSING_BODY;
         }
         break;
       }
       case OZONE_HTTP_PARSING_BODY: {
         ozoneStringAppend(allocator, token, cursor);
+        if (ozoneStringLength(token) == content_length) {
+          http_request->body = *token;
+          return http_request;
+        }
         break;
       }
       }
     }
   }
-
-  http_request->body = *token;
 
   return http_request;
 }
@@ -353,19 +362,11 @@ int ozoneHTTPEndPipeline(OzoneHTTPEvent* event, void* context) {
           &ozoneStringConstant("Content-Type"),
           &ozoneStringConstant("text/plain"));
 
-    if (!ozoneStringMapFindValue(&response->headers, &ozoneStringConstant("Content-Length"))) {
-      // todo: extract to helper
-      char content_length[32] = { 0 };
-      snprintf(content_length, sizeof(content_length), "%ld", ozoneStringLength(&response->body));
-      OzoneString* content_length_string
-          = ozoneStringFromBuffer(event->allocator, content_length, sizeof(content_length));
-      while (!ozoneStringBufferEnd(content_length_string))
-        ozoneStringPop(content_length_string);
-      // end todo
-
-      ozoneStringMapInsert(
-          event->allocator, &response->headers, &ozoneStringConstant("Content-Length"), content_length_string);
-    }
+    ozoneStringMapInsert(
+        event->allocator,
+        &response->headers,
+        &ozoneStringConstant("Content-Length"),
+        ozoneStringFromInteger(event->allocator, ozoneStringLength(&response->body)));
   }
 
   event->raw_socket_response = *ozoneHTTPRenderResponse(event->allocator, response);
