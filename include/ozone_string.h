@@ -48,5 +48,7 @@ int ozoneStringFindFirst(const OzoneString* string, const OzoneString* search);
 int ozoneStringCompare(const OzoneString* left, const OzoneString* right);
 
 OzoneString* ozoneStringFromBuffer(OzoneAllocator* allocator, char* buffer, size_t buffer_size);
+OzoneString* ozoneStringFromInteger(OzoneAllocator* allocator, long int input);
+long int ozoneStringToInteger(const OzoneString* input);
 
 #endif
