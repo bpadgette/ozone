@@ -24,7 +24,8 @@ int home(OzoneAppEvent* event, OzoneAppContext* context) {
 
   // The template used here is already in memory, so no file is opened while handling, go to
   // main to see how the templates are configured and added to the OzoneAppContext.
-  ozoneAppRenderResponseBody(event, context, &ozoneStringConstant(HOME_TEMPLATE), &template_args);
+  ozoneAppRenderResponseBody(
+      event, context, &ozoneStringConstant("text/html"), &ozoneStringConstant(HOME_TEMPLATE), &template_args);
 
   return 0;
 }
@@ -48,7 +49,6 @@ int handleBadRequest(OzoneAppEvent* event, OzoneAppContext* context) {
 int setHeaders(OzoneAppEvent* event, OzoneAppContext* context) {
   (void)context;
 
-  ozoneAppSetResponseHeader(event, &ozoneStringConstant("Content-Type"), &ozoneStringConstant("text/html"));
   ozoneAppSetResponseHeader(event, &ozoneStringConstant("X-Server-Name"), &ozoneStringConstant(SERVER_NAME));
 
   return 0;

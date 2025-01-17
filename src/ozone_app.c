@@ -12,8 +12,11 @@ void ozoneAppSetResponseHeader(OzoneAppEvent* event, const OzoneString* name, co
 void ozoneAppRenderResponseBody(
     OzoneAppEvent* event,
     const OzoneAppContext* context,
+    const OzoneString* content_type,
     const OzoneString* component_name,
     const OzoneStringMap* arguments) {
+  ozoneAppSetResponseHeader(event, &ozoneStringConstant("Content-Type"), content_type);
+
   OzoneTemplatesComponent* component;
   ozoneVectorForEach(component, &context->templates.components) {
     if (!ozoneStringCompare(component_name, &component->name)) {

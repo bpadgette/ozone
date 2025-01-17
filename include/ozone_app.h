@@ -33,6 +33,7 @@ int ozoneAppServe(unsigned short int port, OzoneAppEndpointVector* endpoints, Oz
 void ozoneAppRenderResponseBody(
     OzoneAppEvent* event,
     const OzoneAppContext* context,
+    const OzoneString* content_type,
     const OzoneString* component_name,
     const OzoneStringMap* arguments);
 
