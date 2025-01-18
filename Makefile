@@ -1,16 +1,24 @@
 ##############################################################################
 # Toolchain
 #
+# Compiler
 CC                := gcc
+
+# Memory checking
+MEMCHECK          := valgrind --leak-check=full -s
+
+# Shell
 CLEAN             := rm -rf
 COPY              := cp -rf
+MKDIR             := mkdir -p
+
+# Download
 DOWNLOAD_TARBALL  := curl -s -L
+UNTAR_INTO        := tar xz -C
+
+# C Formatter
 FORMAT            := clang-format -i
 FORMAT_CHECK      := clang-format -i -Werror --dry-run
-FORMAT_TARGETS    := **/*.c **/*.h
-MEMCHECK          := valgrind --leak-check=full -s
-MKDIR             := mkdir -p
-UNTAR_INTO        := tar xz -C
 
 ##############################################################################
 # Paths
@@ -18,6 +26,7 @@ UNTAR_INTO        := tar xz -C
 ROOT        := $(CURDIR)/
 BUILD       := $(ROOT)build/
 INCLUDE     := $(ROOT)include/
+JS_PROJECT   := $(ROOT)ozone_js/
 LIB         := $(ROOT)lib/
 SOURCE      := $(ROOT)src/
 TEST        := $(ROOT)test/
@@ -30,9 +39,18 @@ $(shell $(MKDIR) $(LIB))
 TARGET             := ozone
 TARGET_LIB         := $(BUILD)lib$(TARGET).so
 TARGET_DEBUG_LIB   := $(BUILD)lib$(TARGET).debug.so
+TARGET_JS_MODULE   := $(BUILD)$(TARGET).js
 
 ##############################################################################
-# Build
+# JS Build
+#
+$(TARGET_JS_MODULE):
+	cd $(JS_PROJECT) && deno install && deno task build
+
+build-js: $(TARGET_JS_MODULE)
+
+##############################################################################
+# C Build
 #
 CFLAGS        := -std=gnu99 -Wall -Werror -Wextra -pedantic -fpic -O3 -I$(INCLUDE)
 CLIBS         := -lm
@@ -51,8 +69,8 @@ $(TARGET_LIB): $(OBJECTS)
 $(TARGET_DEBUG_LIB): $(DEBUG_OBJECTS)
 	$(CC) -shared -o $(TARGET_DEBUG_LIB) $^
 
-build: $(TARGET_LIB)
-build-debug: $(TARGET_DEBUG_LIB)
+build: $(TARGET_LIB) $(TARGET_JS_MODULE)
+build-debug: $(TARGET_DEBUG_LIB) $(TARGET_JS_MODULE)
 
 ##############################################################################
 # Testing
@@ -77,10 +95,10 @@ test: $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
 EXAMPLES    	  := $(ROOT)examples/
 BUILD_EXAMPLES    := $(BUILD)examples/
 
-$(BUILD_EXAMPLES)%: $(TARGET_LIB)
+$(BUILD_EXAMPLES)%: $(TARGET_LIB) $(TARGET_JS_MODULE)
 	$(shell $(MKDIR) $(BUILD_EXAMPLES))	$(CC) $(CFLAGS) $(EXAMPLES)$*.c $< $(CLIBS) -o $@
 
-$(BUILD_EXAMPLES)%.debug: $(TARGET_DEBUG_LIB)
+$(BUILD_EXAMPLES)%.debug: $(TARGET_DEBUG_LIB) $(TARGET_JS_MODULE)
 	$(shell $(MKDIR) $(BUILD_EXAMPLES)) $(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g $(EXAMPLES)$*.c $< $(CLIBS) -o $@
 
 %.memcheck: $(BUILD_EXAMPLES)%.debug
@@ -96,7 +114,9 @@ build-examples-debug: $(patsubst $(EXAMPLES)%.c, $(BUILD_EXAMPLES)%.debug, $(wil
 # Installation
 #
 install: build uninstall
-	sudo $(COPY) $(INCLUDE) /usr/include/$(TARGET) && sudo $(COPY) $(TARGET_LIB) /usr/lib
+	sudo $(COPY) $(INCLUDE) /usr/include/$(TARGET) \
+	  && sudo $(COPY) $(TARGET_JS_MODULE) /usr/include/$(TARGET)/$(TARGET).js \
+	  && sudo $(COPY) $(TARGET_LIB) /usr/lib
 
 uninstall:
 	sudo $(CLEAN) /usr/include/$(TARGET) &&	sudo $(CLEAN) /usr/lib/lib$(TARGET).so
@@ -104,6 +124,8 @@ uninstall:
 ##############################################################################
 # Helpers
 #
+FORMAT_TARGETS := **/*.c **/*.h
+
 format:
 	cd $(ROOT) && $(FORMAT) $(FORMAT_TARGETS)
 
@@ -116,4 +138,4 @@ clean:
 all: build build-debug build-examples test
 
 .DELETE_ON_ERROR:
-.PHONY: Makefile format format-check build build-debug build-examples build-examples-debug test clean install uninstall all
+.PHONY: Makefile format format-check build build-debug build-examples build-examples-debug build-js test clean install uninstall all

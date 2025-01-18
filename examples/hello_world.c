@@ -1,6 +1,5 @@
 #include "ozone.h"
 
-#define HTML_DOCUMENT_TEMPLATE "./examples/resources/shell.html"
 #define PAGE_TITLE "My Ozone Server"
 
 // A handler is a function matching the signature `OzoneAppHandler` like
@@ -37,20 +36,8 @@ int home(OzoneAppEvent* event, OzoneAppContext* context) {
 }
 
 int asHTMLDocument(OzoneAppEvent* event, OzoneAppContext* context) {
-  // Ozone is designed with zero-is-initialization (ZII) principles in mind, so
-  // a struct without an explicit (type)Create function is safe to zero init.
-  OzoneStringMap template_args = { 0 };
-
-  ozoneStringMapInsert(
-      event->allocator, &template_args, &ozoneStringConstant("title"), &ozoneStringConstant(PAGE_TITLE));
-  ozoneStringMapInsert(event->allocator, &template_args, &ozoneStringConstant("body"), &event->response->body);
-
   // OzoneApp exposes several convenience functions for manipulating app events.
-
-  // The template used here is already in memory, so no file is opened while handling, go to
-  // main to see how the templates are configured and added to the OzoneAppContext.
-  ozoneAppRenderResponseBody(
-      event, context, &ozoneStringConstant("text/html"), &ozoneStringConstant(HTML_DOCUMENT_TEMPLATE), &template_args);
+  ozoneAppRenderOzoneShellHTML(event, context, &ozoneStringConstant(PAGE_TITLE), &event->response->body);
 
   return 0;
 }
@@ -85,11 +72,8 @@ int main() {
 
   OzoneStringVector options = ozoneVectorFromElements(
       OzoneString,
-      // Option examples:
-      //
-      // "template" Templates can be preloaded into memory via template options, a specified template only be opened and
-      // read on startup
-      ozoneStringConstant("template=" HTML_DOCUMENT_TEMPLATE));
+      ozoneStringConstant("ozone-js=./build/ozone.js"),
+      ozoneStringConstant("ozone-templates-base-path=./include/html"));
 
   return ozoneAppServe(8080, &endpoints, &options);
 }
