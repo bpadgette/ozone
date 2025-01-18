@@ -33,9 +33,10 @@ OZONE_VECTOR_DECLARE_API(OzoneString)
 void ozoneStringAppend(OzoneAllocator* allocator, OzoneString* string, char byte);
 void ozoneStringClear(OzoneString* string);
 char ozoneStringPop(OzoneString* string);
-char ozoneStringShift(OzoneString* string);
 OzoneString* ozoneStringCopy(OzoneAllocator* allocator, const OzoneString* original);
 void ozoneStringConcatenate(OzoneAllocator* allocator, OzoneString* destination, const OzoneString* source);
+OzoneString* ozoneStringJoin(OzoneAllocator* allocator, const OzoneStringVector* strings);
+OzoneString* ozoneStringSlice(OzoneAllocator* allocator, OzoneString* string, size_t begin, size_t end);
 
 /**
  * \returns -1 if not found, or the index of the first occurrence of the search string.

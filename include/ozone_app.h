@@ -26,9 +26,9 @@ typedef struct OzoneAppContextStruct {
   OzoneTemplatesConfig templates;
 } OzoneAppContext;
 
-typedef int(OzoneAppHandler)(OzoneAppEvent* event, OzoneAppContext* context);
+typedef int(OzoneAppHandler)(OzoneAppEvent* event, const OzoneAppContext* context);
 
-int ozoneAppServe(unsigned short int port, OzoneAppEndpointVector* endpoints, OzoneStringVector* template_paths);
+int ozoneAppServe(unsigned short int port, OzoneAppEndpointVector* endpoints, OzoneStringVector* options);
 
 void ozoneAppRenderResponseBody(
     OzoneAppEvent* event,

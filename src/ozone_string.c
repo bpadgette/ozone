@@ -47,16 +47,8 @@ char ozoneStringPop(OzoneString* string) {
   return popped;
 }
 
-char ozoneStringShift(OzoneString* string) {
-  if (ozoneVectorLength(&string->vector) < 2)
-    return '\0';
-
-  char shifted = string->vector.elements[0];
-  string->vector.elements++;
-  string->vector.length--;
-  string->vector.capacity--;
-
-  return shifted;
+OzoneString* ozoneStringSlice(OzoneAllocator* allocator, OzoneString* string, size_t begin, size_t end) {
+  return ozoneStringFromBuffer(allocator, &ozoneVectorAt(&string->vector, begin), end - begin);
 }
 
 OzoneString* ozoneStringCopy(OzoneAllocator* allocator, const OzoneString* original) {
@@ -76,6 +68,15 @@ OzoneString* ozoneStringCopy(OzoneAllocator* allocator, const OzoneString* origi
 void ozoneStringConcatenate(OzoneAllocator* allocator, OzoneString* destination, const OzoneString* source) {
   char* member;
   ozoneVectorForEach(member, &source->vector) { ozoneStringAppend(allocator, destination, *member); }
+}
+
+OzoneString* ozoneStringJoin(OzoneAllocator* allocator, const OzoneStringVector* strings) {
+  OzoneString* string = ozoneString(allocator, "");
+
+  OzoneString* member;
+  ozoneVectorForEach(member, strings) { ozoneStringConcatenate(allocator, string, member); }
+
+  return string;
 }
 
 int ozoneStringCompare(const OzoneString* left, const OzoneString* right) {
@@ -110,14 +111,19 @@ int ozoneStringFindFirst(const OzoneString* string, const OzoneString* search) {
 OzoneString* ozoneStringFromBuffer(OzoneAllocator* allocator, char* buffer, size_t buffer_size) {
   OzoneByteVector vector = (OzoneByteVector) {
     .elements = ozoneAllocatorReserveMany(allocator, char, buffer_size + 1),
-    .length = buffer_size,
-    .capacity = buffer_size,
+    .length = buffer_size + 1,
+    .capacity = buffer_size + 1,
   };
 
   memcpy(vector.elements, buffer, buffer_size);
 
   OzoneString* string = ozoneAllocatorReserveOne(allocator, OzoneString);
   string->vector = vector;
+
+  // Only a single null terminator is needed, if the ending of the string is NULL we should pop
+  while (!ozoneStringBufferEnd(string)) {
+    ozoneStringPop(string);
+  }
 
   return string;
 }

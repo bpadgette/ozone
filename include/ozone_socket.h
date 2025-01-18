@@ -16,16 +16,15 @@
 
 typedef struct OzoneSocketEventStruct OZONE_SOCKET_EVENT_FIELDS(void, void) OzoneSocketEvent;
 
-typedef int(OzoneSocketHandler)(OzoneSocketEvent* event, void* context);
+typedef int(OzoneSocketHandler)(OzoneSocketEvent* event, const void* context);
 typedef OzoneSocketHandler* OzoneSocketHandlerRef;
 OZONE_VECTOR_DECLARE_API(OzoneSocketHandlerRef)
 
 typedef struct OzoneSocketConfigStruct {
   unsigned short int port;
   OzoneSocketHandlerRefVector handler_pipeline;
-  void* handler_context;
 } OzoneSocketConfig;
 
-int ozoneSocketServeTCP(OzoneSocketConfig* config);
+int ozoneSocketServeTCP(OzoneSocketConfig* config, const void* context);
 
 #endif
