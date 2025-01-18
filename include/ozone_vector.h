@@ -32,6 +32,7 @@
 #define ozoneVectorBegin(_vector_) ((_vector_)->elements)
 #define ozoneVectorIndex(_vector_, _iterator_) ((_iterator_) - ozoneVectorBegin(_vector_))
 #define ozoneVectorEnd(_vector_) (ozoneVectorBegin(_vector_) + ozoneVectorLength(_vector_))
+#define ozoneVectorLast(_vector_) (ozoneVectorEnd(_vector_) - 1)
 #define ozoneVectorForEach(_iterator_, _vector_)                                                                       \
   for (_iterator_ = ozoneVectorBegin(_vector_); _iterator_ < ozoneVectorEnd(_vector_); _iterator_++)
 

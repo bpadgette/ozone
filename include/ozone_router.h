@@ -20,6 +20,6 @@ typedef struct OzoneRouterConfigStruct {
   OzoneRouterHTTPEndpointVector endpoints;
 } OzoneRouterConfig;
 
-int ozoneRouter(OzoneRouterConfig* config, OzoneHTTPEvent* event, const void* context);
+int ozoneRouter(OzoneRouterConfig* config, OzoneHTTPEvent* event, void* context);
 
 #endif

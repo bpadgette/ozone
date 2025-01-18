@@ -16,7 +16,7 @@
 
 typedef struct OzoneSocketEventStruct OZONE_SOCKET_EVENT_FIELDS(void, void) OzoneSocketEvent;
 
-typedef int(OzoneSocketHandler)(OzoneSocketEvent* event, const void* context);
+typedef int(OzoneSocketHandler)(OzoneSocketEvent* event, void* context);
 typedef OzoneSocketHandler* OzoneSocketHandlerRef;
 OZONE_VECTOR_DECLARE_API(OzoneSocketHandlerRef)
 
@@ -25,6 +25,6 @@ typedef struct OzoneSocketConfigStruct {
   OzoneSocketHandlerRefVector handler_pipeline;
 } OzoneSocketConfig;
 
-int ozoneSocketServeTCP(OzoneSocketConfig* config, const void* context);
+int ozoneSocketServeTCP(OzoneSocketConfig* config, void* context);
 
 #endif

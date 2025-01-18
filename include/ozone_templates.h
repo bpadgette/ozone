@@ -17,7 +17,7 @@ typedef struct OzoneTemplatesComponentStruct {
 OZONE_VECTOR_DECLARE_API(OzoneTemplatesComponent)
 
 OzoneTemplatesComponent* ozoneTemplatesComponentCreate(
-    OzoneAllocator* allocator, const OzoneString* component_name, const OzoneStringVector* source);
+    OzoneAllocator* allocator, const OzoneString* component_path, const OzoneStringVector* source);
 OzoneTemplatesComponent* ozoneTemplatesComponentFromFile(OzoneAllocator* allocator, const OzoneString* source_path);
 
 OzoneString* ozoneTemplatesComponentRender(

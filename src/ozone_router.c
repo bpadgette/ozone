@@ -1,6 +1,6 @@
 #include "ozone_router.h"
 
-int ozoneRouter(OzoneRouterConfig* config, OzoneHTTPEvent* event, const void* context) {
+int ozoneRouter(OzoneRouterConfig* config, OzoneHTTPEvent* event, void* context) {
   if (!config) {
     event->response->code = 502;
     return 0;

@@ -26,15 +26,15 @@ typedef struct OzoneAppContextStruct {
   OzoneTemplatesConfig templates;
 } OzoneAppContext;
 
-typedef int(OzoneAppHandler)(OzoneAppEvent* event, const OzoneAppContext* context);
+typedef int(OzoneAppHandler)(OzoneAppEvent* event, OzoneAppContext* context);
 
 int ozoneAppServe(unsigned short int port, OzoneAppEndpointVector* endpoints, OzoneStringVector* options);
 
 void ozoneAppRenderResponseBody(
     OzoneAppEvent* event,
-    const OzoneAppContext* context,
+    OzoneAppContext* context,
     const OzoneString* content_type,
-    const OzoneString* component_name,
+    const OzoneString* component_path,
     const OzoneStringMap* arguments);
 
 void ozoneAppSetResponseHeader(OzoneAppEvent* event, const OzoneString* name, const OzoneString* value);

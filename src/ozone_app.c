@@ -11,19 +11,27 @@ void ozoneAppSetResponseHeader(OzoneAppEvent* event, const OzoneString* name, co
 
 void ozoneAppRenderResponseBody(
     OzoneAppEvent* event,
-    const OzoneAppContext* context,
+    OzoneAppContext* context,
     const OzoneString* content_type,
-    const OzoneString* component_name,
+    const OzoneString* component_path,
     const OzoneStringMap* arguments) {
   ozoneAppSetResponseHeader(event, &ozoneStringConstant("Content-Type"), content_type);
 
   OzoneTemplatesComponent* component;
   ozoneVectorForEach(component, &context->templates.components) {
-    if (!ozoneStringCompare(component_name, &component->name)) {
+    if (!ozoneStringCompare(component_path, &component->name)) {
       event->response->body = *ozoneTemplatesComponentRender(event->allocator, component, arguments);
       return;
     }
   }
+
+  ozoneVectorPushOzoneTemplatesComponent(
+      event->allocator,
+      &context->templates.components,
+      ozoneTemplatesComponentFromFile(event->allocator, component_path));
+
+  event->response->body
+      = *ozoneTemplatesComponentRender(event->allocator, ozoneVectorLast(&context->templates.components), arguments);
 }
 
 int ozoneAppBeginPipeline(OzoneHTTPEvent* event, OzoneAppContext* context) {
@@ -46,22 +54,24 @@ int ozoneAppServe(unsigned short int port, OzoneAppEndpointVector* endpoints, Oz
   };
 
   OzoneAllocator* allocator = ozoneAllocatorCreate(4096);
-  OzoneString* option_key_value;
-  ozoneVectorForEach(option_key_value, options) {
-    int equals_at = ozoneStringFindFirst(option_key_value, &ozoneStringConstant("="));
-    if (equals_at < 0) {
-      continue;
-    }
+  if (options) {
+    OzoneString* option_key_value;
+    ozoneVectorForEach(option_key_value, options) {
+      int equals_at = ozoneStringFindFirst(option_key_value, &ozoneStringConstant("="));
+      if (equals_at < 0) {
+        continue;
+      }
 
-    OzoneString* key = ozoneStringSlice(allocator, option_key_value, 0, equals_at);
-    OzoneString* value
-        = ozoneStringSlice(allocator, option_key_value, equals_at + 1, ozoneStringLength(option_key_value));
+      OzoneString* key = ozoneStringSlice(allocator, option_key_value, 0, equals_at);
+      OzoneString* value
+          = ozoneStringSlice(allocator, option_key_value, equals_at + 1, ozoneStringLength(option_key_value));
 
-    if (!ozoneStringCompare(key, &ozoneStringConstant("template"))) {
-      ozoneVectorPushOzoneTemplatesComponent(
-          allocator, &context.templates.components, ozoneTemplatesComponentFromFile(allocator, value));
-    } else {
-      ozoneLogWarn("Ignored option %s", ozoneStringBuffer(key));
+      if (!ozoneStringCompare(key, &ozoneStringConstant("template"))) {
+        ozoneVectorPushOzoneTemplatesComponent(
+            allocator, &context.templates.components, ozoneTemplatesComponentFromFile(allocator, value));
+      } else {
+        ozoneLogWarn("Ignored option %s", ozoneStringBuffer(key));
+      }
     }
   }
 
