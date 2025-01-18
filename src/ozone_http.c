@@ -319,7 +319,7 @@ OzoneStringVector* ozoneHTTPRenderResponse(OzoneAllocator* allocator, OzoneHTTPR
   return chunks;
 }
 
-int ozoneHTTPBeginPipeline(OzoneHTTPEvent* event, void* context) {
+int ozoneHTTPBeginPipeline(OzoneHTTPEvent* event, const void* context) {
   (void)context;
 
   OzoneString* first_line = ozoneString(event->allocator, "");
@@ -343,7 +343,7 @@ int ozoneHTTPBeginPipeline(OzoneHTTPEvent* event, void* context) {
   return 0;
 }
 
-int ozoneHTTPEndPipeline(OzoneHTTPEvent* event, void* context) {
+int ozoneHTTPEndPipeline(OzoneHTTPEvent* event, const void* context) {
   (void)context;
 
   if (!event->response)
@@ -388,7 +388,7 @@ int ozoneHTTPEndPipeline(OzoneHTTPEvent* event, void* context) {
   return 0;
 }
 
-int ozoneHTTPServe(OzoneAllocator* allocator, OzoneHTTPConfig* config) {
+int ozoneHTTPServe(OzoneAllocator* allocator, OzoneHTTPConfig* config, const void* context) {
   OzoneSocketHandlerRefVector* http_pipeline = ozoneAllocatorReserveOne(allocator, OzoneSocketHandlerRefVector);
 
   OzoneSocketHandlerRef begin = (OzoneSocketHandlerRef)ozoneHTTPBeginPipeline;
@@ -405,11 +405,7 @@ int ozoneHTTPServe(OzoneAllocator* allocator, OzoneHTTPConfig* config) {
 
   ozoneLogInfo("Serving at http://localhost:%d", config->port);
 
-  OzoneSocketConfig socket_config = (OzoneSocketConfig) {
-    .handler_pipeline = *http_pipeline,
-    .port = config->port,
-    .handler_context = config->handler_context,
-  };
+  OzoneSocketConfig socket_config = (OzoneSocketConfig) { .handler_pipeline = *http_pipeline, .port = config->port };
 
-  return ozoneSocketServeTCP(&socket_config);
+  return ozoneSocketServeTCP(&socket_config, context);
 }

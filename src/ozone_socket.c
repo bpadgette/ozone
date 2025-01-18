@@ -20,7 +20,7 @@ void ozoneSocketSignalAction(int signum) {
   }
 }
 
-int ozoneSocketServeTCP(OzoneSocketConfig* config) {
+int ozoneSocketServeTCP(OzoneSocketConfig* config, const void* context) {
   int socket_fd = socket(AF_INET6, SOCK_STREAM, 0);
   if (socket_fd == -1) {
     ozoneLogError("Failed to get AF_INET6 SOCK_STREAM socket file descriptor, returning EACCES");
@@ -98,7 +98,7 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config) {
     } while (read_status >= OZONE_SOCKET_REQUEST_CHUNK_SIZE);
 
     OzoneSocketHandlerRef* handler;
-    ozoneVectorForEach(handler, &config->handler_pipeline) { (*handler)(&event, config->handler_context); }
+    ozoneVectorForEach(handler, &config->handler_pipeline) { (*handler)(&event, context); }
 
     int write_status = 0;
     OzoneString* chunk;

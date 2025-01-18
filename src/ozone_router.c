@@ -1,6 +1,6 @@
 #include "ozone_router.h"
 
-int ozoneRouter(OzoneHTTPEvent* event, OzoneRouterConfig* config) {
+int ozoneRouter(OzoneRouterConfig* config, OzoneHTTPEvent* event, const void* context) {
   if (!config) {
     event->response->code = 502;
     return 0;
@@ -15,9 +15,7 @@ int ozoneRouter(OzoneHTTPEvent* event, OzoneRouterConfig* config) {
       continue;
 
     OzoneSocketHandlerRef* handler;
-    ozoneVectorForEach(handler, &endpoint->handler_pipeline) {
-      (*handler)((OzoneSocketEvent*)event, config->handler_context);
-    }
+    ozoneVectorForEach(handler, &endpoint->handler_pipeline) { (*handler)((OzoneSocketEvent*)event, context); }
     return 0;
   }
 

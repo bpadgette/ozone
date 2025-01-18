@@ -18,9 +18,8 @@ OZONE_VECTOR_DECLARE_API(OzoneRouterHTTPEndpoint)
 
 typedef struct OzoneRouterConfigStruct {
   OzoneRouterHTTPEndpointVector endpoints;
-  void* handler_context;
 } OzoneRouterConfig;
 
-int ozoneRouter(OzoneHTTPEvent* event, OzoneRouterConfig* config);
+int ozoneRouter(OzoneRouterConfig* config, OzoneHTTPEvent* event, const void* context);
 
 #endif

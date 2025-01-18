@@ -28,41 +28,45 @@ void ozoneAppRenderResponseBody(
 
 int ozoneAppBeginPipeline(OzoneHTTPEvent* event, OzoneAppContext* context) {
   ozoneLogTrace(
-      "Beginning app pipeline, %ld hot bytes in event allocator", ozoneAllocatorGetTotalFree(event->allocator));
-  context->router.handler_context = context;
+      "Beginning app pipeline, %ld live bytes in event allocator", ozoneAllocatorGetTotalFree(event->allocator));
 
-  return ozoneRouter(event, &context->router);
+  return ozoneRouter(&context->router, event, context);
 }
 
-int ozoneAppServe(unsigned short int port, OzoneAppEndpointVector* endpoints, OzoneStringVector* template_paths) {
-  ozoneLogInfo(
-      "Registering %ld routes and %ld templates", ozoneVectorLength(endpoints), ozoneVectorLength(template_paths));
-
-  OzoneAllocator* allocator = ozoneAllocatorCreate(4096);
-
-  OzoneTemplatesConfig templates_config = (OzoneTemplatesConfig) { 0 };
-
-  OzoneString* component_path;
-  ozoneVectorForEach(component_path, template_paths) {
-    OzoneTemplatesComponent* component = ozoneTemplatesComponentFromFile(allocator, component_path);
-    ozoneVectorPushOzoneTemplatesComponent(allocator, &templates_config.components, component);
-  }
-
-  OzoneAppContext context = (OzoneAppContext) {
-    .router = ((OzoneRouterConfig) {
-        .endpoints = (*(OzoneRouterHTTPEndpointVector*)endpoints),
-        .handler_context = NULL,
-    }),
-    .templates = templates_config,
-  };
-
+int ozoneAppServe(unsigned short int port, OzoneAppEndpointVector* endpoints, OzoneStringVector* options) {
   OzoneHTTPConfig http_config = (OzoneHTTPConfig) {
     .port = port,
     .handler_pipeline = ozoneVectorFromElements(OzoneSocketHandlerRef, (OzoneSocketHandlerRef)ozoneAppBeginPipeline),
-    .handler_context = &context,
   };
 
-  int return_code = ozoneHTTPServe(allocator, &http_config);
+  OzoneAppContext context = (OzoneAppContext) {
+    .router = ((OzoneRouterConfig) {
+        .endpoints = *((OzoneRouterHTTPEndpointVector*)endpoints),
+    }),
+  };
+
+  OzoneAllocator* allocator = ozoneAllocatorCreate(4096);
+  OzoneString* option_key_value;
+  ozoneVectorForEach(option_key_value, options) {
+    int equals_at = ozoneStringFindFirst(option_key_value, &ozoneStringConstant("="));
+    if (equals_at < 0) {
+      continue;
+    }
+
+    OzoneString* key = ozoneStringSlice(allocator, option_key_value, 0, equals_at);
+    OzoneString* value
+        = ozoneStringSlice(allocator, option_key_value, equals_at + 1, ozoneStringLength(option_key_value));
+
+    if (!ozoneStringCompare(key, &ozoneStringConstant("template"))) {
+      ozoneVectorPushOzoneTemplatesComponent(
+          allocator, &context.templates.components, ozoneTemplatesComponentFromFile(allocator, value));
+    } else {
+      ozoneLogWarn("Ignored option %s", ozoneStringBuffer(key));
+    }
+  }
+
+  int return_code = ozoneHTTPServe(allocator, &http_config, &context);
   ozoneAllocatorDelete(allocator);
+
   return return_code;
 }
