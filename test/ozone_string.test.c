@@ -23,7 +23,7 @@ void shouldFindInString(void) {
 
 void shouldScanStringBuffer(void) {
   char* string = "hello, world!";
-  OzoneString* scanned = ozoneStringFromBuffer(test_alloc, string, sizeof(string));
+  OzoneString* scanned = ozoneStringFromBuffer(test_alloc, string, 14);
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&ozoneStringConstant("hello, world!"), scanned, "It scans the full buffer.");
 }
 
