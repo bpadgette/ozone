@@ -120,6 +120,11 @@ OzoneString* ozoneStringFromBuffer(OzoneAllocator* allocator, char* buffer, size
   OzoneString* string = ozoneAllocatorReserveOne(allocator, OzoneString);
   string->vector = vector;
 
+  // Only a single null terminator is needed, if the ending of the string is NULL we should pop
+  while (!ozoneStringBufferEnd(string)) {
+    ozoneStringPop(string);
+  }
+
   return string;
 }
 
