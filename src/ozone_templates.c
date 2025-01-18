@@ -84,7 +84,8 @@ OzoneTemplatesComponent* ozoneTemplatesComponentCreate(
 }
 
 OzoneTemplatesComponent* ozoneTemplatesComponentFromFile(OzoneAllocator* allocator, const OzoneString* source_path) {
-  OzoneStringVector* source = ozoneFileLoadFromPath(allocator, source_path, 256);
+  OzoneStringVector* source = ozoneAllocatorReserveOne(allocator, OzoneStringVector);
+  ozoneFileLoadFromPath(allocator, source, source_path, 256);
   return ozoneTemplatesComponentCreate(allocator, source_path, source);
 }
 
