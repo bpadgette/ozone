@@ -20,7 +20,7 @@ void ozoneSocketSignalAction(int signum) {
   }
 }
 
-int ozoneSocketServeTCP(OzoneSocketConfig* config, const void* context) {
+int ozoneSocketServeTCP(OzoneSocketConfig* config, void* context) {
   int socket_fd = socket(AF_INET6, SOCK_STREAM, 0);
   if (socket_fd == -1) {
     ozoneLogError("Failed to get AF_INET6 SOCK_STREAM socket file descriptor, returning EACCES");

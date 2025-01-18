@@ -1,11 +1,10 @@
 #include "ozone.h"
 
-#define HTML_DOCUMENT_TEMPLATE "./examples/resources/hello_world.html"
-#define SERVER_NAME "My Ozone Server"
+#define PAGE_TITLE "My Ozone Server"
 
 // A handler is a function matching the signature `OzoneAppHandler` like
 // the function `handleBadRequest` below: `int <name>(OzoneAppEvent*, const OzoneAppContext*)`
-int handleBadRequest(OzoneAppEvent* event, const OzoneAppContext* context) {
+int handleBadRequest(OzoneAppEvent* event, OzoneAppContext* context) {
   // context may not be necessary, but handlers should declare it in their
   // signatures for HTTP pipeline memory layout reasons. (void)context
   // is a way to suppress any linter warnings for this unused parameter.
@@ -21,7 +20,7 @@ int handleBadRequest(OzoneAppEvent* event, const OzoneAppContext* context) {
   return 0;
 }
 
-int home(OzoneAppEvent* event, const OzoneAppContext* context) {
+int home(OzoneAppEvent* event, OzoneAppContext* context) {
   (void)context;
 
   event->response->body = *ozoneString(
@@ -36,34 +35,22 @@ int home(OzoneAppEvent* event, const OzoneAppContext* context) {
   return 0;
 }
 
-int asHTMLDocument(OzoneAppEvent* event, const OzoneAppContext* context) {
-  // Ozone is designed with zero-is-initialization (ZII) principles in mind, so
-  // a struct without an explicit (type)Create function is safe to zero init.
-  OzoneStringMap template_args = { 0 };
-
-  ozoneStringMapInsert(
-      event->allocator, &template_args, &ozoneStringConstant("title"), &ozoneStringConstant(SERVER_NAME));
-  ozoneStringMapInsert(event->allocator, &template_args, &ozoneStringConstant("body"), &event->response->body);
-
+int asHTMLDocument(OzoneAppEvent* event, OzoneAppContext* context) {
   // OzoneApp exposes several convenience functions for manipulating app events.
-
-  // The template used here is already in memory, so no file is opened while handling, go to
-  // main to see how the templates are configured and added to the OzoneAppContext.
-  ozoneAppRenderResponseBody(
-      event, context, &ozoneStringConstant("text/html"), &ozoneStringConstant(HTML_DOCUMENT_TEMPLATE), &template_args);
+  ozoneAppRenderOzoneShellHTML(event, context, &ozoneStringConstant(PAGE_TITLE), &event->response->body);
 
   return 0;
 }
 
-int setHeaders(OzoneAppEvent* event, const OzoneAppContext* context) {
+int setHeaders(OzoneAppEvent* event, OzoneAppContext* context) {
   (void)context;
 
-  ozoneAppSetResponseHeader(event, &ozoneStringConstant("X-Server-Name"), &ozoneStringConstant(SERVER_NAME));
+  ozoneAppSetResponseHeader(event, &ozoneStringConstant("X-Server-Name"), &ozoneStringConstant(PAGE_TITLE));
 
   return 0;
 }
 
-int renderHTTPStatusToBody(OzoneAppEvent* event, const OzoneAppContext* context) {
+int renderHTTPStatusToBody(OzoneAppEvent* event, OzoneAppContext* context) {
   (void)context;
 
   event->response->body = *ozoneHTTPStatusText(event->allocator, event->response->code);
@@ -83,8 +70,10 @@ int main() {
       ozoneAppEndpoint(POST, "/use-javascript", setHeaders, handleBadRequest, renderHTTPStatusToBody, asHTMLDocument),
       ozoneAppEndpoint(PUT, "/just-write-it-in-rust", setHeaders, handleBadRequest));
 
-  OzoneStringVector options
-      = ozoneVectorFromElements(OzoneString, ozoneStringConstant("template=" HTML_DOCUMENT_TEMPLATE));
+  OzoneStringVector options = ozoneVectorFromElements(
+      OzoneString,
+      ozoneStringConstant("ozone-js=./build/ozone.js"),
+      ozoneStringConstant("ozone-templates-base-path=./include/html"));
 
   return ozoneAppServe(8080, &endpoints, &options);
 }

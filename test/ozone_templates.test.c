@@ -4,10 +4,10 @@
 #include "ozone_templates.h"
 
 void shouldParseTemplate(void) {
-  OzoneStringVector* source
-      = ozoneFileLoadFromPath(test_alloc, &ozoneStringConstant("./test/resources/test.html"), 128);
+  OzoneStringVector source = (OzoneStringVector) { 0 };
+  ozoneFileLoadFromPath(test_alloc, &source, &ozoneStringConstant("./test/resources/test.html"), 128);
 
-  OzoneTemplatesComponent* component = ozoneTemplatesComponentCreate(test_alloc, &ozoneStringConstant("test"), source);
+  OzoneTemplatesComponent* component = ozoneTemplatesComponentCreate(test_alloc, &ozoneStringConstant("test"), &source);
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&ozoneStringConstant("test"), &component->name, "It sets the component name");
 
   TEST_ASSERT_EQUAL_MESSAGE(5, ozoneVectorLength(&component->blocks), "It parses the template source into 5 blocks");

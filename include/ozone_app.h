@@ -8,6 +8,9 @@
 #include "ozone_string.h"
 #include "ozone_templates.h"
 
+#define OZONE_APP_OPTION_TEMPLATES_BASE_PATH_KEY "ozone-templates-base-path"
+#define OZONE_APP_OPTION_OZONE_JS_KEY "ozone-js"
+
 typedef OzoneHTTPEvent OzoneAppEvent;
 typedef OzoneRouterHTTPEndpoint OzoneAppEndpoint;
 OZONE_VECTOR_DECLARE_API(OzoneAppEndpoint)
@@ -24,18 +27,15 @@ OZONE_VECTOR_DECLARE_API(OzoneAppEndpoint)
 typedef struct OzoneAppContextStruct {
   OzoneRouterConfig router;
   OzoneTemplatesConfig templates;
+  OzoneStringMap startup_configuration;
 } OzoneAppContext;
 
-typedef int(OzoneAppHandler)(OzoneAppEvent* event, const OzoneAppContext* context);
+typedef int(OzoneAppHandler)(OzoneAppEvent* event, OzoneAppContext* context);
 
 int ozoneAppServe(unsigned short int port, OzoneAppEndpointVector* endpoints, OzoneStringVector* options);
 
-void ozoneAppRenderResponseBody(
-    OzoneAppEvent* event,
-    const OzoneAppContext* context,
-    const OzoneString* content_type,
-    const OzoneString* component_name,
-    const OzoneStringMap* arguments);
+void ozoneAppRenderOzoneShellHTML(
+    OzoneAppEvent* event, OzoneAppContext* context, const OzoneString* title, const OzoneString* body);
 
 void ozoneAppSetResponseHeader(OzoneAppEvent* event, const OzoneString* name, const OzoneString* value);
 
