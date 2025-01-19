@@ -13,7 +13,7 @@ int homepage(OzoneAppEvent* event, OzoneAppContext* context) {
   return 0;
 }
 
-int main() {
+int main(void) {
   OzoneAppEndpointVector endpoints = ozoneVectorFromElements(OzoneAppEndpoint, ozoneAppEndpoint(GET, "/", homepage));
 
   OzoneStringVector options = ozoneVectorFromElements(

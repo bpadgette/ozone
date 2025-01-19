@@ -15,7 +15,7 @@
         file,                                                                                                          \
         "{"                                                                                                            \
         "\"level\":\"" level "\","                                                                                     \
-        "\"timestamp\":\"%04d-%02d-%02d %02d:%02d:%02d.%03ld\","                                                       \
+        "\"timestamp\":\"%04d-%02d-%02d %02d:%02d:%02d.%03d\","                                                        \
         "\"message\":\"",                                                                                              \
         now->tm_year + 1900,                                                                                           \
         now->tm_mon + 1,                                                                                               \
@@ -23,8 +23,8 @@
         now->tm_hour,                                                                                                  \
         now->tm_min,                                                                                                   \
         now->tm_sec,                                                                                                   \
-        now_ms.tv_usec / 1000);                                                                                        \
-    fprintf(file, ##__VA_ARGS__);                                                                                      \
+        (int)now_ms.tv_usec / 1000);                                                                                   \
+    fprintf(file, __VA_ARGS__);                                                                                        \
     fprintf(                                                                                                           \
         file,                                                                                                          \
         "\","                                                                                                          \
@@ -35,12 +35,12 @@
     fflush(file);                                                                                                      \
   } while (0)
 
-#define ozoneLogError(...) ozoneLog(stderr, "error", ##__VA_ARGS__)
-#define ozoneLogWarn(...) ozoneLog(stderr, "warn", ##__VA_ARGS__)
-#define ozoneLogInfo(...) ozoneLog(stdout, "info", ##__VA_ARGS__)
+#define ozoneLogError(...) ozoneLog(stderr, "error", __VA_ARGS__)
+#define ozoneLogWarn(...) ozoneLog(stderr, "warn", __VA_ARGS__)
+#define ozoneLogInfo(...) ozoneLog(stdout, "info", __VA_ARGS__)
 
 #if defined(OZONE_LOG_TRACE) || defined(OZONE_LOG_DEBUG)
-#define ozoneLogDebug(...) ozoneLog(stdout, "debug", ##__VA_ARGS__)
+#define ozoneLogDebug(...) ozoneLog(stdout, "debug", __VA_ARGS__)
 #else
 #define ozoneLogDebug(...)                                                                                             \
   do {                                                                                                                 \
@@ -48,7 +48,7 @@
 #endif
 
 #ifdef OZONE_LOG_TRACE
-#define ozoneLogTrace(...) ozoneLog(stdout, "trace", ##__VA_ARGS__)
+#define ozoneLogTrace(...) ozoneLog(stdout, "trace", __VA_ARGS__)
 #else
 #define ozoneLogTrace(...)                                                                                             \
   do {                                                                                                                 \

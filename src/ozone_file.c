@@ -28,6 +28,7 @@ void ozoneFileLoad(OzoneAllocator* allocator, OzoneStringVector* destination, FI
       break;
   };
 
+  (void)bytes_read;
   ozoneLogDebug("Loaded %ld bytes", bytes_read);
 }
 

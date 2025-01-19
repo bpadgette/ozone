@@ -2,7 +2,7 @@
 # Toolchain
 #
 # Compiler
-CC                := gcc
+CC                := clang
 
 # Memory checking
 MEMCHECK          := valgrind --leak-check=full -s
@@ -26,7 +26,7 @@ FORMAT_CHECK      := clang-format -i -Werror --dry-run
 ROOT        := $(CURDIR)/
 BUILD       := $(ROOT)build/
 INCLUDE     := $(ROOT)include/
-JS_PROJECT   := $(ROOT)ozone_js/
+JS_PROJECT  := $(ROOT)ozone_js/
 LIB         := $(ROOT)lib/
 SOURCE      := $(ROOT)src/
 TEST        := $(ROOT)test/
@@ -53,15 +53,14 @@ build-js: $(TARGET_JS_MODULE)
 # C Build
 #
 CFLAGS        := -std=gnu99 -Wall -Werror -Wextra -pedantic -fpic -O3 -I$(INCLUDE)
-CLIBS         := -lm
 OBJECTS       := $(patsubst $(SOURCE)%.c, $(BUILD)%.o, $(wildcard *, $(SOURCE)*.c))
 DEBUG_OBJECTS := $(patsubst $(SOURCE)%.c, $(BUILD)%.debug.o, $(wildcard *, $(SOURCE)*.c))
 
 $(BUILD)%.o: $(SOURCE)%.c
-	$(CC) $(CFLAGS) -c $< $(CLIBS) -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD)%.debug.o: $(SOURCE)%.c
-	$(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g -c $< $(CLIBS) -o $@
+	$(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g -c $< -o $@
 
 $(TARGET_LIB): $(OBJECTS)
 	$(CC) -shared -o $(TARGET_LIB) $^
@@ -81,10 +80,10 @@ $(TEST_LIB_SOURCE):
 
 TEST_LIB  := $(LIB)unity.o
 $(TEST_LIB): $(TEST_LIB_SOURCE)
-	$(CC) $(CFLAGS) -c $(TEST_LIB_SOURCE)unity.c $(CLIBS) -o $@
+	$(CC) $(CFLAGS) -c $(TEST_LIB_SOURCE)unity.c -o $@
 
 $(BUILD)%.test: $(TEST)%.test.c $(DEBUG_OBJECTS) $(TEST_LIB)
-	$(CC) $(CFLAGS) -I$(TEST_LIB_SOURCE) -g $^ $(CLIBS) -o $@
+	$(CC) $(CFLAGS) -I$(TEST_LIB_SOURCE) -g $^ -o $@
 	$@
 
 test: $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
@@ -96,10 +95,10 @@ EXAMPLES    	  := $(ROOT)examples/
 BUILD_EXAMPLES    := $(BUILD)examples/
 
 $(BUILD_EXAMPLES)%: $(TARGET_LIB) $(TARGET_JS_MODULE)
-	$(shell $(MKDIR) $(BUILD_EXAMPLES))	$(CC) $(CFLAGS) $(EXAMPLES)$*.c $< $(CLIBS) -o $@
+	$(shell $(MKDIR) $(BUILD_EXAMPLES))	$(CC) $(CFLAGS) $(EXAMPLES)$*.c $< -o $@
 
 $(BUILD_EXAMPLES)%.debug: $(TARGET_DEBUG_LIB) $(TARGET_JS_MODULE)
-	$(shell $(MKDIR) $(BUILD_EXAMPLES)) $(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g $(EXAMPLES)$*.c $< $(CLIBS) -o $@
+	$(shell $(MKDIR) $(BUILD_EXAMPLES)) $(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g $(EXAMPLES)$*.c $< -o $@
 
 %.memcheck: $(BUILD_EXAMPLES)%.debug
 	$(MEMCHECK) $(BUILD_EXAMPLES)$*.debug
