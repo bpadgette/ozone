@@ -11,19 +11,11 @@ void ozoneStringAppend(OzoneAllocator* allocator, OzoneString* string, char byte
   if (!string || byte == '\0')
     return;
 
-  if (!ozoneStringLength(string)) {
-    OzoneByteVector* vector = ozoneAllocatorReserveOne(allocator, OzoneByteVector);
-    vector->length = 2;
-    vector->capacity = 2;
-    vector->elements = ozoneAllocatorReserveMany(allocator, char, vector->capacity);
-    vector->elements[0] = byte;
+  char end = '\0';
+  ozoneVectorPushOzoneByte(allocator, &string->vector, &end);
+  if (ozoneVectorLength(&string->vector) < 2)
+    ozoneVectorPushOzoneByte(allocator, &string->vector, &end);
 
-    string->vector = *vector;
-    return;
-  }
-
-  char* end = "\0";
-  ozoneVectorPushOzoneByte(allocator, &string->vector, end);
   string->vector.elements[string->vector.length - 2] = byte;
 }
 
