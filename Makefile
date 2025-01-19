@@ -53,7 +53,7 @@ endif
 #
 TARGET             := ozone
 TARGET_LIB         := $(BUILD)lib$(TARGET)$(SHARED_OBJECT_EXTENSION)
-TARGET_DEBUG_LIB   := $(BUILD)lib$(TARGET)$(SHARED_OBJECT_EXTENSION)
+TARGET_DEBUG_LIB   := $(BUILD)lib$(TARGET).debug$(SHARED_OBJECT_EXTENSION)
 TARGET_JS_MODULE   := $(BUILD)$(TARGET).js
 
 ##############################################################################
