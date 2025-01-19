@@ -94,11 +94,11 @@ test: $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
 EXAMPLES    	  := $(ROOT)examples/
 BUILD_EXAMPLES    := $(BUILD)examples/
 
-$(BUILD_EXAMPLES)%: $(TARGET_LIB) $(TARGET_JS_MODULE)
-	$(shell $(MKDIR) $(BUILD_EXAMPLES))	$(CC) $(CFLAGS) $(EXAMPLES)$*.c $< -o $@
-
 $(BUILD_EXAMPLES)%.debug: $(TARGET_DEBUG_LIB) $(TARGET_JS_MODULE)
 	$(shell $(MKDIR) $(BUILD_EXAMPLES)) $(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g $(EXAMPLES)$*.c $< -o $@
+
+$(BUILD_EXAMPLES)%: $(TARGET_LIB) $(TARGET_JS_MODULE)
+	$(shell $(MKDIR) $(BUILD_EXAMPLES))	$(CC) $(CFLAGS) $(EXAMPLES)$*.c $< -o $@
 
 %.memcheck: $(BUILD_EXAMPLES)%.debug
 	$(MEMCHECK) $(BUILD_EXAMPLES)$*.debug
