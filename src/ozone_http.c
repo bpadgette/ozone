@@ -388,7 +388,8 @@ int ozoneHTTPEndPipeline(OzoneHTTPEvent* event, void* context) {
   return 0;
 }
 
-int ozoneHTTPServe(OzoneAllocator* allocator, OzoneHTTPConfig* config, void* context) {
+int ozoneHTTPServe(OzoneHTTPConfig* config, void* context) {
+  OzoneAllocator* allocator = ozoneAllocatorCreate(1024);
   OzoneSocketHandlerRefVector* http_pipeline = ozoneAllocatorReserveOne(allocator, OzoneSocketHandlerRefVector);
 
   OzoneSocketHandlerRef begin = (OzoneSocketHandlerRef)ozoneHTTPBeginPipeline;
@@ -407,5 +408,7 @@ int ozoneHTTPServe(OzoneAllocator* allocator, OzoneHTTPConfig* config, void* con
 
   OzoneSocketConfig socket_config = (OzoneSocketConfig) { .handler_pipeline = *http_pipeline, .port = config->port };
 
-  return ozoneSocketServeTCP(&socket_config, context);
+  int return_code = ozoneSocketServeTCP(&socket_config, context);
+  ozoneAllocatorDelete(allocator);
+  return return_code;
 }

@@ -62,7 +62,7 @@ int renderHTTPStatusToBody(OzoneAppEvent* event, OzoneAppContext* context) {
   return 0;
 }
 
-int main() {
+int main(void) {
   OzoneAppEndpointVector endpoints = ozoneVectorFromElements(
       OzoneAppEndpoint,
       // Endpoints can take an arbitrary count of handlers

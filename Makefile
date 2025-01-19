@@ -2,7 +2,7 @@
 # Toolchain
 #
 # Compiler
-CC                := gcc
+CC                := clang
 
 # Memory checking
 MEMCHECK          := valgrind --leak-check=full -s
@@ -26,7 +26,7 @@ FORMAT_CHECK      := clang-format -i -Werror --dry-run
 ROOT        := $(CURDIR)/
 BUILD       := $(ROOT)build/
 INCLUDE     := $(ROOT)include/
-JS_PROJECT   := $(ROOT)ozone_js/
+JS_PROJECT  := $(ROOT)ozone_js/
 LIB         := $(ROOT)lib/
 SOURCE      := $(ROOT)src/
 TEST        := $(ROOT)test/
@@ -34,11 +34,26 @@ $(shell $(MKDIR) $(BUILD))
 $(shell $(MKDIR) $(LIB))
 
 ##############################################################################
+# Platform
+#
+PLATFORM := $(shell uname -s)
+
+ifeq ($(PLATFORM), Darwin)
+PLATFORM_INCLUDES_PATH  := /usr/local/include/
+PLATFORM_LIBS_PATH      := /usr/local/lib/
+SHARED_OBJECT_EXTENSION := .dylib
+else
+PLATFORM_INCLUDES_PATH  := /usr/include/
+PLATFORM_LIBS_PATH      := /usr/lib/
+SHARED_OBJECT_EXTENSION := .so
+endif
+
+##############################################################################
 # Target
 #
 TARGET             := ozone
-TARGET_LIB         := $(BUILD)lib$(TARGET).so
-TARGET_DEBUG_LIB   := $(BUILD)lib$(TARGET).debug.so
+TARGET_LIB         := $(BUILD)lib$(TARGET)$(SHARED_OBJECT_EXTENSION)
+TARGET_DEBUG_LIB   := $(BUILD)lib$(TARGET)$(SHARED_OBJECT_EXTENSION)
 TARGET_JS_MODULE   := $(BUILD)$(TARGET).js
 
 ##############################################################################
@@ -53,24 +68,20 @@ build-js: $(TARGET_JS_MODULE)
 # C Build
 #
 CFLAGS        := -std=gnu99 -Wall -Werror -Wextra -pedantic -fpic -O3 -I$(INCLUDE)
-CLIBS         := -lm
 OBJECTS       := $(patsubst $(SOURCE)%.c, $(BUILD)%.o, $(wildcard *, $(SOURCE)*.c))
 DEBUG_OBJECTS := $(patsubst $(SOURCE)%.c, $(BUILD)%.debug.o, $(wildcard *, $(SOURCE)*.c))
 
 $(BUILD)%.o: $(SOURCE)%.c
-	$(CC) $(CFLAGS) -c $< $(CLIBS) -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD)%.debug.o: $(SOURCE)%.c
-	$(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g -c $< $(CLIBS) -o $@
+	$(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g -c $< -o $@
 
-$(TARGET_LIB): $(OBJECTS)
+build: $(OBJECTS)
 	$(CC) -shared -o $(TARGET_LIB) $^
 
-$(TARGET_DEBUG_LIB): $(DEBUG_OBJECTS)
+build-debug: $(DEBUG_OBJECTS)
 	$(CC) -shared -o $(TARGET_DEBUG_LIB) $^
-
-build: $(TARGET_LIB) $(TARGET_JS_MODULE)
-build-debug: $(TARGET_DEBUG_LIB) $(TARGET_JS_MODULE)
 
 ##############################################################################
 # Testing
@@ -81,10 +92,10 @@ $(TEST_LIB_SOURCE):
 
 TEST_LIB  := $(LIB)unity.o
 $(TEST_LIB): $(TEST_LIB_SOURCE)
-	$(CC) $(CFLAGS) -c $(TEST_LIB_SOURCE)unity.c $(CLIBS) -o $@
+	$(CC) $(CFLAGS) -c $(TEST_LIB_SOURCE)unity.c -o $@
 
 $(BUILD)%.test: $(TEST)%.test.c $(DEBUG_OBJECTS) $(TEST_LIB)
-	$(CC) $(CFLAGS) -I$(TEST_LIB_SOURCE) -g $^ $(CLIBS) -o $@
+	$(CC) $(CFLAGS) -I$(TEST_LIB_SOURCE) -g $^ -o $@
 	$@
 
 test: $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
@@ -95,11 +106,11 @@ test: $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
 EXAMPLES    	  := $(ROOT)examples/
 BUILD_EXAMPLES    := $(BUILD)examples/
 
-$(BUILD_EXAMPLES)%: $(TARGET_LIB) $(TARGET_JS_MODULE)
-	$(shell $(MKDIR) $(BUILD_EXAMPLES))	$(CC) $(CFLAGS) $(EXAMPLES)$*.c $< $(CLIBS) -o $@
+$(BUILD_EXAMPLES)%.debug: build-debug build-js
+	$(shell $(MKDIR) $(BUILD_EXAMPLES)) $(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g $(EXAMPLES)$*.c $(TARGET_DEBUG_LIB) -o $@
 
-$(BUILD_EXAMPLES)%.debug: $(TARGET_DEBUG_LIB) $(TARGET_JS_MODULE)
-	$(shell $(MKDIR) $(BUILD_EXAMPLES)) $(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g $(EXAMPLES)$*.c $< $(CLIBS) -o $@
+$(BUILD_EXAMPLES)%: build build-js
+	$(shell $(MKDIR) $(BUILD_EXAMPLES))	$(CC) $(CFLAGS) $(EXAMPLES)$*.c $(TARGET_LIB) -o $@
 
 %.memcheck: $(BUILD_EXAMPLES)%.debug
 	$(MEMCHECK) $(BUILD_EXAMPLES)$*.debug
@@ -114,12 +125,12 @@ build-examples-debug: $(patsubst $(EXAMPLES)%.c, $(BUILD_EXAMPLES)%.debug, $(wil
 # Installation
 #
 install: build uninstall
-	sudo $(COPY) $(INCLUDE) /usr/include/$(TARGET) \
-	  && sudo $(COPY) $(TARGET_JS_MODULE) /usr/include/$(TARGET)/$(TARGET).js \
-	  && sudo $(COPY) $(TARGET_LIB) /usr/lib
+	sudo $(COPY) $(INCLUDE) $(PLATFORM_INCLUDES_PATH)$(TARGET) \
+	  && sudo $(COPY) $(TARGET_JS_MODULE) $(PLATFORM_INCLUDES_PATH)$(TARGET) \
+	  && sudo $(COPY) $(TARGET_LIB) $(PLATFORM_LIBS_PATH)
 
 uninstall:
-	sudo $(CLEAN) /usr/include/$(TARGET) &&	sudo $(CLEAN) /usr/lib/lib$(TARGET).so
+	sudo $(CLEAN) $(PLATFORM_INCLUDES_PATH)$(TARGET) &&	sudo $(CLEAN) $(PLATFORM_LIBS_PATH)$(TARGET_LIB)
 
 ##############################################################################
 # Helpers
