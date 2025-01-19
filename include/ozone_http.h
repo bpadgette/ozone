@@ -59,6 +59,6 @@ typedef struct OzoneHTTPConfigStruct {
   OzoneSocketHandlerRefVector handler_pipeline;
 } OzoneHTTPConfig;
 
-int ozoneHTTPServe(OzoneAllocator* allocator, OzoneHTTPConfig* config, void* context);
+int ozoneHTTPServe(OzoneHTTPConfig* config, void* context);
 
 #endif

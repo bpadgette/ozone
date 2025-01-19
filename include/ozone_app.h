@@ -25,6 +25,7 @@ OZONE_VECTOR_DECLARE_API(OzoneAppEndpoint)
   }
 
 typedef struct OzoneAppContextStruct {
+  OzoneAllocator* allocator;
   OzoneRouterConfig router;
   OzoneTemplatesConfig templates;
   OzoneStringMap startup_configuration;
