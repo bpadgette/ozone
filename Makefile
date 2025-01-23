@@ -27,7 +27,6 @@ ROOT        := $(CURDIR)/
 BENCHMARKS  := $(ROOT)benchmarks/
 BUILD       := $(ROOT)build/
 INCLUDE     := $(ROOT)include/
-JS_PROJECT  := $(ROOT)ozone_js/
 LIB         := $(ROOT)lib/
 SOURCE      := $(ROOT)src/
 TEST        := $(ROOT)test/
@@ -56,15 +55,6 @@ endif
 TARGET             := ozone
 TARGET_LIB         := $(BUILD)lib$(TARGET)$(SHARED_OBJECT_EXTENSION)
 TARGET_DEBUG_LIB   := $(BUILD)lib$(TARGET).debug$(SHARED_OBJECT_EXTENSION)
-TARGET_JS_MODULE   := $(BUILD)$(TARGET).js
-
-##############################################################################
-# JS Build
-#
-$(TARGET_JS_MODULE):
-	cd $(JS_PROJECT) && deno install && deno task build
-
-build-js: $(TARGET_JS_MODULE)
 
 ##############################################################################
 # C Build
@@ -91,10 +81,10 @@ build-debug: $(DEBUG_OBJECTS)
 EXAMPLES    	  := $(ROOT)examples/
 BUILD_EXAMPLES    := $(BUILD)examples/
 
-$(BUILD_EXAMPLES)%.debug: build-debug build-js
+$(BUILD_EXAMPLES)%.debug: build-debug
 	$(shell $(MKDIR) $(BUILD_EXAMPLES)) $(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g $(EXAMPLES)$*.c $(TARGET_DEBUG_LIB) -o $@
 
-$(BUILD_EXAMPLES)%: build build-js
+$(BUILD_EXAMPLES)%: build
 	$(shell $(MKDIR) $(BUILD_EXAMPLES))	$(CC) $(CFLAGS) $(EXAMPLES)$*.c $(TARGET_LIB) -o $@
 
 %.memcheck: $(BUILD_EXAMPLES)%.debug
@@ -154,4 +144,4 @@ clean:
 all: build build-debug build-examples test
 
 .DELETE_ON_ERROR:
-.PHONY: Makefile format format-check build build-debug build-examples build-examples-debug build-js test benchmarks clean install uninstall all
+.PHONY: Makefile format format-check build build-debug build-examples build-examples-debug test benchmarks clean install uninstall all
