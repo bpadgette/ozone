@@ -43,11 +43,6 @@ void ozoneAppRenderOzoneShellHTML(
 
   OzoneStringMap template_arguments = (OzoneStringMap) { 0 };
   ozoneStringMapInsert(event->allocator, &template_arguments, &ozoneStringConstant("title"), title);
-  ozoneStringMapInsert(
-      event->allocator,
-      &template_arguments,
-      &ozoneStringConstant("ozone_js"),
-      ozoneStringMapFindValue(&context->startup_configuration, &ozoneStringConstant(OZONE_APP_OPTION_OZONE_JS_KEY)));
   ozoneStringMapInsert(event->allocator, &template_arguments, &ozoneStringConstant("body"), body);
 
   event->response->body = *ozoneTemplatesComponentRender(event->allocator, component, &template_arguments);
@@ -74,7 +69,6 @@ int ozoneAppServe(unsigned short int port, OzoneAppEndpointVector* endpoints, Oz
   };
 
   OzoneString* ozone_templates_base_path = ozoneString(context.allocator, "/usr/include/ozone/html");
-  OzoneString* ozone_js = ozoneString(context.allocator, "alert('ozone.js could not be loaded.')");
 
   if (options) {
     OzoneString* option_key_value;
@@ -90,10 +84,6 @@ int ozoneAppServe(unsigned short int port, OzoneAppEndpointVector* endpoints, Oz
 
       if (!ozoneStringCompare(key, &ozoneStringConstant(OZONE_APP_OPTION_TEMPLATES_BASE_PATH_KEY))) {
         ozone_templates_base_path = value;
-      } else if (!ozoneStringCompare(key, &ozoneStringConstant(OZONE_APP_OPTION_OZONE_JS_KEY))) {
-        OzoneStringVector chunks = { 0 };
-        ozoneFileLoadFromPath(context.allocator, &chunks, value, 1024);
-        ozone_js = ozoneStringJoin(context.allocator, &chunks);
       } else {
         ozoneLogWarn("Ignored option %s", ozoneStringBuffer(key));
       }
@@ -105,9 +95,6 @@ int ozoneAppServe(unsigned short int port, OzoneAppEndpointVector* endpoints, Oz
       &context.startup_configuration,
       &ozoneStringConstant(OZONE_APP_OPTION_TEMPLATES_BASE_PATH_KEY),
       ozone_templates_base_path);
-
-  ozoneStringMapInsert(
-      context.allocator, &context.startup_configuration, &ozoneStringConstant(OZONE_APP_OPTION_OZONE_JS_KEY), ozone_js);
 
   int return_code = ozoneHTTPServe(&http_config, &context);
   ozoneAllocatorDelete(context.allocator);

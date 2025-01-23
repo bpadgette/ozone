@@ -9,7 +9,6 @@
 #include "ozone_templates.h"
 
 #define OZONE_APP_OPTION_TEMPLATES_BASE_PATH_KEY "ozone-templates-base-path"
-#define OZONE_APP_OPTION_OZONE_JS_KEY "ozone-js"
 
 typedef OzoneHTTPEvent OzoneAppEvent;
 typedef OzoneRouterHTTPEndpoint OzoneAppEndpoint;

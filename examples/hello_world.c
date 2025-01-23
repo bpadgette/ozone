@@ -70,10 +70,8 @@ int main(void) {
       ozoneAppEndpoint(POST, "/use-javascript", setHeaders, handleBadRequest, renderHTTPStatusToBody, asHTMLDocument),
       ozoneAppEndpoint(PUT, "/just-write-it-in-rust", setHeaders, handleBadRequest));
 
-  OzoneStringVector options = ozoneVectorFromElements(
-      OzoneString,
-      ozoneStringConstant("ozone-js=./build/ozone.js"),
-      ozoneStringConstant("ozone-templates-base-path=./include/html"));
+  OzoneStringVector options
+      = ozoneVectorFromElements(OzoneString, ozoneStringConstant("ozone-templates-base-path=./include/html"));
 
   return ozoneAppServe(8080, &endpoints, &options);
 }
