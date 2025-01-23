@@ -24,12 +24,14 @@ FORMAT_CHECK      := clang-format -i -Werror --dry-run
 # Paths
 #
 ROOT        := $(CURDIR)/
+BENCHMARKS  := $(ROOT)benchmarks/
 BUILD       := $(ROOT)build/
 INCLUDE     := $(ROOT)include/
 JS_PROJECT  := $(ROOT)ozone_js/
 LIB         := $(ROOT)lib/
 SOURCE      := $(ROOT)src/
 TEST        := $(ROOT)test/
+$(shell $(MKDIR) $(BENCHMARKS))
 $(shell $(MKDIR) $(BUILD))
 $(shell $(MKDIR) $(LIB))
 
@@ -84,23 +86,6 @@ build-debug: $(DEBUG_OBJECTS)
 	$(CC) -shared -o $(TARGET_DEBUG_LIB) $^
 
 ##############################################################################
-# Testing
-#
-TEST_LIB_SOURCE  := $(LIB)Unity-2.6.0/src/
-$(TEST_LIB_SOURCE):
-	$(DOWNLOAD_TARBALL) https://github.com/ThrowTheSwitch/Unity/archive/refs/tags/v2.6.0.tar.gz | $(UNTAR_INTO) $(LIB)
-
-TEST_LIB  := $(LIB)unity.o
-$(TEST_LIB): $(TEST_LIB_SOURCE)
-	$(CC) $(CFLAGS) -c $(TEST_LIB_SOURCE)unity.c -o $@
-
-$(BUILD)%.test: $(TEST)%.test.c $(DEBUG_OBJECTS) $(TEST_LIB)
-	$(CC) $(CFLAGS) -I$(TEST_LIB_SOURCE) -g $^ -o $@
-	$@
-
-test: $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
-
-##############################################################################
 # Examples
 #
 EXAMPLES    	  := $(ROOT)examples/
@@ -120,6 +105,26 @@ build-examples-debug: $(patsubst $(EXAMPLES)%.c, $(BUILD_EXAMPLES)%.debug, $(wil
 
 %: $(BUILD_EXAMPLES)%
 	$(BUILD_EXAMPLES)$*
+
+##############################################################################
+# Testing
+#
+TEST_LIB_SOURCE  := $(LIB)Unity-2.6.0/src/
+$(TEST_LIB_SOURCE):
+	$(DOWNLOAD_TARBALL) https://github.com/ThrowTheSwitch/Unity/archive/refs/tags/v2.6.0.tar.gz | $(UNTAR_INTO) $(LIB)
+
+TEST_LIB  := $(LIB)unity.o
+$(TEST_LIB): $(TEST_LIB_SOURCE)
+	$(CC) $(CFLAGS) -c $(TEST_LIB_SOURCE)unity.c -o $@
+
+$(BUILD)%.test: $(TEST)%.test.c $(DEBUG_OBJECTS) $(TEST_LIB)
+	$(CC) $(CFLAGS) -I$(TEST_LIB_SOURCE) -g $^ -o $@
+	$@
+
+test: $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
+
+benchmarks: $(BUILD_EXAMPLES)hello_world
+	cd $(TEST)benchmarks && deno install && deno task run $(BUILD_EXAMPLES)hello_world > $(BENCHMARKS)README.md
 
 ##############################################################################
 # Installation
@@ -149,4 +154,4 @@ clean:
 all: build build-debug build-examples test
 
 .DELETE_ON_ERROR:
-.PHONY: Makefile format format-check build build-debug build-examples build-examples-debug build-js test clean install uninstall all
+.PHONY: Makefile format format-check build build-debug build-examples build-examples-debug build-js test benchmarks clean install uninstall all
