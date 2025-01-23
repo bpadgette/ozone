@@ -6,10 +6,9 @@ Ozone is a minimal dependency, C-based web framework.
 
 - [Getting Started](#getting-started)
   - [Hello, World!](#hello-world)
-  - [Tests & Examples](#tests-and-examples)
+  - [Other Examples](#other-examples)
 - [Build & Install](#build-and-install)
-  - [Build Options](#build-options)
-- [Features](#features)
+- [Tests & Benchmarks](#tests-and-benchmarks)
 
 # Getting Started <a name="getting-started"></a>
 
@@ -21,15 +20,9 @@ Build and run a release build of `./examples/hello_world.c` with:
 make hello_world
 ```
 
-## Tests & Examples <a name="tests-and-examples"></a>
+## Other Examples <a name="other-examples"></a>
 
-Learn more about ozone by running the unit tests and programs in `./test` and `./examples`.
-
-Build and run tests with:
-
-```bash
-make test
-```
+Learn more about ozone by reading and running the programs in`./examples`.
 
 Build all of the examples to `./build/examples` with:
 
@@ -37,7 +30,7 @@ Build all of the examples to `./build/examples` with:
 make build-examples
 ```
 
-A debug build and memcheck run using Valgrind can be executed respectively for any example program:
+Debug builds and memcheck run using Valgrind can be executed respectively for any example program:
 
 ```bash
 make hello_world.debug
@@ -64,17 +57,16 @@ Uninstall with:
 make uninstall
 ```
 
-## Build Options <a name="build-options"></a>
+# Tests & Benchmarks <a name="tests-and-benchmarks"></a>
 
-### Compile-time Flags
+Build and run the tests in `./tests` with:
 
-| Flag              | Default  | Effect                                      |
-| ----------------- | -------- | ------------------------------------------- |
-| `OZONE_LOG_DEBUG` | disabled | Enables debug-level logging                 |
-| `OZONE_LOG_TRACE` | disabled | Enables trace-level and debug-level logging |
+```bash
+make test
+```
 
-# Features <a name="features"></a>
+Generate [benchmarks](./benchmarks/README.md) with:
 
-## HTTP Pipelines
-
-## Template Processor
+```bash
+make benchmarks
+```
