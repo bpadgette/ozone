@@ -65,7 +65,7 @@ Build and run the tests in `./tests` with:
 make test
 ```
 
-Generate [benchmarks](./benchmarks/README.md) with:
+Generate [benchmarks](./test/benchmarks) with:
 
 ```bash
 make benchmarks

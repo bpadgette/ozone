@@ -24,13 +24,11 @@ FORMAT_CHECK      := clang-format -i -Werror --dry-run
 # Paths
 #
 ROOT        := $(CURDIR)/
-BENCHMARKS  := $(ROOT)benchmarks/
 BUILD       := $(ROOT)build/
 INCLUDE     := $(ROOT)include/
 LIB         := $(ROOT)lib/
 SOURCE      := $(ROOT)src/
 TEST        := $(ROOT)test/
-$(shell $(MKDIR) $(BENCHMARKS))
 $(shell $(MKDIR) $(BUILD))
 $(shell $(MKDIR) $(LIB))
 
@@ -113,6 +111,7 @@ $(BUILD)%.test: $(TEST)%.test.c $(DEBUG_OBJECTS) $(TEST_LIB)
 
 test: $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
 
+BENCHMARKS  := $(TEST)benchmarks/
 benchmarks: $(BUILD_EXAMPLES)hello_world
 	cd $(TEST)benchmarks && deno install && deno task run $(BUILD_EXAMPLES)hello_world > $(BENCHMARKS)README.md
 

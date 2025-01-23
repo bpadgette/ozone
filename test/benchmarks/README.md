@@ -11,9 +11,9 @@ Cancel this benchmark if a request takes longer than 100 milliseconds.
 
 ## GET http://localhost:8080/ -> OK
 
-- 54209 requests in 10.001 seconds (5421 requests/s)
-- Fastest in 0.088 ms
-- Slowest in 25.621 ms
+- 65720 requests in 10.001 seconds (6571 requests/s)
+- Fastest in 0.089 ms
+- Slowest in 23.268 ms
 
 
 # Phase: 30 users
@@ -25,7 +25,7 @@ Cancel this benchmark if a request takes longer than 100 milliseconds.
 
 ## GET http://localhost:8080/ -> OK
 
-- 101629 requests in 10.002 seconds (10161 requests/s)
-- Fastest in 1.190 ms
-- Slowest in 63.881 ms
+- 108707 requests in 10.002 seconds (10868 requests/s)
+- Fastest in 1.065 ms
+- Slowest in 64.515 ms
 
