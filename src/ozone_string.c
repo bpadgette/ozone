@@ -44,15 +44,12 @@ OzoneString* ozoneStringSlice(OzoneAllocator* allocator, OzoneString* string, si
 }
 
 OzoneString* ozoneStringCopy(OzoneAllocator* allocator, const OzoneString* original) {
-  OzoneByteVector* vector = ozoneAllocatorReserveOne(allocator, OzoneByteVector);
-  vector->elements = ozoneAllocatorReserveMany(allocator, char, original->vector.capacity);
-  vector->capacity = original->vector.capacity;
-  vector->length = original->vector.length;
-
-  memcpy(vector->elements, original->vector.elements, vector->capacity);
-
   OzoneString* copy = ozoneAllocatorReserveOne(allocator, OzoneString);
-  copy->vector = *vector;
+  copy->vector.length = original->vector.length;
+  copy->vector.capacity = original->vector.capacity;
+
+  copy->vector.elements = ozoneAllocatorReserveMany(allocator, char, copy->vector.capacity);
+  memcpy(copy->vector.elements, original->vector.elements, copy->vector.capacity);
 
   return copy;
 }
@@ -101,16 +98,14 @@ int ozoneStringFindFirst(const OzoneString* string, const OzoneString* search) {
 }
 
 OzoneString* ozoneStringFromBuffer(OzoneAllocator* allocator, char* buffer, size_t buffer_size) {
-  OzoneByteVector vector = (OzoneByteVector) {
+  OzoneString* string = ozoneAllocatorReserveOne(allocator, OzoneString);
+  string->vector = (OzoneByteVector) {
     .elements = ozoneAllocatorReserveMany(allocator, char, buffer_size + 1),
     .length = buffer_size + 1,
     .capacity = buffer_size + 1,
   };
 
-  memcpy(vector.elements, buffer, buffer_size);
-
-  OzoneString* string = ozoneAllocatorReserveOne(allocator, OzoneString);
-  string->vector = vector;
+  memcpy(string->vector.elements, buffer, buffer_size);
 
   // Only a single null terminator is needed, if the ending of the string is NULL we should pop
   while (!ozoneStringBufferEnd(string)) {

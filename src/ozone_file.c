@@ -13,13 +13,10 @@ void ozoneFileLoad(OzoneAllocator* allocator, OzoneStringVector* destination, FI
 
     cursor[read_status] = '\0';
 
-    OzoneByteVector* byte_vector = ozoneAllocatorReserveOne(allocator, OzoneByteVector);
-    byte_vector->capacity = read_status + 1;
-    byte_vector->length = read_status + 1;
-    byte_vector->elements = cursor;
-
     OzoneString* string = ozoneAllocatorReserveOne(allocator, OzoneString);
-    string->vector = *byte_vector;
+    string->vector.capacity = read_status + 1;
+    string->vector.length = read_status + 1;
+    string->vector.elements = cursor;
 
     ozoneVectorPushOzoneString(allocator, destination, string);
 

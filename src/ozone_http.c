@@ -310,11 +310,11 @@ OzoneStringVector* ozoneHTTPRenderResponse(OzoneAllocator* allocator, OzoneHTTPR
 
   ozoneStringAppend(allocator, response, '\r');
   ozoneStringAppend(allocator, response, '\n');
-  if (ozoneStringLength(&http_response->body))
-    ozoneStringConcatenate(allocator, response, &http_response->body);
-
   OzoneStringVector* chunks = ozoneAllocatorReserveOne(allocator, OzoneStringVector);
   ozoneVectorPushOzoneString(allocator, chunks, response);
+
+  if (ozoneStringLength(&http_response->body))
+    ozoneVectorPushOzoneString(allocator, chunks, &http_response->body);
 
   return chunks;
 }
@@ -376,37 +376,39 @@ int ozoneHTTPEndPipeline(OzoneHTTPEvent* event, void* context) {
   ozoneVectorForEach(chunk, &event->raw_socket_response) {
     for (size_t string_index = 0; string_index < ozoneStringLength(chunk); string_index++) {
       char cursor = ozoneStringBufferAt(chunk, string_index);
-      if (cursor == '\r')
-        break;
+      if (cursor == '\r') {
+        ozoneLogInfo("%s", ozoneStringBuffer(first_line));
+        return 0;
+      }
 
       ozoneStringAppend(event->allocator, first_line, cursor);
     }
   }
 
-  ozoneLogInfo("%s", ozoneStringBuffer(first_line));
+  ozoneLogError("HTTP response is malformed");
 
   return 0;
 }
 
 int ozoneHTTPServe(OzoneHTTPConfig* config, void* context) {
   OzoneAllocator* allocator = ozoneAllocatorCreate(1024);
-  OzoneSocketHandlerRefVector* http_pipeline = ozoneAllocatorReserveOne(allocator, OzoneSocketHandlerRefVector);
+  OzoneSocketHandlerRefVector http_pipeline = (OzoneSocketHandlerRefVector) { 0 };
 
   OzoneSocketHandlerRef begin = (OzoneSocketHandlerRef)ozoneHTTPBeginPipeline;
   OzoneSocketHandlerRef end = (OzoneSocketHandlerRef)ozoneHTTPEndPipeline;
 
-  ozoneVectorPushOzoneSocketHandlerRef(allocator, http_pipeline, &begin);
+  ozoneVectorPushOzoneSocketHandlerRef(allocator, &http_pipeline, &begin);
 
   OzoneSocketHandlerRef* handler;
   ozoneVectorForEach(handler, &config->handler_pipeline) {
-    ozoneVectorPushOzoneSocketHandlerRef(allocator, http_pipeline, handler);
+    ozoneVectorPushOzoneSocketHandlerRef(allocator, &http_pipeline, handler);
   }
 
-  ozoneVectorPushOzoneSocketHandlerRef(allocator, http_pipeline, &end);
+  ozoneVectorPushOzoneSocketHandlerRef(allocator, &http_pipeline, &end);
 
   ozoneLogInfo("Serving at http://localhost:%d", config->port);
 
-  OzoneSocketConfig socket_config = (OzoneSocketConfig) { .handler_pipeline = *http_pipeline, .port = config->port };
+  OzoneSocketConfig socket_config = (OzoneSocketConfig) { .handler_pipeline = http_pipeline, .port = config->port };
 
   int return_code = ozoneSocketServeTCP(&socket_config, context);
   ozoneAllocatorDelete(allocator);

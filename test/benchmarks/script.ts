@@ -19,6 +19,12 @@ const loadTests = [
         durationSeconds: 10,
         timeoutMs: 100,
       },
+      {
+        name: `100 users`,
+        concurrentUsers: 100,
+        durationSeconds: 10,
+        timeoutMs: 100,
+      },
     ],
   },
 ] as const;
