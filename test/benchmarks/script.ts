@@ -1,3 +1,5 @@
+import { arch, cpus, release, type } from "node:os";
+
 Deno.chdir("../../");
 const serverBinPath = Deno.args[0];
 const serverStartupSeconds = 0.5;
@@ -36,7 +38,23 @@ type Report = Record<string, {
 }>;
 
 for (const test of loadTests) {
-  console.log(`# Load Test Report\n`);
+  console.log("# Host Information\n");
+
+  console.log(`- **Platform**: ${type()} ${release()} (${arch()})`);
+
+  // This is naïve, but it works on my machine:
+  const [cpu, ...others] = cpus();
+  console.log(`- **CPU**: ${1 + others.length}-core ${cpu.model}`);
+
+  const memoryInfo = Deno.systemMemoryInfo();
+  console.log(
+    `- **Memory**: ${(memoryInfo.total / 1024 / 1024).toFixed(0)} MB (${
+      (memoryInfo.free / 1024 / 1024).toFixed(0)
+    } MB free)`,
+  );
+  console.log();
+
+  console.log(`# Benchmarks\n`);
   console.log(`Using server \`${serverBinPath.split("/").at(-1)}\``);
 
   for (const phase of test.phases) {
@@ -54,7 +72,7 @@ for (const test of loadTests) {
     );
 
     console.log(
-      `Cancel this benchmark if a request takes longer than ${phase.timeoutMs} milliseconds.\n`,
+      `This benchmark will be canceled if a request takes longer than ${phase.timeoutMs} milliseconds.\n`,
     );
 
     let stop = false;
@@ -140,7 +158,6 @@ for (const test of loadTests) {
       console.log(
         `- Slowest in ${value.slowestMs.toFixed(3)} ms`,
       );
-      console.log();
     });
   }
 }

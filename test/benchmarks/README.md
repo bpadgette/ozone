@@ -1,4 +1,10 @@
-# Load Test Report
+# Host Information
+
+- **Platform**: Linux 6.8.0-51-generic (x64)
+- **CPU**: 12-core 13th Gen Intel(R) Core(TM) i7-1355U
+- **Memory**: 15678 MB (9724 MB free)
+
+# Benchmarks
 
 Using server `hello_world`
 
@@ -6,40 +12,37 @@ Using server `hello_world`
 
 For this benchmark, send and wait on requests for 10 seconds using 1 concurrent user.
 
-Cancel this benchmark if a request takes longer than 100 milliseconds.
+This benchmark will be canceled if a request takes longer than 100 milliseconds.
 
 
 ## GET http://localhost:8080/ -> OK
 
-- 81441 requests in 10.001 seconds (8143 requests/s)
-- Fastest in 0.078 ms
-- Slowest in 17.038 ms
-
+- 81823 requests in 10.001 seconds (8181 requests/s)
+- Fastest in 0.080 ms
+- Slowest in 17.665 ms
 
 # Phase: 30 users
 
 For this benchmark, send and wait on requests for 10 seconds using 30 concurrent users.
 
-Cancel this benchmark if a request takes longer than 100 milliseconds.
+This benchmark will be canceled if a request takes longer than 100 milliseconds.
 
 
 ## GET http://localhost:8080/ -> OK
 
-- 105920 requests in 10.002 seconds (10590 requests/s)
-- Fastest in 1.090 ms
-- Slowest in 60.822 ms
-
+- 112315 requests in 10.003 seconds (11228 requests/s)
+- Fastest in 1.188 ms
+- Slowest in 60.604 ms
 
 # Phase: 100 users
 
 For this benchmark, send and wait on requests for 10 seconds using 100 concurrent users.
 
-Cancel this benchmark if a request takes longer than 100 milliseconds.
+This benchmark will be canceled if a request takes longer than 100 milliseconds.
 
 
 ## GET http://localhost:8080/ -> OK
 
-- 96528 requests in 10.005 seconds (9648 requests/s)
-- Fastest in 1.289 ms
-- Slowest in 84.703 ms
-
+- 101516 requests in 10.013 seconds (10139 requests/s)
+- Fastest in 1.626 ms
+- Slowest in 99.120 ms

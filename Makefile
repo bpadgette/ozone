@@ -113,7 +113,7 @@ test: $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
 
 BENCHMARKS  := $(TEST)benchmarks/
 benchmarks: $(BUILD_EXAMPLES)hello_world
-	cd $(TEST)benchmarks && deno install && deno task run $(BUILD_EXAMPLES)hello_world > $(BENCHMARKS)README.md
+	cd $(TEST)benchmarks && deno install && deno task run $(BUILD_EXAMPLES)hello_world | tee $(BENCHMARKS)README.md
 
 ##############################################################################
 # Installation
