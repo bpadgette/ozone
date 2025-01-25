@@ -1,14 +1,9 @@
 #ifndef OZONE_SOCKET_H
 #define OZONE_SOCKET_H
 
-#include <sys/poll.h>
-
 #include "ozone_allocator.h"
 #include "ozone_string.h"
 #include "ozone_vector.h"
-
-typedef struct pollfd OzoneSocketPollDescriptor;
-OZONE_VECTOR_DECLARE_API(OzoneSocketPollDescriptor)
 
 #define OZONE_SOCKET_EVENT_FIELDS(_request_type_, _response_type_)                                                     \
   {                                                                                                                    \
