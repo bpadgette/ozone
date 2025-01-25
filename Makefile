@@ -112,8 +112,8 @@ $(BUILD)%.test: $(TEST)%.test.c $(DEBUG_OBJECTS) $(TEST_LIB)
 test: $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
 
 BENCHMARKS  := $(TEST)benchmarks/
-benchmarks: $(BUILD_EXAMPLES)hello_world
-	cd $(TEST)benchmarks && deno install && deno task run $(BUILD_EXAMPLES)hello_world | tee $(BENCHMARKS)README.md
+%.benchmarks: $(BUILD_EXAMPLES)%
+	cd $(TEST)benchmarks && deno install && deno task run $^ | tee $(BENCHMARKS)$@_$(PLATFORM).md
 
 ##############################################################################
 # Installation

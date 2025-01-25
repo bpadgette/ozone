@@ -404,7 +404,12 @@ int ozoneHTTPServe(OzoneHTTPConfig* config, void* context) {
 
   ozoneLogInfo("Serving at http://localhost:%d", config->port);
 
-  OzoneSocketConfig socket_config = (OzoneSocketConfig) { .handler_pipeline = http_pipeline, .port = config->port };
+  OzoneSocketConfig socket_config = (OzoneSocketConfig) {
+    .handler_pipeline = http_pipeline,
+    .port = config->port,
+    // we are still single-threaded...
+    .max_connections = 8,
+  };
 
   int return_code = ozoneSocketServeTCP(&socket_config, context);
   ozoneAllocatorDelete(allocator);

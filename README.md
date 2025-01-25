@@ -30,24 +30,20 @@ Build all of the examples to `./build/examples` with:
 make build-examples
 ```
 
-Debug builds and memcheck run using Valgrind can be executed respectively for any example program:
+Debug builds, benchmarks, and memcheck runs can be executed for any example program:
 
 ```bash
 make hello_world.debug
+make hello_world.benchmarks
 make hello_world.memcheck
 ```
 
 # Build & Install <a name="build-and-install"></a>
 
-Build the shared library, `libozone.so`.
+Build and install the shared library, `libozone.so`.
 
 ```bash
 make build
-```
-
-Install the shared library, `libozone.so`, to `/usr/lib` and copy `./include` to `/usr/include`.
-
-```bash
 make install
 ```
 
@@ -65,8 +61,8 @@ Build and run the tests in `./tests` with:
 make test
 ```
 
-Generate [benchmarks](./test/benchmarks) with:
+Run [benchmarks](./test/benchmarks) for any example program, such as `hello_world` with:
 
 ```bash
-make benchmarks
+make hello_world.benchmarks
 ```
