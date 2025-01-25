@@ -354,20 +354,16 @@ int ozoneHTTPEndPipeline(OzoneHTTPEvent* event, void* context) {
   if (!response->code)
     response->code = ozoneStringLength(&response->body) ? 200 : 204;
 
-  if (ozoneStringLength(&response->body)) {
-    if (!ozoneStringMapFindValue(&response->headers, &ozoneStringConstant("Content-Type")))
-      ozoneStringMapInsert(
-          event->allocator,
-          &response->headers,
-          &ozoneStringConstant("Content-Type"),
-          &ozoneStringConstant("text/plain"));
-
+  if (ozoneStringLength(&response->body)
+      && !ozoneStringMapFindValue(&response->headers, &ozoneStringConstant("Content-Type")))
     ozoneStringMapInsert(
-        event->allocator,
-        &response->headers,
-        &ozoneStringConstant("Content-Length"),
-        ozoneStringFromInteger(event->allocator, ozoneStringLength(&response->body)));
-  }
+        event->allocator, &response->headers, &ozoneStringConstant("Content-Type"), &ozoneStringConstant("text/plain"));
+
+  ozoneStringMapInsert(
+      event->allocator,
+      &response->headers,
+      &ozoneStringConstant("Content-Length"),
+      ozoneStringFromInteger(event->allocator, ozoneStringLength(&response->body)));
 
   event->raw_socket_response = *ozoneHTTPRenderResponse(event->allocator, response);
 
