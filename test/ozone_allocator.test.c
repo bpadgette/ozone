@@ -11,7 +11,10 @@ void shouldReserveAndClearSingleRegion(void) {
   TEST_ASSERT_MESSAGE(ozoneAllocatorGetRegionCapacity(alloc) == size, "It allocates capacity to single region");
   TEST_ASSERT_MESSAGE(ozoneAllocatorGetTotalFree(alloc) == 0, "It has 0 free bytes in allocator");
   TEST_ASSERT_MESSAGE(ozoneAllocatorGetRegionFree(alloc) == 0, "It has 0 free bytes in allocator region");
-  TEST_ASSERT_MESSAGE(allocation[size - 1] == 0, "It grants access to full allocation");
+
+  for (size_t i = 0; i < size; i++) {
+    TEST_ASSERT_MESSAGE(allocation[i] == 0, "It grants access to full zeroed allocation");
+  }
 
   ozoneAllocatorClear(alloc);
   TEST_ASSERT_MESSAGE(ozoneAllocatorGetTotalCapacity(alloc) == size, "It has total capacity equal to size after clear");
