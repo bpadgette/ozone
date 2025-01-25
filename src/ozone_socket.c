@@ -147,7 +147,7 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config, void* context) {
         polling_fd, NULL, 0, ozoneVectorBegin(&connection_pool), ozoneVectorLength(&connection_pool), &kqueue_timeout);
     size_t stop_index = events_count;
 #else
-    int events_count = epoll_wait(
+    epoll_wait(
         polling_fd,
         ozoneVectorBegin(&connection_pool),
         ozoneVectorLength(&connection_pool),
