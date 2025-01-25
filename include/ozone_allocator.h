@@ -26,6 +26,6 @@ uintptr_t ozoneAllocatorReserveBytes(OzoneAllocator* _allocator_, size_t size);
 #define ozoneAllocatorReserveOne(_allocator_, _type_)                                                                  \
   (_type_*)ozoneAllocatorReserveBytes(_allocator_, 1 * sizeof(_type_))
 #define ozoneAllocatorReserveMany(_allocator_, _type_, _count_)                                                        \
-  (_type_*)ozoneAllocatorReserveBytes(_allocator_, _count_ * sizeof(_type_))
+  (_type_*)ozoneAllocatorReserveBytes(_allocator_, (_count_) * sizeof(_type_))
 
 #endif

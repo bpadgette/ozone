@@ -27,6 +27,13 @@
       .capacity = sizeof(((_type_[]) { __VA_ARGS__ })) / sizeof(_type_),                                               \
   })
 
+#define ozoneVectorAllocate(_allocator_, _type_, _capacity_)                                                           \
+  ((_type_##Vector) {                                                                                                  \
+      .elements = ozoneAllocatorReserveMany(_allocator_, _type_, (_capacity_)),                                        \
+      .length = 0,                                                                                                     \
+      .capacity = _capacity_,                                                                                          \
+  })
+
 #define ozoneVectorLength(_vector_) ((_vector_)->length)
 #define ozoneVectorAt(_vector_, _index_) ((_vector_)->elements[_index_])
 #define ozoneVectorBegin(_vector_) ((_vector_)->elements)
