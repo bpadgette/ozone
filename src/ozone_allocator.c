@@ -94,3 +94,22 @@ void ozoneAllocatorClear(OzoneAllocator* allocator) {
     allocator_iterator->cursor = ozoneAllocatorGetRegionStart(allocator_iterator);
   } while ((allocator_iterator = allocator_iterator->next));
 }
+
+int ozoneAllocatorGrow(OzoneAllocator* allocator, uintptr_t address, size_t current_size, size_t new_size) {
+  if (!allocator || !address || !current_size || new_size < current_size)
+    return -1;
+
+  OzoneAllocator* allocator_iterator = allocator;
+  do {
+    if (address + current_size != allocator_iterator->cursor)
+      continue;
+
+    if (allocator_iterator->cursor + new_size > allocator_iterator->end)
+      continue;
+
+    allocator_iterator->cursor += (new_size - current_size);
+    return 0;
+  } while ((allocator_iterator = allocator_iterator->next));
+
+  return -1;
+}

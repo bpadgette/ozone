@@ -88,7 +88,8 @@ int ozoneStringFindFirst(const OzoneString* string, const OzoneString* search) {
   if (!search || !string)
     return -1;
 
-  for (size_t string_index = 0; string_index < ozoneStringLength(string); string_index++) {
+  for (size_t string_index = 0; string_index < (ozoneStringLength(string) - ozoneStringLength(search));
+       string_index++) {
     if (!memcmp(ozoneStringBuffer(string) + string_index, ozoneStringBuffer(search), ozoneStringLength(search))) {
       return (int)string_index;
     }

@@ -14,13 +14,11 @@
 #if OZONE_SOCKET_USE_KQUEUE
 #include <sys/event.h>
 typedef struct kevent OzoneSocketPollEvent;
-
 #define ozoneSocketPollEventFile(_event_) ((int)((_event_)->ident))
 
 #else
 #include <sys/epoll.h>
 typedef struct epoll_event OzoneSocketPollEvent;
-
 #define ozoneSocketPollEventFile(_event_) ((_event_)->data.fd)
 
 #endif
@@ -54,11 +52,6 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config, void* context) {
   // todo: review socket options, consider SO_LINGER
   const int socket_option_one = 1;
   setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &socket_option_one, sizeof(int));
-
-  struct timeval socket_option_recv_timeout = (struct timeval) { .tv_sec = 1, .tv_usec = 0 };
-  setsockopt(
-      socket_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&socket_option_recv_timeout, sizeof(socket_option_recv_timeout));
-
   if (ioctl(socket_fd, FIONBIO, &socket_option_one) < 0)
     ozoneLogWarn("Connection ioctl FIONBIO failed, socket may run in blocking mode");
 
@@ -274,23 +267,18 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config, void* context) {
       }
 
       if (close_connection) {
-#ifdef OZONE_SOCKET_USE_KQUEUE
-        ozoneVectorForEach(connection, &connection_pool) {
-          if (ozoneSocketPollEventFile(connection) == connection_fd) {
-            EV_SET(connection, connection_fd, EVFILT_READ, EV_DISABLE | EV_DELETE, 0, 0, 0);
-            kevent(polling_fd, connection, 1, NULL, 0, NULL);
-            connection->ident = 0;
-          }
-        }
-#else
+        ozoneLogDebug("Closing server connection %d", connection_fd);
+        close(connection_fd);
+
+#ifndef OZONE_SOCKET_USE_KQUEUE
+        // This could be unnecessary following close(connection_fd), but best to be safe across epoll implementations
         epoll_ctl(polling_fd, EPOLL_CTL_DEL, connection_fd, NULL);
+#endif
+
         ozoneVectorForEach(connection, &connection_pool) {
           if (ozoneSocketPollEventFile(connection) == connection_fd)
             *connection = (OzoneSocketPollEvent) { 0 };
         }
-#endif
-        ozoneLogDebug("Closing server connection %d", connection_fd);
-        close(connection_fd);
       }
     }
   }
