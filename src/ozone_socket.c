@@ -147,10 +147,7 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config, void* context) {
         OZONE_SOCKET_POLLING_TIMEOUT_SECONDS * 1000);
     size_t stop_index = ozoneVectorLength(&connection_pool);
 #endif
-    for (size_t connection_index = 0; connection_index < stop_index; connection_index++) {
-      if (ozone_socket_shutdown)
-        break;
-
+    for (size_t connection_index = 0; connection_index < stop_index && !ozone_socket_shutdown; connection_index++) {
       OzoneSocketPollEvent* connection = &ozoneVectorAt(&connection_pool, connection_index);
       int connection_fd = ozoneSocketPollEventFile(connection);
       if (!connection_fd)
