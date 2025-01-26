@@ -267,23 +267,18 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config, void* context) {
       }
 
       if (close_connection) {
-#ifdef OZONE_SOCKET_USE_KQUEUE
-        ozoneVectorForEach(connection, &connection_pool) {
-          if (ozoneSocketPollEventFile(connection) == connection_fd) {
-            EV_SET(connection, connection_fd, EVFILT_READ, EV_DISABLE | EV_DELETE, 0, 0, 0);
-            kevent(polling_fd, connection, 1, NULL, 0, NULL);
-            connection->ident = 0;
-          }
-        }
-#else
+        ozoneLogDebug("Closing server connection %d", connection_fd);
+        close(connection_fd);
+
+#ifndef OZONE_SOCKET_USE_KQUEUE
+        // This could be unnecessary following close(connection_fd), but best to be safe across epoll implementations
         epoll_ctl(polling_fd, EPOLL_CTL_DEL, connection_fd, NULL);
+#endif
+
         ozoneVectorForEach(connection, &connection_pool) {
           if (ozoneSocketPollEventFile(connection) == connection_fd)
             *connection = (OzoneSocketPollEvent) { 0 };
         }
-#endif
-        ozoneLogDebug("Closing server connection %d", connection_fd);
-        close(connection_fd);
       }
     }
   }
