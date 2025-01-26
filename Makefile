@@ -58,20 +58,16 @@ TARGET_DEBUG_LIB   := $(BUILD)lib$(TARGET).debug$(SHARED_OBJECT_EXTENSION)
 # C Build
 #
 CFLAGS        := -std=gnu99 -Wall -Werror -Wextra -pedantic -fpic -O3 -I$(INCLUDE)
-OBJECTS       := $(patsubst $(SOURCE)%.c, $(BUILD)%.o, $(wildcard *, $(SOURCE)*.c))
-DEBUG_OBJECTS := $(patsubst $(SOURCE)%.c, $(BUILD)%.debug.o, $(wildcard *, $(SOURCE)*.c))
 
-$(BUILD)%.o: $(SOURCE)%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+$(TARGET_LIB):
+	$(CC) -shared $(CFLAGS) -o $(TARGET_LIB) $(SOURCE)$(TARGET).c
 
-$(BUILD)%.debug.o: $(SOURCE)%.c
-	$(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g -c $< -o $@
+build: $(TARGET_LIB)
 
-build: $(OBJECTS)
-	$(CC) -shared -o $(TARGET_LIB) $^
+$(TARGET_DEBUG_LIB):
+	$(CC) -shared -DOZONE_LOG_DEBUG -g $(CFLAGS) -o $(TARGET_DEBUG_LIB) $(SOURCE)$(TARGET).c
 
-build-debug: $(DEBUG_OBJECTS)
-	$(CC) -shared -o $(TARGET_DEBUG_LIB) $^
+build-debug: $(TARGET_DEBUG_LIB)
 
 ##############################################################################
 # Examples
@@ -79,10 +75,10 @@ build-debug: $(DEBUG_OBJECTS)
 EXAMPLES    	  := $(ROOT)examples/
 BUILD_EXAMPLES    := $(BUILD)examples/
 
-$(BUILD_EXAMPLES)%.debug: build-debug
+$(BUILD_EXAMPLES)%.debug: $(TARGET_DEBUG_LIB)
 	$(shell $(MKDIR) $(BUILD_EXAMPLES)) $(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g $(EXAMPLES)$*.c $(TARGET_DEBUG_LIB) -o $@
 
-$(BUILD_EXAMPLES)%: build
+$(BUILD_EXAMPLES)%: $(TARGET_LIB)
 	$(shell $(MKDIR) $(BUILD_EXAMPLES))	$(CC) $(CFLAGS) $(EXAMPLES)$*.c $(TARGET_LIB) -o $@
 
 %.memcheck: $(BUILD_EXAMPLES)%.debug
@@ -105,7 +101,7 @@ TEST_LIB  := $(LIB)unity.o
 $(TEST_LIB): $(TEST_LIB_SOURCE)
 	$(CC) $(CFLAGS) -c $(TEST_LIB_SOURCE)unity.c -o $@
 
-$(BUILD)%.test: $(TEST)%.test.c $(DEBUG_OBJECTS) $(TEST_LIB)
+$(BUILD)%.test: $(TEST)%.test.c $(TARGET_DEBUG_LIB) $(TEST_LIB)
 	$(CC) $(CFLAGS) -I$(TEST_LIB_SOURCE) -g $^ -o $@
 	$@
 
@@ -119,12 +115,12 @@ BENCHMARKS  := $(TEST)benchmarks/
 # Installation
 #
 install: build uninstall
-	sudo $(COPY) $(INCLUDE) $(PLATFORM_INCLUDES_PATH)$(TARGET) \
-	  && sudo $(COPY) $(TARGET_JS_MODULE) $(PLATFORM_INCLUDES_PATH)$(TARGET) \
-	  && sudo $(COPY) $(TARGET_LIB) $(PLATFORM_LIBS_PATH)
+	$(COPY) $(INCLUDE) $(PLATFORM_INCLUDES_PATH)$(TARGET) \
+	  && $(COPY) $(TARGET_LIB) $(PLATFORM_LIBS_PATH)
 
 uninstall:
-	sudo $(CLEAN) $(PLATFORM_INCLUDES_PATH)$(TARGET) &&	sudo $(CLEAN) $(PLATFORM_LIBS_PATH)$(TARGET_LIB)
+	$(CLEAN) $(PLATFORM_INCLUDES_PATH)$(TARGET) \
+	  && $(CLEAN) $(PLATFORM_LIBS_PATH)$(TARGET_LIB)
 
 ##############################################################################
 # Helpers
