@@ -50,14 +50,22 @@
   }                                                                                                                    \
   void ozoneVectorPush##_type_(OzoneAllocator* allocator, _type_##Vector* vector, _type_* element) {                   \
     if (vector->length >= vector->capacity) {                                                                          \
+      size_t current_capacity = vector->capacity;                                                                      \
       vector->capacity *= 2;                                                                                           \
       if (vector->capacity < 1)                                                                                        \
         vector->capacity = 1;                                                                                          \
                                                                                                                        \
-      _type_* old = vector->elements;                                                                                  \
-      vector->elements = ozoneAllocatorReserveMany(allocator, _type_, vector->capacity);                               \
-      if (old && vector->length)                                                                                       \
-        memcpy(vector->elements, old, sizeof(_type_) * vector->length);                                                \
+      if (ozoneAllocatorGrow(                                                                                          \
+              allocator,                                                                                               \
+              (uintptr_t)vector->elements,                                                                             \
+              current_capacity * sizeof(_type_),                                                                       \
+              vector->capacity * sizeof(_type_))                                                                       \
+          == -1) {                                                                                                     \
+        _type_* old = vector->elements;                                                                                \
+        vector->elements = ozoneAllocatorReserveMany(allocator, _type_, vector->capacity);                             \
+        if (old && vector->length)                                                                                     \
+          memcpy(vector->elements, old, sizeof(_type_) * vector->length);                                              \
+      }                                                                                                                \
     }                                                                                                                  \
                                                                                                                        \
     vector->elements[vector->length++] = *element;                                                                     \
