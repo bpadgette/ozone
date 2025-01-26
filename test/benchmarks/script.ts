@@ -6,7 +6,6 @@ const serverStartupSeconds = 1;
 
 const createRequest = () =>
   new Request("http://localhost:8080", { method: "GET" });
-const timeoutMs = 500;
 const durationSeconds = 10;
 const loadTests = [
   {
@@ -14,21 +13,18 @@ const loadTests = [
     createRequest,
     concurrentUsers: 1,
     durationSeconds,
-    timeoutMs,
   },
   {
     name: `30 users`,
     createRequest,
     concurrentUsers: 30,
     durationSeconds,
-    timeoutMs,
   },
   {
     name: `100 users`,
     createRequest,
     concurrentUsers: 100,
     durationSeconds,
-    timeoutMs,
   },
 ] as const;
 
@@ -77,13 +73,11 @@ for (const phase of loadTests) {
     }.\n`,
   );
 
-  console.log(
-    `This benchmark will be canceled if a request takes longer than ${phase.timeoutMs} milliseconds or is dropped completely.\n`,
-  );
-
   let stop = false;
-  const now = performance.now();
-  const endTest = setTimeout(() => stop = true, phase.durationSeconds * 1000);
+  const startTestMs = performance.now();
+  const timeoutMs = phase.durationSeconds * 1000;
+
+  const endTest = setTimeout(() => stop = true, timeoutMs);
   const reports: Report[] = await Promise.all(
     Array(phase.concurrentUsers).fill(0).entries().map(async ([userId]) => {
       const report: Report = {};
@@ -93,8 +87,9 @@ for (const phase of loadTests) {
         const now = performance.now();
         let status;
         try {
+          const abortMs = timeoutMs - performance.now() - startTestMs;
           const response = await fetch(request, {
-            signal: AbortSignal.timeout(phase.timeoutMs),
+            signal: abortMs > 5 ? AbortSignal.timeout(abortMs) : undefined,
           });
           status = response.statusText;
         } catch (error) {
@@ -129,7 +124,7 @@ for (const phase of loadTests) {
       return report;
     }),
   );
-  const ms = performance.now() - now;
+  const ms = performance.now() - startTestMs;
 
   if (process) {
     try {
