@@ -310,12 +310,13 @@ OzoneStringVector* ozoneHTTPRenderResponse(OzoneAllocator* allocator, OzoneHTTPR
 
   ozoneStringAppend(allocator, response, '\r');
   ozoneStringAppend(allocator, response, '\n');
-  OzoneStringVector* chunks = ozoneAllocatorReserveOne(allocator, OzoneStringVector);
-  ozoneVectorPushOzoneString(allocator, chunks, response);
 
   if (ozoneStringLength(&http_response->body))
-    ozoneVectorPushOzoneString(allocator, chunks, &http_response->body);
+    ozoneStringConcatenate(allocator, response, &http_response->body);
 
+  // Keep the chunked response format simply because it could be useful for HTTP/2 or multi-part bodies etc.
+  OzoneStringVector* chunks = ozoneAllocatorReserveOne(allocator, OzoneStringVector);
+  ozoneVectorPushOzoneString(allocator, chunks, response);
   return chunks;
 }
 
