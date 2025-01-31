@@ -24,6 +24,7 @@ OZONE_VECTOR_DECLARE_API(OzoneAppEndpoint)
   }
 
 typedef struct OzoneAppContextStruct {
+  // todo: make all fields thread-safe
   OzoneAllocator* allocator;
   OzoneRouterConfig router;
   OzoneTemplatesConfig templates;

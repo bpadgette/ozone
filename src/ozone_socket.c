@@ -3,9 +3,13 @@
 #include "ozone_log.h"
 #include <arpa/inet.h>
 #include <errno.h>
+#include <pthread.h>
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+
+#define OZONE_SOCKET_POLLING_TIMEOUT_SECONDS 10
+#define OZONE_SOCKET_REQUEST_CHUNK_SIZE 8192
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #define OZONE_SOCKET_USE_KQUEUE 1
@@ -13,33 +17,130 @@
 
 #if OZONE_SOCKET_USE_KQUEUE
 #include <sys/event.h>
-typedef struct kevent OzoneSocketPollEvent;
-#define ozoneSocketPollEventFile(_event_) ((int)((_event_)->ident))
+typedef struct kevent OzoneSocketConnection;
+#define ozoneSocketConnectionFile(_event_) ((int)((_event_)->ident))
 
 #else
 #include <sys/epoll.h>
-typedef struct epoll_event OzoneSocketPollEvent;
-#define ozoneSocketPollEventFile(_event_) ((_event_)->data.fd)
+typedef struct epoll_event OzoneSocketConnection;
+#define ozoneSocketConnectionFile(_event_) ((_event_)->data.fd)
 
 #endif
 
-#define OZONE_SOCKET_POLLING_TIMEOUT_SECONDS 60
-#define OZONE_SOCKET_REQUEST_CHUNK_SIZE 8192
-
-OZONE_VECTOR_DECLARE_API(OzoneSocketPollEvent)
-OZONE_VECTOR_IMPLEMENT_API(OzoneSocketPollEvent)
+OZONE_VECTOR_DECLARE_API(OzoneSocketConnection)
+OZONE_VECTOR_IMPLEMENT_API(OzoneSocketConnection)
 
 OZONE_VECTOR_IMPLEMENT_API(OzoneSocketHandlerRef)
+
+typedef struct OzoneSocketWorkerStruct {
+  pthread_t thread;
+  const OzoneSocketHandlerRefVector* handler_pipeline;
+  OzoneSocketConnection* connection;
+  void* event_context;
+} OzoneSocketWorker;
+
+OZONE_VECTOR_DECLARE_API(OzoneSocketWorker)
+OZONE_VECTOR_IMPLEMENT_API(OzoneSocketWorker)
 
 int ozone_socket_shutdown = 0;
 void ozoneSocketSignalAction(int signum) {
   if (signum == SIGINT) {
-    ozoneLogError("Received SIGINT, will shutdown");
+    ozoneLogWarn("Received SIGINT, will shutdown gracefully");
     ozone_socket_shutdown = 1;
   }
 }
 
+void* ozoneSocketHandleWorker(OzoneSocketWorker* worker) {
+  struct timespec sleep_on_idle = (struct timespec) { .tv_nsec = 100000 };
+  OzoneAllocator* event_allocator = NULL;
+  while (!ozone_socket_shutdown) {
+    int connection_fd = worker->connection ? ozoneSocketConnectionFile(worker->connection) : 0;
+    if (!connection_fd) {
+      nanosleep(&sleep_on_idle, NULL);
+      continue;
+    }
+
+    int close_connection = 0;
+
+    if (!event_allocator)
+      event_allocator = ozoneAllocatorCreate(1024 + OZONE_SOCKET_REQUEST_CHUNK_SIZE);
+
+    ozoneLogDebug("Worker picked up connection %d", connection_fd);
+    ozoneAllocatorClear(event_allocator);
+    OzoneSocketEvent event = { .allocator = event_allocator };
+
+    int recv_code = 0;
+    do {
+      OzoneString* string = ozoneAllocatorReserveOne(event.allocator, OzoneString);
+      string->vector = ozoneVectorAllocate(event.allocator, OzoneByte, OZONE_SOCKET_REQUEST_CHUNK_SIZE + 1);
+
+      recv_code = recv(connection_fd, ozoneStringBuffer(string), OZONE_SOCKET_REQUEST_CHUNK_SIZE, 0);
+      if (recv_code == 0) {
+        ozoneLogDebug("Client closed connection %d", connection_fd);
+        close_connection = 1;
+        break;
+      }
+
+      if (recv_code < 0) {
+        if (errno == EWOULDBLOCK)
+          continue;
+
+        if (errno == ECONNRESET || errno == ECONNREFUSED || errno == ENOTCONN) {
+          ozoneLogDebug("Client closed connection %d", connection_fd);
+          close_connection = 1;
+          break;
+        }
+
+        if (errno == EBADF) {
+          ozoneLogWarn(
+              "Tried to read from what may be a previously closed connection, errno %d for file %d",
+              errno,
+              connection_fd);
+          close_connection = 1;
+          break;
+        }
+
+        ozoneLogError("Could not read part of TCP connection request, errno %d for file %d", errno, connection_fd);
+        close_connection = 1;
+        break;
+      }
+
+      string->vector.length = (size_t)recv_code;
+      ozoneVectorPushOzoneString(event.allocator, &event.raw_socket_request, string);
+    } while (recv_code >= OZONE_SOCKET_REQUEST_CHUNK_SIZE);
+
+    if (!close_connection && ozoneVectorLength(&event.raw_socket_request)) {
+      ozoneLogDebug("Handling event on connection %d", connection_fd);
+      OzoneSocketHandlerRef* handler;
+      ozoneVectorForEach(handler, worker->handler_pipeline) (*handler)(&event, worker->event_context);
+
+      OzoneString* chunk;
+      ozoneVectorForEach(chunk, &event.raw_socket_response)
+          send(connection_fd, ozoneStringBuffer(chunk), ozoneStringLength(chunk), MSG_NOSIGNAL);
+    }
+
+    ozoneLogDebug("Closing connection %d", connection_fd);
+    close(connection_fd);
+    *worker->connection = (OzoneSocketConnection) { 0 };
+    worker->connection = NULL;
+  }
+
+  ozoneAllocatorDelete(event_allocator);
+
+  return NULL;
+}
+
 int ozoneSocketServeTCP(OzoneSocketConfig* config, void* context) {
+  size_t connection_pool_capacity = SOMAXCONN - 1;
+  if (config->max_connections && config->max_connections < connection_pool_capacity) {
+    connection_pool_capacity = config->max_connections;
+  }
+
+  size_t worker_pool_capacity = 32;
+  if (config->max_workers && config->max_workers < worker_pool_capacity) {
+    worker_pool_capacity = config->max_workers;
+  }
+
   struct sigaction signal_actions = { .sa_handler = &ozoneSocketSignalAction };
   sigaction(SIGINT, &signal_actions, NULL);
 
@@ -55,7 +156,7 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config, void* context) {
   if (ioctl(socket_fd, FIONBIO, &socket_option_one) < 0)
     ozoneLogWarn("Connection ioctl FIONBIO failed, socket may run in blocking mode");
 
-  OzoneSocketPollEvent listening_socket;
+  OzoneSocketConnection listening_socket;
 
 #ifdef OZONE_SOCKET_USE_KQUEUE
   struct timespec kqueue_timeout = (struct timespec) { .tv_sec = OZONE_SOCKET_POLLING_TIMEOUT_SECONDS };
@@ -113,177 +214,155 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config, void* context) {
       config->port,
       ozoneVectorLength(&config->handler_pipeline));
 
-  size_t connection_pool_capacity = SOMAXCONN - 1;
-  if (config->max_connections && config->max_connections < connection_pool_capacity) {
-    connection_pool_capacity = config->max_connections;
-  }
-
-  OzoneAllocator* handler_allocator = ozoneAllocatorCreate(1024 + OZONE_SOCKET_REQUEST_CHUNK_SIZE);
   OzoneAllocator* socket_allocator = ozoneAllocatorCreate(1024);
-#ifdef OZONE_SOCKET_USE_KQUEUE
-  OzoneSocketPollEventVector connection_pool
-      = ozoneVectorAllocate(socket_allocator, OzoneSocketPollEvent, connection_pool_capacity);
+  OzoneSocketConnectionVector connection_pool
+      = ozoneVectorAllocate(socket_allocator, OzoneSocketConnection, connection_pool_capacity);
   connection_pool.length = connection_pool.capacity;
   ozoneLogDebug("Connection pool will handle up to %ld connections", ozoneVectorLength(&connection_pool));
+
+#ifdef OZONE_SOCKET_USE_KQUEUE
+  OzoneSocketConnectionVector events
+      = ozoneVectorAllocate(socket_allocator, OzoneSocketConnection, connection_pool_capacity);
+  events.length = connection_pool.capacity;
 #else
-  OzoneSocketPollEventVector connection_pool
-      = ozoneVectorAllocate(socket_allocator, OzoneSocketPollEvent, connection_pool_capacity + 1);
-  ozoneVectorPushOzoneSocketPollEvent(socket_allocator, &connection_pool, &listening_socket);
-  connection_pool.length = connection_pool.capacity;
-  ozoneLogDebug("Connection pool will handle up to %ld connections", ozoneVectorLength(&connection_pool) - 1);
+  OzoneSocketConnectionVector events
+      = ozoneVectorAllocate(socket_allocator, OzoneSocketConnection, connection_pool_capacity + 1);
+  ozoneVectorPushOzoneSocketConnection(socket_allocator, &events, &listening_socket);
+  events.length = connection_pool.capacity;
 #endif
 
+  OzoneSocketWorkerVector worker_pool = ozoneVectorAllocate(socket_allocator, OzoneSocketWorker, worker_pool_capacity);
+  worker_pool.length = worker_pool.capacity;
+  OzoneSocketWorker* worker;
+  ozoneVectorForEach(worker, &worker_pool) {
+    worker->event_context = context;
+    worker->handler_pipeline = &config->handler_pipeline;
+    pthread_create(&worker->thread, NULL, (void* (*)(void*))ozoneSocketHandleWorker, worker);
+  }
+  ozoneLogDebug("Created %ld workers", ozoneVectorLength(&worker_pool));
+
+  struct timespec sleep_on_idle = (struct timespec) { .tv_nsec = 10000 };
   while (!ozone_socket_shutdown) {
 
 #ifdef OZONE_SOCKET_USE_KQUEUE
-    int events_count = kevent(
-        polling_fd, NULL, 0, ozoneVectorBegin(&connection_pool), ozoneVectorLength(&connection_pool), &kqueue_timeout);
-    size_t stop_index = events_count;
+    events.length = (size_t)kevent(polling_fd, NULL, 0, ozoneVectorBegin(&events), events.capacity, &kqueue_timeout);
 #else
     epoll_wait(
-        polling_fd,
-        ozoneVectorBegin(&connection_pool),
-        ozoneVectorLength(&connection_pool),
-        OZONE_SOCKET_POLLING_TIMEOUT_SECONDS * 1000);
-    size_t stop_index = ozoneVectorLength(&connection_pool);
+        polling_fd, ozoneVectorBegin(&events), ozoneVectorLength(&events), OZONE_SOCKET_POLLING_TIMEOUT_SECONDS * 1000);
 #endif
-    for (size_t connection_index = 0; connection_index < stop_index && !ozone_socket_shutdown; connection_index++) {
-      OzoneSocketPollEvent* connection = &ozoneVectorAt(&connection_pool, connection_index);
-      int connection_fd = ozoneSocketPollEventFile(connection);
+
+    OzoneSocketConnection* event;
+    ozoneVectorForEach(event, &events) {
+      if (ozone_socket_shutdown)
+        break;
+
+      int connection_fd = ozoneSocketConnectionFile(event);
       if (!connection_fd)
-        continue;
+        break;
 
-      for (; connection_fd == socket_fd;) {
-        OzoneSocketPollEvent* accepted_connection = NULL;
-        OzoneSocketPollEvent* existing_connection;
-        ozoneVectorForEach(existing_connection, &connection_pool) {
-          if (!ozoneSocketPollEventFile(existing_connection)) {
-            accepted_connection = existing_connection;
-            break;
-          }
-        }
-
-        if (!accepted_connection) {
-          ozoneLogDebug("Waiting to accept connection, all connections in pool are occupied");
+      while (connection_fd == socket_fd) {
+        if (ozone_socket_shutdown)
           break;
-        }
 
         int accepted_socket_fd = accept(
-            ozoneSocketPollEventFile(&listening_socket), (struct sockaddr*)&host_addr, (socklen_t*)&host_addr_len);
+            ozoneSocketConnectionFile(&listening_socket), (struct sockaddr*)&host_addr, (socklen_t*)&host_addr_len);
         if (accepted_socket_fd == -1)
           break;
 
-        ozoneVectorForEach(existing_connection, &connection_pool) {
-          if (ozoneSocketPollEventFile(existing_connection) == accepted_socket_fd) {
-            accepted_connection = existing_connection;
-            break;
+        ozoneLogDebug("Accepted connection %d", accepted_socket_fd);
+        for (;;) {
+          OzoneSocketConnection* accepted_connection = NULL;
+          OzoneSocketConnection* connection;
+          ozoneVectorForEach(connection, &connection_pool) {
+            if (!ozoneSocketConnectionFile(connection)) {
+              accepted_connection = connection;
+              break;
+            }
           }
-        }
 
-        ozoneLogDebug("Accepted new connection %d", accepted_socket_fd);
+          if (!accepted_connection) {
+            ozoneLogDebug("Waiting to handle connection, all connections in pool are occupied");
+            nanosleep(&sleep_on_idle, NULL);
+            continue;
+          }
 
 #ifdef OZONE_SOCKET_USE_KQUEUE
-        EV_SET(accepted_connection, accepted_socket_fd, EVFILT_READ, EV_ADD, 0, 0, 0);
-        if (kevent(polling_fd, accepted_connection, 1, NULL, 0, NULL)) {
-          ozoneLogError("Could not poll connection %d", accepted_socket_fd);
-          close(accepted_socket_fd);
-          *accepted_connection = (OzoneSocketPollEvent) { 0 };
-          break;
-        }
+          EV_SET(accepted_connection, accepted_socket_fd, EVFILT_READ, EV_ADD, 0, 0, 0);
+          if (kevent(polling_fd, accepted_connection, 1, NULL, 0, NULL)) {
+            ozoneLogError("Could not poll connection %d", accepted_socket_fd);
+            close(accepted_socket_fd);
+            *accepted_connection = (OzoneSocketConnection) { 0 };
+          }
 #else
-        accepted_connection->data.fd = accepted_socket_fd;
-        accepted_connection->events = EPOLLIN;
+          accepted_connection->data.fd = accepted_socket_fd;
+          accepted_connection->events = EPOLLIN;
 
-        if (epoll_ctl(polling_fd, EPOLL_CTL_ADD, accepted_socket_fd, accepted_connection)) {
-          ozoneLogError("Could not poll connection %d", accepted_socket_fd);
-          close(accepted_socket_fd);
-          *accepted_connection = (OzoneSocketPollEvent) { 0 };
-          break;
-        }
-#endif
-
-        ozoneLogDebug("Polling connection %d", accepted_socket_fd);
-      }
-
-      if (connection_fd == socket_fd)
-        continue;
-
-      ozoneAllocatorClear(handler_allocator);
-      OzoneSocketEvent event = { .allocator = handler_allocator };
-
-      int close_connection = 0;
-      int recv_code = 0;
-      do {
-        OzoneString* string = ozoneAllocatorReserveOne(event.allocator, OzoneString);
-        string->vector = ozoneVectorAllocate(event.allocator, OzoneByte, OZONE_SOCKET_REQUEST_CHUNK_SIZE + 1);
-
-        recv_code = recv(connection_fd, ozoneStringBuffer(string), OZONE_SOCKET_REQUEST_CHUNK_SIZE, 0);
-        if (recv_code == 0) {
-          ozoneLogDebug("Client closed connection %d", connection_fd);
-          close_connection = 1;
-          break;
-        }
-
-        if (recv_code < 0) {
-          if (errno == EWOULDBLOCK)
-            // This is against the spirit of non-blocking sockets, handler event management will come in another feature
-            continue;
-
-          if (errno == ECONNRESET || errno == ECONNREFUSED || errno == ENOTCONN) {
-            ozoneLogDebug("Client closed connection %d", connection_fd);
-            close_connection = 1;
-            break;
+          if (epoll_ctl(polling_fd, EPOLL_CTL_ADD, accepted_socket_fd, accepted_connection)) {
+            ozoneLogError("Could not poll connection %d", accepted_socket_fd);
+            close(accepted_socket_fd);
+            *accepted_connection = (OzoneSocketConnection) { 0 };
           }
 
-          if (errno == EBADF) {
-            ozoneLogWarn(
-                "Tried to read from what may be a previously closed connection, errno %d for file %d",
-                errno,
-                connection_fd);
-            close_connection = 1;
-            break;
-          }
-
-          ozoneLogError("Could not read part of TCP connection request, errno %d for file %d", errno, connection_fd);
-          close_connection = 1;
           break;
+#endif
         }
 
-        string->vector.length = (size_t)recv_code;
-        ozoneVectorPushOzoneString(event.allocator, &event.raw_socket_request, string);
-      } while (recv_code >= OZONE_SOCKET_REQUEST_CHUNK_SIZE);
-
-      if (!close_connection && ozoneVectorLength(&event.raw_socket_request)) {
-        ozoneLogDebug("Handling event on connection %d", connection_fd);
-        OzoneSocketHandlerRef* handler;
-        ozoneVectorForEach(handler, &config->handler_pipeline) (*handler)(&event, context);
-
-        OzoneString* chunk;
-        ozoneVectorForEach(chunk, &event.raw_socket_response)
-            send(connection_fd, ozoneStringBuffer(chunk), ozoneStringLength(chunk), MSG_NOSIGNAL);
+        break;
       }
 
-      if (close_connection) {
-        ozoneLogDebug("Closing server connection %d", connection_fd);
-        close(connection_fd);
-
-#ifndef OZONE_SOCKET_USE_KQUEUE
-        // This could be unnecessary following close(connection_fd), but best to be safe across epoll implementations
-        epoll_ctl(polling_fd, EPOLL_CTL_DEL, connection_fd, NULL);
-#endif
-
+      while (connection_fd != socket_fd) {
+        OzoneSocketConnection* accepted_connection = NULL;
+        OzoneSocketConnection* connection;
         ozoneVectorForEach(connection, &connection_pool) {
-          if (ozoneSocketPollEventFile(connection) == connection_fd)
-            *connection = (OzoneSocketPollEvent) { 0 };
+          if (ozoneSocketConnectionFile(connection) == connection_fd) {
+            accepted_connection = connection;
+            break;
+          }
         }
+
+        if (!accepted_connection)
+          break;
+
+        int locked = 0;
+        OzoneSocketWorker* accepted_worker = NULL;
+        ozoneVectorForEach(worker, &worker_pool) {
+          if (accepted_connection == worker->connection) {
+            accepted_worker = NULL;
+            locked = 1;
+            break;
+          }
+
+          if (!accepted_worker && !worker->connection) {
+            accepted_worker = worker;
+          }
+        }
+
+        if (locked)
+          break;
+
+        if (!accepted_worker) {
+          ozoneLogDebug("Waiting to handle connection, all workers in pool are occupied");
+          nanosleep(&sleep_on_idle, NULL);
+          continue;
+        }
+
+        accepted_worker->connection = accepted_connection;
+        break;
       }
     }
   }
 
-  OzoneSocketPollEvent* connection;
-  ozoneVectorForEach(connection, &connection_pool) close(ozoneSocketPollEventFile(connection));
+  ozoneVectorForEach(worker, &worker_pool) {
+    if (worker->thread)
+      pthread_join(worker->thread, NULL);
+  }
 
-  ozoneAllocatorDelete(handler_allocator);
+  OzoneSocketConnection* connection;
+  ozoneVectorForEach(connection, &connection_pool) {
+    if (ozoneSocketConnectionFile(connection))
+      close(ozoneSocketConnectionFile(connection));
+  }
+
   ozoneAllocatorDelete(socket_allocator);
   close(polling_fd);
   close(socket_fd);
