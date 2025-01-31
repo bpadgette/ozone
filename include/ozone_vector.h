@@ -13,6 +13,9 @@
   void ozoneVectorClear##_type_(_type_##Vector* vector);                                                               \
   void ozoneVectorPush##_type_(OzoneAllocator* allocator, _type_##Vector* vector, _type_* element);
 
+typedef int OzoneInt;
+OZONE_VECTOR_DECLARE_API(OzoneInt)
+
 #define ozoneVectorFromArray(_type_, _array_)                                                                          \
   ((_type_##Vector) {                                                                                                  \
       .elements = (_type_*)_array_,                                                                                    \
