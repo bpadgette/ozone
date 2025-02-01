@@ -98,11 +98,16 @@ for (const phase of loadTests) {
           });
           status = response.statusText;
         } catch (error) {
+          if (stop) {
+            return report;
+          }
+
           stop = true;
           clearTimeout(endTest);
           console.log(
             `- **Warning**: User ${userId}, request dropped ${String(error)}`,
           );
+
           return report;
         }
         const ms = performance.now() - now;
