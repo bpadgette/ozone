@@ -48,7 +48,6 @@ OZONE_VECTOR_DECLARE_API(OzoneInt)
 #define OZONE_VECTOR_IMPLEMENT_API(_type_)                                                                             \
   void ozoneVectorClear##_type_(_type_##Vector* vector) {                                                              \
     memset(vector->elements, 0, sizeof(_type_) * (vector->capacity));                                                  \
-    vector->capacity = 0;                                                                                              \
     vector->length = 0;                                                                                                \
   }                                                                                                                    \
   void ozoneVectorPush##_type_(OzoneAllocator* allocator, _type_##Vector* vector, _type_* element) {                   \
