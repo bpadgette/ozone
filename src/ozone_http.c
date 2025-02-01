@@ -294,7 +294,13 @@ OzoneHTTPRequest* ozoneHTTPParseSocketRequest(OzoneAllocator* allocator, const O
 }
 
 OzoneStringVector* ozoneHTTPRenderResponse(OzoneAllocator* allocator, OzoneHTTPResponse* http_response) {
-  OzoneString* response = ozoneString(allocator, "HTTP/1.0 ");
+  OzoneString* response;
+  if (http_response->version == OZONE_HTTP_VERSION_1_0) {
+    response = ozoneString(allocator, "HTTP/1.0 ");
+  } else {
+    response = ozoneString(allocator, "HTTP/1.1 ");
+  }
+
   ozoneStringConcatenate(allocator, response, ozoneHTTPStatusText(allocator, http_response->code));
   ozoneStringAppend(allocator, response, '\r');
   ozoneStringAppend(allocator, response, '\n');
@@ -351,6 +357,13 @@ int ozoneHTTPEndPipeline(OzoneHTTPEvent* event, void* context) {
     return 0;
 
   OzoneHTTPResponse* response = event->response;
+  OzoneHTTPVersion http_version = event->request->version;
+  if (http_version)
+    response->version = http_version;
+
+  if (response->version == OZONE_HTTP_VERSION_1_1)
+    ozoneStringMapInsert(
+        event->allocator, &response->headers, &ozoneStringConstant("Connection"), &ozoneStringConstant("keep-alive"));
 
   if (!response->code)
     response->code = ozoneStringLength(&response->body) ? 200 : 204;
