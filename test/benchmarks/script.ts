@@ -4,6 +4,12 @@ Deno.chdir("../../");
 const serverBinPath = Deno.args[0];
 const serverStartupSeconds = 1;
 
+let process;
+if (serverBinPath) {
+  process = new Deno.Command(serverBinPath, { stdout: "null" })
+    .spawn();
+}
+
 const createRequest = () =>
   new Request("http://localhost:8080", { method: "GET" });
 const durationSeconds = 10;
@@ -56,11 +62,6 @@ if (serverBinPath) {
 }
 
 for (const phase of loadTests) {
-  let process;
-  if (serverBinPath) {
-    process = new Deno.Command(serverBinPath, { stdout: "null" })
-      .spawn();
-  }
   await new Promise((resolve) =>
     setTimeout(resolve, serverStartupSeconds * 1000)
   );
@@ -73,11 +74,16 @@ for (const phase of loadTests) {
     }.\n`,
   );
 
-  let stop = false;
   const startTestMs = performance.now();
   const timeoutMs = phase.durationSeconds * 1000;
 
-  const endTest = setTimeout(() => stop = true, timeoutMs);
+  let stop = false;
+  const abortController = new AbortController();
+  const endTest = setTimeout(() => {
+    stop = true;
+    abortController.abort();
+  }, timeoutMs);
+
   const reports: Report[] = await Promise.all(
     Array(phase.concurrentUsers).fill(0).entries().map(async ([userId]) => {
       const report: Report = {};
@@ -87,17 +93,21 @@ for (const phase of loadTests) {
         const now = performance.now();
         let status;
         try {
-          const abortMs = timeoutMs - performance.now() - startTestMs;
           const response = await fetch(request, {
-            signal: abortMs > 5 ? AbortSignal.timeout(abortMs) : undefined,
+            signal: abortController.signal,
           });
           status = response.statusText;
         } catch (error) {
+          if (stop) {
+            return report;
+          }
+
           stop = true;
           clearTimeout(endTest);
           console.log(
             `- **Warning**: User ${userId}, request dropped ${String(error)}`,
           );
+
           return report;
         }
         const ms = performance.now() - now;
@@ -125,18 +135,6 @@ for (const phase of loadTests) {
     }),
   );
   const ms = performance.now() - startTestMs;
-
-  if (process) {
-    try {
-      Deno.kill(process.pid);
-    } catch (error) {
-      console.log(
-        `\n\n- **Critical**: The server probably crashed before the end of the run, OS responded with \`${
-          String(error)
-        }\` while cleaning up`,
-      );
-    }
-  }
 
   const report = reports.reduce(
     (report, current) => {
@@ -193,4 +191,16 @@ for (const phase of loadTests) {
   });
 
   console.log();
+}
+
+if (process) {
+  try {
+    Deno.kill(process.pid);
+  } catch (error) {
+    console.log(
+      `\n\n- **Critical**: The server probably crashed before the end of the run, OS responded with \`${
+        String(error)
+      }\` while cleaning up`,
+    );
+  }
 }

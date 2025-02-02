@@ -22,7 +22,7 @@ OZONE_VECTOR_DECLARE_API(OzoneSocketHandlerRef)
 
 typedef struct OzoneSocketConfigStruct {
   unsigned short int port;
-  size_t max_connections;
+  size_t max_workers;
   OzoneSocketHandlerRefVector handler_pipeline;
 } OzoneSocketConfig;
 
