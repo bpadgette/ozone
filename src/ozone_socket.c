@@ -8,11 +8,12 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-#define OZONE_SOCKET_DEFAULT_WORKER_CAPACITY 16
-#define OZONE_SOCKET_IDLE_NANOSECONDS 10000
-#define OZONE_SOCKET_POLLING_TIMEOUT_SECONDS 10
+#define OZONE_SOCKET_DEFAULT_WORKER_CAPACITY 32
+#define OZONE_SOCKET_POLLING_TIMEOUT_SECONDS 8
 #define OZONE_SOCKET_REQUEST_CHUNK_SIZE 8192
-#define OZONE_SOCKET_WORKER_CONNECTION_CAPACITY 64
+#define OZONE_SOCKET_WORKER_CONNECTION_CAPACITY 32
+#define OZONE_SOCKET_WORKER_IDLE_NANOSECONDS 8192
+#define OZONE_SOCKET_WORKER_IDLE_KEEP_ALIVE_CYCLES 5 * (1000000000 / OZONE_SOCKET_WORKER_IDLE_NANOSECONDS)
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #define OZONE_SOCKET_USE_KQUEUE 1
@@ -31,18 +32,20 @@ OZONE_VECTOR_IMPLEMENT_API(OzonePollingEvent)
 
 OZONE_VECTOR_IMPLEMENT_API(OzoneSocketHandlerRef)
 
-#define OZONE_SOCKET_WORKER_INIT 0
-#define OZONE_SOCKET_WORKER_READ 1
-#define OZONE_SOCKET_WORKER_HANDLING 2
-#define OZONE_SOCKET_WORKER_SEND 3
-#define OZONE_SOCKET_WORKER_CLOSE 4
-#define OZONE_SOCKET_WORKER_CLEANUP 5
+#define OZONE_SOCKET_WORKER_CONNECTION_INIT 0
+#define OZONE_SOCKET_WORKER_CONNECTION_READ 1
+#define OZONE_SOCKET_WORKER_CONNECTION_HANDLING 2
+#define OZONE_SOCKET_WORKER_CONNECTION_SEND 3
+#define OZONE_SOCKET_WORKER_CONNECTION_CLOSE 4
+#define OZONE_SOCKET_WORKER_CONNECTION_CLEANUP 5
 
-// todo: thread-safety
 typedef struct OzoneSocketWorkerStruct {
+  size_t id;
   pthread_t thread;
+  pthread_mutex_t thread_lock;
   int pending;
   int connection_fds[OZONE_SOCKET_WORKER_CONNECTION_CAPACITY];
+  size_t connection_send_chunk_index[OZONE_SOCKET_WORKER_CONNECTION_CAPACITY];
   int connection_states[OZONE_SOCKET_WORKER_CONNECTION_CAPACITY];
   const OzoneSocketHandlerRefVector* handler_pipeline;
   void* handler_context;
@@ -60,132 +63,169 @@ void ozoneSocketShutdownSignalAction(int signum) {
 
 // todo: thread-safety
 void* ozoneSocketHandleWorker(OzoneSocketWorker* worker) {
-  struct timespec idle = (struct timespec) { .tv_nsec = OZONE_SOCKET_IDLE_NANOSECONDS };
+  ozoneLogDebug("Worker %ld: Created", worker->id);
+  struct timespec idle = (struct timespec) { .tv_nsec = OZONE_SOCKET_WORKER_IDLE_NANOSECONDS };
+  size_t idle_cycles = 0;
 
   OzoneSocketEvent events[OZONE_SOCKET_WORKER_CONNECTION_CAPACITY] = { 0 };
-  while (!ozone_socket_shutdown) {
+  while (!ozone_socket_shutdown && worker->pending >= 0 && idle_cycles < OZONE_SOCKET_WORKER_IDLE_KEEP_ALIVE_CYCLES) {
     if (!worker->pending) {
       nanosleep(&idle, NULL);
+      idle_cycles++;
       continue;
     }
+
+    idle_cycles = 0;
 
     for (size_t connection_index = 0; connection_index < OZONE_SOCKET_WORKER_CONNECTION_CAPACITY; connection_index++) {
       int connection_fd = worker->connection_fds[connection_index];
       if (!connection_fd)
         continue;
 
-      OzoneSocketEvent* event = &events[connection_index];
       switch (worker->connection_states[connection_index]) {
-      case OZONE_SOCKET_WORKER_INIT: {
-        ozoneLogDebug("Worker picked up connection %d", connection_fd);
-        if (!event->allocator)
-          event->allocator = ozoneAllocatorCreate(1024 + OZONE_SOCKET_REQUEST_CHUNK_SIZE);
+      case OZONE_SOCKET_WORKER_CONNECTION_INIT: {
+        ozoneLogDebug("Worker %ld: Preparing to handle connection %d", worker->id, connection_fd);
+        if (!events[connection_index].allocator)
+          events[connection_index].allocator = ozoneAllocatorCreate(1024 + OZONE_SOCKET_REQUEST_CHUNK_SIZE);
 
-        events[connection_index] = (OzoneSocketEvent) { .allocator = event->allocator };
-        worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_READ;
+        events[connection_index] = (OzoneSocketEvent) { .allocator = events[connection_index].allocator };
+        worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CONNECTION_READ;
       }
-      case OZONE_SOCKET_WORKER_READ: {
+      case OZONE_SOCKET_WORKER_CONNECTION_READ: {
         int recv_code = 0;
         char recv_buffer[OZONE_SOCKET_REQUEST_CHUNK_SIZE + 1] = { 0 };
         recv_code = recv(connection_fd, recv_buffer, OZONE_SOCKET_REQUEST_CHUNK_SIZE, MSG_DONTWAIT);
 
         if (recv_code == 0) {
-          ozoneLogDebug("Client closed connection %d", connection_fd);
-          worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CLOSE;
+          ozoneLogDebug("Worker %ld: Client closed connection %d", worker->id, connection_fd);
+          worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CONNECTION_CLOSE;
           break;
         }
 
         if (recv_code > 0) {
           ozoneVectorPushOzoneString(
-              event->allocator,
-              &event->raw_socket_request,
-              ozoneStringFromBuffer(event->allocator, recv_buffer, (size_t)recv_code));
+              events[connection_index].allocator,
+              &events[connection_index].raw_socket_request,
+              ozoneStringFromBuffer(events[connection_index].allocator, recv_buffer, (size_t)recv_code));
 
           if (recv_code < OZONE_SOCKET_REQUEST_CHUNK_SIZE)
-            worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_HANDLING;
+            worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CONNECTION_HANDLING;
 
           break;
         }
 
-        if (errno == EWOULDBLOCK || errno == EAGAIN)
+        if (errno == EWOULDBLOCK || errno == EAGAIN) {
           break;
+        }
 
         if (errno == EBADF || errno == ENOTCONN) {
           ozoneLogWarn(
-              "Tried to read from what may be a previously closed connection, errno %d for file %d",
+              "Worker %ld: Tried to read from what may be a previously closed connection, errno %d for file %d",
+              worker->id,
               errno,
               connection_fd);
-          worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CLEANUP;
+          worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CONNECTION_CLEANUP;
           break;
         }
 
         if (errno == ECONNRESET || errno == ECONNREFUSED) {
-          ozoneLogDebug("Client closed connection %d", connection_fd);
-          worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CLOSE;
+          ozoneLogDebug("Worker %ld: Client closed connection %d", worker->id, connection_fd);
+          worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CONNECTION_CLOSE;
           break;
         }
 
-        ozoneLogError("Could not read part of TCP connection request, errno %d for file %d", errno, connection_fd);
-        worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CLOSE;
+        ozoneLogError(
+            "Worker %ld: Could not read part of TCP connection request, errno %d for file %d",
+            worker->id,
+            errno,
+            connection_fd);
+        worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CONNECTION_CLOSE;
         break;
       }
-      case OZONE_SOCKET_WORKER_HANDLING: {
-        if (!ozoneVectorLength(&event->raw_socket_request)) {
-          worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CLOSE;
+      case OZONE_SOCKET_WORKER_CONNECTION_HANDLING: {
+        if (!ozoneVectorLength(&events[connection_index].raw_socket_request)) {
+          worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CONNECTION_CLOSE;
           break;
         }
 
-        ozoneLogDebug("Handling event on connection %d", connection_fd);
         OzoneSocketHandlerRef* handler;
-        ozoneVectorForEach(handler, worker->handler_pipeline) (*handler)(event, worker->handler_context);
-        worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_SEND;
+        ozoneVectorForEach(handler, worker->handler_pipeline) (*handler)(
+            &events[connection_index], worker->handler_context);
+        worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CONNECTION_SEND;
       }
-      case OZONE_SOCKET_WORKER_SEND: {
-        if (!ozoneVectorLength(&event->raw_socket_response)) {
-          worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CLOSE;
+      case OZONE_SOCKET_WORKER_CONNECTION_SEND: {
+        if (!ozoneVectorLength(&events[connection_index].raw_socket_response)) {
+          worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CONNECTION_CLOSE;
           break;
         }
 
-        OzoneString* chunk;
-        ozoneVectorForEach(chunk, &event->raw_socket_response) {
-          int send_code = send(connection_fd, ozoneStringBuffer(chunk), ozoneStringLength(chunk), 0);
+        while (worker->connection_send_chunk_index[connection_index]
+               < ozoneVectorLength(&events[connection_index].raw_socket_response)) {
+
+          OzoneString* chunk = &ozoneVectorAt(
+              &events[connection_index].raw_socket_response, worker->connection_send_chunk_index[connection_index]++);
+
+          int send_code = send(connection_fd, ozoneStringBuffer(chunk), ozoneStringLength(chunk), MSG_DONTWAIT);
           if (send_code == (int)ozoneStringLength(chunk))
-            continue;
+            break;
 
-          if (errno == EAGAIN || errno == EWOULDBLOCK)
-            continue;
+          if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            ozoneLogWarn("NONBLOCKING");
+            break;
+          }
 
-          ozoneLogDebug("Could not send part of TCP connection response, errno %d for file %d", errno, connection_fd);
-          worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CLOSE;
-          break;
+          ozoneLogDebug(
+              "Worker %ld: Could not send part of TCP connection response, errno %d for file %d",
+              worker->id,
+              errno,
+              connection_fd);
+          worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CONNECTION_CLOSE;
         }
 
-        if (worker->connection_states[connection_index] == OZONE_SOCKET_WORKER_SEND)
-          worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CLEANUP;
+        if (worker->connection_send_chunk_index[connection_index]
+                == ozoneVectorLength(&events[connection_index].raw_socket_response)
+            && worker->connection_states[connection_index] == OZONE_SOCKET_WORKER_CONNECTION_SEND)
+          worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CONNECTION_CLEANUP;
 
         break;
       }
-      case OZONE_SOCKET_WORKER_CLOSE: {
-        ozoneLogDebug("Closing connection %d", connection_fd);
+      case OZONE_SOCKET_WORKER_CONNECTION_CLOSE: {
+        ozoneLogDebug("Worker %ld: Closing connection %d", worker->id, connection_fd);
         close(connection_fd);
-        worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CLEANUP;
+        worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CONNECTION_CLEANUP;
       }
-      case OZONE_SOCKET_WORKER_CLEANUP: {
-        ozoneLogDebug("Cleaning up connection %d for now", connection_fd);
-        ozoneAllocatorClear(event->allocator);
-        events[connection_index] = (OzoneSocketEvent) { .allocator = event->allocator };
+      case OZONE_SOCKET_WORKER_CONNECTION_CLEANUP: {
+        pthread_mutex_lock(&worker->thread_lock);
         worker->pending--;
         worker->connection_fds[connection_index] = 0;
-        worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_INIT;
+        worker->connection_send_chunk_index[connection_index] = 0;
+        worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CONNECTION_INIT;
+        pthread_mutex_unlock(&worker->thread_lock);
+        ozoneLogDebug(
+            "Worker %ld: Cleaning up connection %d for now, worker has %d pending connections",
+            worker->id,
+            connection_fd,
+            worker->pending);
+        ozoneAllocatorClear(events[connection_index].allocator);
+        events[connection_index] = (OzoneSocketEvent) { .allocator = events[connection_index].allocator };
       }
       }
     }
   }
 
+  pthread_mutex_lock(&worker->thread_lock);
   for (size_t connection_index = 0; connection_index < OZONE_SOCKET_WORKER_CONNECTION_CAPACITY; connection_index++) {
     if (events[connection_index].allocator)
       ozoneAllocatorDelete(events[connection_index].allocator);
+
+    events[connection_index] = (OzoneSocketEvent) { 0 };
+    worker->connection_fds[connection_index] = 0;
+    worker->connection_states[connection_index] = 0;
   }
+
+  worker->pending = -1;
+  pthread_mutex_unlock(&worker->thread_lock);
+  ozoneLogDebug("Worker %ld: Finished", worker->id);
 
   return NULL;
 }
@@ -273,14 +313,18 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config, void* context) {
   OzoneAllocator* socket_allocator = ozoneAllocatorCreate(0);
   OzonePollingEventVector events = ozoneVectorAllocate(
       socket_allocator, OzonePollingEvent, OZONE_SOCKET_WORKER_CONNECTION_CAPACITY * worker_pool_capacity);
-  OzoneSocketWorkerVector worker_pool = ozoneVectorAllocate(socket_allocator, OzoneSocketWorker, worker_pool_capacity);
-  worker_pool.length = 1;
-  OzoneSocketWorker* worker = &ozoneVectorAt(&worker_pool, 0);
-  worker->handler_context = context;
-  worker->handler_pipeline = &config->handler_pipeline;
-  pthread_create(&worker->thread, NULL, (void* (*)(void*))ozoneSocketHandleWorker, worker);
 
-  struct timespec idle = (struct timespec) { .tv_nsec = OZONE_SOCKET_IDLE_NANOSECONDS };
+  OzoneSocketWorkerVector worker_pool = ozoneVectorAllocate(socket_allocator, OzoneSocketWorker, worker_pool_capacity);
+  for (size_t worker_id = 0; worker_id < worker_pool.capacity; worker_id++) {
+    worker_pool.elements[worker_id] = (OzoneSocketWorker) {
+      .id = worker_id + 1,
+      .handler_context = context,
+      .handler_pipeline = &config->handler_pipeline,
+    };
+    pthread_mutex_init(&worker_pool.elements[worker_id].thread_lock, NULL);
+  }
+
+  struct timespec idle = (struct timespec) { .tv_nsec = OZONE_SOCKET_WORKER_IDLE_NANOSECONDS };
   while (!ozone_socket_shutdown) {
     ozoneVectorClearOzonePollingEvent(&events);
 #ifdef OZONE_SOCKET_USE_KQUEUE
@@ -309,27 +353,8 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config, void* context) {
 
       while (event_fd == listening_socket_fd) {
         int accepted_socket_fd = accept(listening_socket_fd, (struct sockaddr*)&host_addr, (socklen_t*)&host_addr_len);
-
         if (accepted_socket_fd == -1)
           break;
-
-        int locked = 0;
-        ozoneVectorForEach(worker, &worker_pool) {
-          for (size_t connection_index = 0; connection_index < OZONE_SOCKET_WORKER_CONNECTION_CAPACITY;
-               connection_index++) {
-            if (worker->connection_fds[connection_index] == accepted_socket_fd) {
-              ozoneLogWarn("Connection %d is locked", accepted_socket_fd);
-              locked = 1;
-              break;
-            }
-          }
-
-          if (locked)
-            break;
-        }
-
-        if (locked)
-          continue;
 
         ozoneLogDebug("Accepted connection %d", accepted_socket_fd);
 
@@ -356,10 +381,31 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config, void* context) {
         continue;
 
       int locked = 0;
-      while (!locked) {
+      while (!locked && !ozone_socket_shutdown) {
         int pending_least = OZONE_SOCKET_WORKER_CONNECTION_CAPACITY;
         OzoneSocketWorker* accepted_worker = NULL;
+        OzoneSocketWorker* backup_offline_worker = NULL;
+        OzoneSocketWorker* worker;
         ozoneVectorForEach(worker, &worker_pool) {
+          pthread_mutex_lock(&worker->thread_lock);
+          if (worker->pending == -1) {
+            if (worker->thread) {
+              pthread_mutex_unlock(&worker->thread_lock);
+              pthread_join(worker->thread, NULL);
+            }
+
+            worker->thread = 0;
+            worker->pending = 0;
+          }
+
+          if (!worker->thread) {
+            if (!backup_offline_worker)
+              backup_offline_worker = worker;
+
+            pthread_mutex_unlock(&worker->thread_lock);
+            continue;
+          }
+
           for (size_t connection_index = 0; connection_index < OZONE_SOCKET_WORKER_CONNECTION_CAPACITY;
                connection_index++) {
             if (worker->connection_fds[connection_index] == event_fd) {
@@ -368,47 +414,55 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config, void* context) {
             }
           }
 
+          if (!locked && worker->pending < pending_least) {
+            pending_least = worker->pending;
+            accepted_worker = worker;
+          }
+          pthread_mutex_unlock(&worker->thread_lock);
+
           if (locked) {
             break;
-          }
-
-          int pending = worker->pending;
-          if (pending < pending_least) {
-            pending_least = pending;
-            accepted_worker = worker;
           }
         }
 
         if (locked)
           break;
 
-        if (!accepted_worker && ozoneVectorLength(&worker_pool) == worker_pool_capacity) {
+        if (!accepted_worker && backup_offline_worker) {
+          accepted_worker = backup_offline_worker;
+        }
+
+        if (!accepted_worker && ozoneVectorLength(&worker_pool) < worker_pool_capacity) {
+          accepted_worker = &ozoneVectorAt(&worker_pool, worker_pool.length++);
+        }
+
+        if (!accepted_worker) {
           nanosleep(&idle, NULL);
           continue;
         }
 
-        if (!accepted_worker) {
-          accepted_worker = &ozoneVectorAt(&worker_pool, worker_pool.length++);
-          accepted_worker->handler_context = context;
-          accepted_worker->handler_pipeline = &config->handler_pipeline;
-          pthread_create(&accepted_worker->thread, NULL, (void* (*)(void*))ozoneSocketHandleWorker, worker);
-        }
-
+        pthread_mutex_lock(&worker->thread_lock);
         for (size_t connection_index = 0; connection_index < OZONE_SOCKET_WORKER_CONNECTION_CAPACITY;
              connection_index++) {
           if (accepted_worker->connection_fds[connection_index] == 0) {
             accepted_worker->connection_fds[connection_index] = event_fd;
             accepted_worker->pending++;
+            ozoneLogDebug("Passing connection %d to worker %ld", event_fd, accepted_worker->id);
             locked = 1;
-            ozoneLogDebug("Passing connection %d to worker", event_fd);
             break;
           }
         }
+        pthread_mutex_unlock(&worker->thread_lock);
+
+        if (!accepted_worker->thread)
+          pthread_create(&accepted_worker->thread, NULL, (void* (*)(void*))ozoneSocketHandleWorker, accepted_worker);
       }
     }
   }
 
+  OzoneSocketWorker* worker;
   ozoneVectorForEach(worker, &worker_pool) {
+    pthread_mutex_destroy(&worker->thread_lock);
     if (worker->thread)
       pthread_join(worker->thread, NULL);
   }
