@@ -326,9 +326,7 @@ OzoneStringVector* ozoneHTTPRenderResponse(OzoneAllocator* allocator, OzoneHTTPR
   return chunks;
 }
 
-int ozoneHTTPBeginPipeline(OzoneHTTPEvent* event, void* context) {
-  (void)context;
-
+int ozoneHTTPBeginPipeline(OzoneHTTPEvent* event) {
   OzoneString* first_line = ozoneString(event->allocator, "");
   OzoneString* chunk;
   ozoneVectorForEach(chunk, &event->raw_socket_request) {
@@ -350,9 +348,7 @@ int ozoneHTTPBeginPipeline(OzoneHTTPEvent* event, void* context) {
   return 0;
 }
 
-int ozoneHTTPEndPipeline(OzoneHTTPEvent* event, void* context) {
-  (void)context;
-
+int ozoneHTTPEndPipeline(OzoneHTTPEvent* event) {
   if (!event->response)
     return 0;
 
@@ -400,7 +396,7 @@ int ozoneHTTPEndPipeline(OzoneHTTPEvent* event, void* context) {
   return 0;
 }
 
-int ozoneHTTPServe(OzoneHTTPConfig* config, void* context) {
+int ozoneHTTPServe(OzoneHTTPConfig* config) {
   OzoneAllocator* allocator = ozoneAllocatorCreate(1024);
   OzoneSocketHandlerRefVector http_pipeline = (OzoneSocketHandlerRefVector) { 0 };
 
@@ -421,9 +417,10 @@ int ozoneHTTPServe(OzoneHTTPConfig* config, void* context) {
   OzoneSocketConfig socket_config = (OzoneSocketConfig) {
     .handler_pipeline = http_pipeline,
     .port = config->port,
+    .handler_context = config->handler_context,
   };
 
-  int return_code = ozoneSocketServeTCP(&socket_config, context);
+  int return_code = ozoneSocketServeTCP(&socket_config);
   ozoneAllocatorDelete(allocator);
   return return_code;
 }
