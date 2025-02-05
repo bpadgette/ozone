@@ -13,7 +13,7 @@
 #define OZONE_SOCKET_REQUEST_CHUNK_SIZE 8192
 #define OZONE_SOCKET_WORKER_CONNECTION_CAPACITY 32
 #define OZONE_SOCKET_WORKER_IDLE_NANOSECONDS 8192
-#define OZONE_SOCKET_WORKER_IDLE_KEEP_ALIVE_CYCLES 5 * (1000000000 / OZONE_SOCKET_WORKER_IDLE_NANOSECONDS)
+#define OZONE_SOCKET_WORKER_IDLE_KEEP_ALIVE_CYCLES 5 * (100000000 / OZONE_SOCKET_WORKER_IDLE_NANOSECONDS)
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #define OZONE_SOCKET_USE_KQUEUE 1
@@ -47,8 +47,8 @@ typedef struct OzoneSocketWorkerStruct {
   int connection_fds[OZONE_SOCKET_WORKER_CONNECTION_CAPACITY];
   size_t connection_send_chunk_index[OZONE_SOCKET_WORKER_CONNECTION_CAPACITY];
   int connection_states[OZONE_SOCKET_WORKER_CONNECTION_CAPACITY];
-  const OzoneSocketHandlerRefVector* handler_pipeline;
   void* handler_context;
+  const OzoneSocketHandlerRefVector* handler_pipeline;
 } OzoneSocketWorker;
 
 OZONE_VECTOR_DECLARE_API(OzoneSocketWorker)
@@ -61,7 +61,6 @@ void ozoneSocketShutdownSignalAction(int signum) {
   ozone_socket_shutdown = 1;
 }
 
-// todo: thread-safety
 void* ozoneSocketHandleWorker(OzoneSocketWorker* worker) {
   ozoneLogDebug("Worker %ld: Created", worker->id);
   struct timespec idle = (struct timespec) { .tv_nsec = OZONE_SOCKET_WORKER_IDLE_NANOSECONDS };
@@ -88,7 +87,8 @@ void* ozoneSocketHandleWorker(OzoneSocketWorker* worker) {
         if (!events[connection_index].allocator)
           events[connection_index].allocator = ozoneAllocatorCreate(1024 + OZONE_SOCKET_REQUEST_CHUNK_SIZE);
 
-        events[connection_index] = (OzoneSocketEvent) { .allocator = events[connection_index].allocator };
+        events[connection_index] = (OzoneSocketEvent) { .allocator = events[connection_index].allocator,
+                                                        .context = worker->handler_context };
         worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CONNECTION_READ;
       }
       case OZONE_SOCKET_WORKER_CONNECTION_READ: {
@@ -149,8 +149,7 @@ void* ozoneSocketHandleWorker(OzoneSocketWorker* worker) {
         }
 
         OzoneSocketHandlerRef* handler;
-        ozoneVectorForEach(handler, worker->handler_pipeline) (*handler)(
-            &events[connection_index], worker->handler_context);
+        ozoneVectorForEach(handler, worker->handler_pipeline) (*handler)(&events[connection_index]);
         worker->connection_states[connection_index] = OZONE_SOCKET_WORKER_CONNECTION_SEND;
       }
       case OZONE_SOCKET_WORKER_CONNECTION_SEND: {
@@ -230,7 +229,7 @@ void* ozoneSocketHandleWorker(OzoneSocketWorker* worker) {
   return NULL;
 }
 
-int ozoneSocketServeTCP(OzoneSocketConfig* config, void* context) {
+int ozoneSocketServeTCP(OzoneSocketConfig* config) {
   size_t worker_pool_capacity = OZONE_SOCKET_DEFAULT_WORKER_CAPACITY;
   if (config->max_workers && config->max_workers < worker_pool_capacity) {
     worker_pool_capacity = config->max_workers;
@@ -318,7 +317,7 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config, void* context) {
   for (size_t worker_id = 0; worker_id < worker_pool.capacity; worker_id++) {
     worker_pool.elements[worker_id] = (OzoneSocketWorker) {
       .id = worker_id + 1,
-      .handler_context = context,
+      .handler_context = config->handler_context,
       .handler_pipeline = &config->handler_pipeline,
     };
     pthread_mutex_init(&worker_pool.elements[worker_id].thread_lock, NULL);

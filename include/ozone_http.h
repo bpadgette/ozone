@@ -47,9 +47,9 @@ typedef struct OzoneHTTPResponseStruct {
   OzoneString body;
 } OzoneHTTPResponse;
 
-typedef struct OzoneHTTPEventStruct OZONE_SOCKET_EVENT_FIELDS(OzoneHTTPRequest, OzoneHTTPResponse) OzoneHTTPEvent;
+typedef struct OzoneHTTPEventStruct OZONE_SOCKET_EVENT_FIELDS(OzoneHTTPRequest, OzoneHTTPResponse, void) OzoneHTTPEvent;
 
-typedef int(OzoneHTTPHandler)(OzoneHTTPEvent* event, void* context);
+typedef int(OzoneHTTPHandler)(OzoneHTTPEvent* event);
 
 OzoneHTTPRequest* ozoneHTTPParseSocketRequest(OzoneAllocator* allocator, const OzoneStringVector* socket_request);
 OzoneStringVector* ozoneHTTPRenderResponse(OzoneAllocator* allocator, OzoneHTTPResponse* http_response);
@@ -57,8 +57,9 @@ OzoneStringVector* ozoneHTTPRenderResponse(OzoneAllocator* allocator, OzoneHTTPR
 typedef struct OzoneHTTPConfigStruct {
   unsigned short int port;
   OzoneSocketHandlerRefVector handler_pipeline;
+  void* handler_context;
 } OzoneHTTPConfig;
 
-int ozoneHTTPServe(OzoneHTTPConfig* config, void* context);
+int ozoneHTTPServe(OzoneHTTPConfig* config);
 
 #endif
