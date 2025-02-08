@@ -17,7 +17,7 @@
 
 typedef struct OzoneSocketEventStruct OZONE_SOCKET_EVENT_FIELDS(void, void, void) OzoneSocketEvent;
 
-typedef int(OzoneSocketHandler)(OzoneSocketEvent* event);
+typedef void(OzoneSocketHandler)(OzoneSocketEvent* event);
 typedef OzoneSocketHandler* OzoneSocketHandlerRef;
 OZONE_VECTOR_DECLARE_API(OzoneSocketHandlerRef)
 

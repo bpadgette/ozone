@@ -4,35 +4,27 @@
 
 #define PAGE_TITLE "My Ozone Server"
 
-int setHeaders(OzoneAppEvent* event) {
+void setHeaders(OzoneAppEvent* event) {
   ozoneAppSetResponseHeader(event, &ozoneStringConstant("X-Server-Name"), &ozoneStringConstant(PAGE_TITLE));
-
-  return 0;
 }
 
-int handleBadRequest(OzoneAppEvent* event) {
+void handleBadRequest(OzoneAppEvent* event) {
   event->response->body = *ozoneString(event->allocator, "No.");
   event->response->code = 400;
 
   ozoneLogWarn("Bad request at %s", ozoneStringBuffer(&event->request->target));
-
-  return 0;
 }
 
-int home(OzoneAppEvent* event) {
+void home(OzoneAppEvent* event) {
   event->response->body = *ozoneString(
       event->allocator,
       "<h1>ozone</h1>"
       "<p>Ozone is a minimal dependency, C and web standards based web framework.</p>");
-
-  return 0;
 }
 
-int renderHTTPStatusToBody(OzoneAppEvent* event) {
+void renderHTTPStatusToBody(OzoneAppEvent* event) {
   // ozone modules like ozone_http expose helpful functions too
   event->response->body = *ozoneHTTPStatusText(event->allocator, event->response->code);
-
-  return 0;
 }
 
 int main(int argc, char* argv[]) {

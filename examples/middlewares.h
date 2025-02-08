@@ -1,6 +1,6 @@
 #include "ozone.h"
 
-int asHTMLDocument(OzoneAppEvent* event) {
+void asHTMLDocument(OzoneAppEvent* event) {
   OzoneTemplatesComponent* html_shell;
 
   ozoneAppContextLock(event);
@@ -17,6 +17,4 @@ int asHTMLDocument(OzoneAppEvent* event) {
   ozoneTemplatesComponentRender(event->allocator, html_shell, &arguments);
 
   ozoneAppSetResponseHeader(event, &ozoneStringConstant("Content-Type"), &ozoneStringConstant("text/html"));
-
-  return 0;
 }

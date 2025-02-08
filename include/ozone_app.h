@@ -31,7 +31,7 @@ typedef struct OzoneAppContextStruct {
 typedef struct OzoneAppEventStruct
     OZONE_SOCKET_EVENT_FIELDS(OzoneHTTPRequest, OzoneHTTPResponse, OzoneAppContext) OzoneAppEvent;
 
-typedef int(OzoneAppHandler)(OzoneAppEvent* event);
+typedef void(OzoneAppHandler)(OzoneAppEvent* event);
 
 #define ozoneAppEndpoint(_method_, _path_, ...)                                                                        \
   (OzoneAppEndpoint) {                                                                                                 \
