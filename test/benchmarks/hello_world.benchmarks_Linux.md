@@ -2,7 +2,7 @@
 
 - **Platform**: Linux 6.8.0-52-generic (x64)
 - **CPU**: 12-core 13th Gen Intel(R) Core(TM) i7-1355U
-- **Memory**: 15678 MB (5166 MB free)
+- **Memory**: 15678 MB (7703 MB free)
 
 # Benchmarks
 
@@ -17,15 +17,15 @@ For this benchmark, send and wait on requests for 10 seconds using 1 concurrent 
 
 ### Server Performance
 
-- Handled 68143 requests in 10.017 seconds
-  - Requests per second: 6803
-  - Mean response time: 0.147 ms
+- Handled 107698 requests in 10.012 seconds
+  - Requests per second: 10757
+  - Mean response time: 0.093 ms
 
 ### User Experience
 
 - For the 1 user in this phase:
-  - Fastest response time: 0.047 ms
-  - Slowest response time: 37.640 ms
+  - Fastest response time: 0.041 ms
+  - Slowest response time: 33.440 ms
 
 
 # Phase: 30 users
@@ -37,15 +37,15 @@ For this benchmark, send and wait on requests for 10 seconds using 30 concurrent
 
 ### Server Performance
 
-- Handled 276121 requests in 10.051 seconds
-  - Requests per second: 27472
+- Handled 277754 requests in 10.035 seconds
+  - Requests per second: 27678
   - Mean response time: 0.036 ms
 
 ### User Experience
 
 - For the 30 users in this phase:
-  - Fastest response time: 0.325 ms
-  - Slowest response time: 96.010 ms
+  - Fastest response time: 0.221 ms
+  - Slowest response time: 88.326 ms
 
 
 # Phase: 100 users
@@ -57,13 +57,13 @@ For this benchmark, send and wait on requests for 10 seconds using 100 concurren
 
 ### Server Performance
 
-- Handled 169981 requests in 10.016 seconds
-  - Requests per second: 16971
-  - Mean response time: 0.059 ms
+- Handled 162794 requests in 10.056 seconds
+  - Requests per second: 16189
+  - Mean response time: 0.062 ms
 
 ### User Experience
 
 - For the 100 users in this phase:
-  - Fastest response time: 2.064 ms
-  - Slowest response time: 90.513 ms
+  - Fastest response time: 1.641 ms
+  - Slowest response time: 79.297 ms
 
