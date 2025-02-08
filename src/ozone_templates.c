@@ -83,7 +83,7 @@ OzoneTemplatesComponent* ozoneTemplatesComponentFromFile(OzoneAllocator* allocat
 }
 
 OzoneString* ozoneTemplatesComponentRender(
-    OzoneAllocator* allocator, const OzoneTemplatesComponent* component, const OzoneStringMap* arguments) {
+    OzoneAllocator* allocator, const OzoneTemplatesComponent* component, OzoneStringMap* arguments) {
   OzoneString* rendered = ozoneString(allocator, "");
 
   for (size_t block_index = 0; block_index < ozoneVectorLength(&component->blocks); block_index++) {
@@ -101,7 +101,7 @@ OzoneString* ozoneTemplatesComponentRender(
       if (!arguments)
         break;
 
-      const OzoneString* argument = ozoneStringMapFindValue(arguments, block);
+      OzoneString* argument = ozoneMapGetOzoneString(arguments, block);
       if (!argument)
         break;
 

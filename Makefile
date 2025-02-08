@@ -76,10 +76,10 @@ EXAMPLES    	  := $(ROOT)examples/
 BUILD_EXAMPLES    := $(BUILD)examples/
 
 $(BUILD_EXAMPLES)%.debug: $(TARGET_DEBUG_LIB)
-	$(shell $(MKDIR) $(BUILD_EXAMPLES)) $(CC) $(CFLAGS) -DOZONE_LOG_DEBUG -g $(EXAMPLES)$*.c $(TARGET_DEBUG_LIB) -o $@
+	$(shell $(MKDIR) $(BUILD_EXAMPLES)) $(CC) $(CFLAGS) -I$(EXAMPLES) -DOZONE_LOG_DEBUG -g $(EXAMPLES)$*.c $(TARGET_DEBUG_LIB) -o $@
 
 $(BUILD_EXAMPLES)%: $(TARGET_LIB)
-	$(shell $(MKDIR) $(BUILD_EXAMPLES))	$(CC) $(CFLAGS) $(EXAMPLES)$*.c $(TARGET_LIB) -o $@
+	$(shell $(MKDIR) $(BUILD_EXAMPLES))	$(CC) $(CFLAGS) -I$(EXAMPLES) $(EXAMPLES)$*.c $(TARGET_LIB) -o $@
 
 %.memcheck: $(BUILD_EXAMPLES)%.debug
 	$(MEMCHECK) $(BUILD_EXAMPLES)$*.debug

@@ -23,17 +23,17 @@ void shouldParseSocketChunksAsHTTPRequest(void) {
 
   TEST_ASSERT_EQUAL_MESSAGE(OZONE_HTTP_VERSION_1_1, request->version, "It parses the correct HTTP version");
 
-  const OzoneString* header = ozoneStringMapFindValue(&request->headers, &ozoneStringConstant("Host"));
+  const OzoneString* header = ozoneMapGetOzoneString(&request->headers, &ozoneStringConstant("Host"));
   TEST_ASSERT_NOT_NULL_MESSAGE(header, "It returns a Host header");
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
       &ozoneStringConstant("example.com"), header, "It parses the correct Host value");
 
-  header = ozoneStringMapFindValue(&request->headers, &ozoneStringConstant("Content-Type"));
+  header = ozoneMapGetOzoneString(&request->headers, &ozoneStringConstant("Content-Type"));
   TEST_ASSERT_NOT_NULL_MESSAGE(header, "It returns a Content-Type header");
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
       &ozoneStringConstant("application/x-www-form-urlencoded"), header, "It parses the correct Content-Type value");
 
-  header = ozoneStringMapFindValue(&request->headers, &ozoneStringConstant("Content-Length"));
+  header = ozoneMapGetOzoneString(&request->headers, &ozoneStringConstant("Content-Length"));
   TEST_ASSERT_NOT_NULL_MESSAGE(header, "It returns a Content-Length header");
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
       &ozoneStringConstant("27"), header, "It parses the correct Content-Length value");

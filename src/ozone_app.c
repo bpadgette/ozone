@@ -4,38 +4,25 @@
 #include "ozone_log.h"
 #include <pthread.h>
 
+#define OZONE_APP_HELP                                                                                                 \
+  "ozone (pre-alpha) application help menu.\n\n"                                                                       \
+  "Options:\n"                                                                                                         \
+  "  --help                 Show this screen.\n"                                                                       \
+  "  --port=<port>          Port for your application [default: 8080].\n"                                              \
+  "  --<other-key>=<value>  Intended for custom application configuration, inserts 'option:<other-key>' into "         \
+  "the OzoneAppEvent.context cache.\n"
+
+#define OZONE_APP_DEFAULT_PORT 8080
+#define OZONE_APP_MAX_OPTION_LENGTH 128
+
 OZONE_VECTOR_IMPLEMENT_API(OzoneAppEndpoint)
 
+OZONE_VECTOR_IMPLEMENT_API(OzoneAppVoidRef)
+OZONE_MAP_IMPLEMENT_API(OzoneAppVoidRef)
+
 void ozoneAppSetResponseHeader(OzoneAppEvent* event, const OzoneString* name, const OzoneString* value) {
-  ozoneStringMapInsert(event->allocator, &event->response->headers, name, value);
-}
-
-void ozoneAppRenderOzoneShellHTML(OzoneAppEvent* event, const OzoneString* title) {
-  ozoneAppSetResponseHeader(event, &ozoneStringConstant("Content-Type"), &ozoneStringConstant("text/html"));
-
-  OzoneString* shell_template_path = ozoneStringCopy(
-      event->allocator,
-      ozoneStringMapFindValue(
-          &event->context->startup_configuration, &ozoneStringConstant(OZONE_APP_OPTION_TEMPLATES_BASE_PATH_KEY)));
-
-  ozoneStringConcatenate(event->allocator, shell_template_path, &ozoneStringConstant("/ozone_shell.html"));
-
-  OzoneString* shell_template_content = ozoneCacheGet(event->allocator, event->context->cache, shell_template_path);
-  if (!shell_template_content) {
-    OzoneStringVector load_file = (OzoneStringVector) { 0 };
-    ozoneFileLoadFromPath(event->allocator, &load_file, shell_template_path, 1024);
-    shell_template_content = ozoneStringJoin(event->allocator, &load_file);
-
-    ozoneCacheSet(event->context->allocator, event->context->cache, shell_template_path, shell_template_content);
-  }
-
-  OzoneTemplatesComponent* component = ozoneTemplatesComponentCreate(
-      event->allocator, shell_template_path, &ozoneVectorFromElements(OzoneString, *shell_template_content));
-  OzoneStringMap template_arguments = (OzoneStringMap) { 0 };
-  ozoneStringMapInsert(event->allocator, &template_arguments, &ozoneStringConstant("title"), title);
-  ozoneStringMapInsert(event->allocator, &template_arguments, &ozoneStringConstant("body"), &event->response->body);
-
-  event->response->body = *ozoneTemplatesComponentRender(event->allocator, component, &template_arguments);
+  ozoneMapInsertOzoneString(
+      event->allocator, &event->response->headers, name, ozoneStringCopy(event->allocator, value));
 }
 
 int ozoneAppBeginPipeline(OzoneAppEvent* event) {
@@ -59,39 +46,56 @@ int ozoneAppBeginPipeline(OzoneAppEvent* event) {
   return 0;
 }
 
-int ozoneAppServe(unsigned short int port, OzoneAppEndpointVector* endpoints, OzoneStringVector* options) {
-  OzoneCache cache = (OzoneCache) { 0 };
-  pthread_mutex_init(&cache.thread_lock, NULL);
+int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
+  OzoneAppContext context = (OzoneAppContext) { .allocator = ozoneAllocatorCreate(4096), .endpoints = *endpoints };
+  context.cache_lock = ozoneAllocatorReserveOne(context.allocator, pthread_mutex_t);
+  context.cache = ozoneAllocatorReserveOne(context.allocator, OzoneAppVoidRefMap);
 
-  OzoneAppContext context
-      = (OzoneAppContext) { .allocator = ozoneAllocatorCreate(4096), .endpoints = *endpoints, .cache = &cache };
+  int help = 0;
+  unsigned short port = OZONE_APP_DEFAULT_PORT;
 
-  OzoneString* ozone_templates_base_path = ozoneString(context.allocator, "/usr/include/ozone/html");
-  if (options) {
-    OzoneString* option_key_value;
-    ozoneVectorForEach(option_key_value, options) {
-      int equals_at = ozoneStringFindFirst(option_key_value, &ozoneStringConstant("="));
-      if (equals_at < 0) {
-        continue;
-      }
+  for (int option = 1; option < argc; option++) {
+    OzoneString* option_key_value = ozoneStringFromBuffer(context.allocator, argv[option], OZONE_APP_MAX_OPTION_LENGTH);
 
-      OzoneString* key = ozoneStringSlice(context.allocator, option_key_value, 0, equals_at);
-      OzoneString* value
-          = ozoneStringSlice(context.allocator, option_key_value, equals_at + 1, ozoneStringLength(option_key_value));
+    int option_marker = ozoneStringFindFirst(option_key_value, &ozoneStringConstant("--"));
+    if (option_marker != 0) {
+      ozoneLogError("Command line options should begin with '--'");
+      help = 1;
+      break;
+    }
 
-      if (!ozoneStringCompare(key, &ozoneStringConstant(OZONE_APP_OPTION_TEMPLATES_BASE_PATH_KEY))) {
-        ozone_templates_base_path = value;
-      } else {
-        ozoneLogWarn("Ignored option %s", ozoneStringBuffer(key));
-      }
+    OzoneString* value = NULL;
+    int equals_at = ozoneStringFindFirst(option_key_value, &ozoneStringConstant("="));
+    if (equals_at > 1)
+      value = ozoneStringSlice(context.allocator, option_key_value, equals_at + 1, ozoneStringLength(option_key_value));
+
+    OzoneString* key = ozoneStringSlice(
+        context.allocator, option_key_value, 2, equals_at > 1 ? equals_at : ozoneStringLength(option_key_value));
+
+    if (!ozoneStringCompare(key, &ozoneStringConstant("help"))) {
+      help = 1;
+      break;
+    } else if (!ozoneStringCompare(key, &ozoneStringConstant("port")) && value) {
+      port = (unsigned short)ozoneStringToInteger(value);
+    } else if (!value) {
+      ozoneLogWarn("Ignored option '%s'", ozoneStringBuffer(key));
+      help = 1;
+      break;
+    } else {
+      // Cache ignored options in the event context
+      OzoneString* cache_key = ozoneString(context.allocator, "option:");
+      ozoneStringConcatenate(context.allocator, cache_key, key);
+      ozoneMapInsertOzoneAppVoidRef(context.allocator, context.cache, cache_key, (OzoneAppVoidRef*)&value);
+      ozoneLogDebug("Added '%s' to event context cache", ozoneStringBuffer(cache_key));
     }
   }
 
-  ozoneStringMapInsert(
-      context.allocator,
-      &context.startup_configuration,
-      &ozoneStringConstant(OZONE_APP_OPTION_TEMPLATES_BASE_PATH_KEY),
-      ozone_templates_base_path);
+  if (help) {
+    printf(OZONE_APP_HELP);
+
+    ozoneAllocatorDelete(context.allocator);
+    return 0;
+  }
 
   OzoneHTTPConfig http_config = (OzoneHTTPConfig) {
     .port = port,
@@ -99,9 +103,10 @@ int ozoneAppServe(unsigned short int port, OzoneAppEndpointVector* endpoints, Oz
     .handler_context = &context
   };
 
+  pthread_mutex_init(context.cache_lock, NULL);
   int return_code = ozoneHTTPServe(&http_config);
+  pthread_mutex_destroy(context.cache_lock);
 
-  pthread_mutex_destroy(&cache.thread_lock);
   ozoneAllocatorDelete(context.allocator);
 
   return return_code;

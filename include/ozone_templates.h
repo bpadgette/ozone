@@ -21,7 +21,7 @@ OzoneTemplatesComponent* ozoneTemplatesComponentCreate(
 OzoneTemplatesComponent* ozoneTemplatesComponentFromFile(OzoneAllocator* allocator, const OzoneString* source_path);
 
 OzoneString* ozoneTemplatesComponentRender(
-    OzoneAllocator* allocator, const OzoneTemplatesComponent* component, const OzoneStringMap* arguments);
+    OzoneAllocator* allocator, const OzoneTemplatesComponent* component, OzoneStringMap* arguments);
 
 typedef struct OzoneTemplatesConfigStruct {
   OzoneTemplatesComponentVector components;
