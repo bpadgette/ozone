@@ -1,5 +1,7 @@
 #include "ozone.h"
 
+#include "middlewares.h"
+
 #define PAGE_TITLE "My Ozone Server"
 
 int setHeaders(OzoneAppEvent* event) {
@@ -26,13 +28,6 @@ int home(OzoneAppEvent* event) {
   return 0;
 }
 
-int asHTMLDocument(OzoneAppEvent* event) {
-  // deprecated: I think the shell file should be application specific, I will remove this from the framework
-  ozoneAppRenderOzoneShellHTML(event, &ozoneStringConstant(PAGE_TITLE));
-
-  return 0;
-}
-
 int renderHTTPStatusToBody(OzoneAppEvent* event) {
   // ozone modules like ozone_http expose helpful functions too
   event->response->body = *ozoneHTTPStatusText(event->allocator, event->response->code);
@@ -40,7 +35,7 @@ int renderHTTPStatusToBody(OzoneAppEvent* event) {
   return 0;
 }
 
-int main(void) {
+int main(int argc, char* argv[]) {
   OzoneAppEndpointVector endpoints = ozoneVectorFromElements(
       OzoneAppEndpoint,
       // Endpoints can take an arbitrary count of handlers
@@ -48,8 +43,5 @@ int main(void) {
       ozoneAppEndpoint(POST, "/use-javascript", setHeaders, handleBadRequest, renderHTTPStatusToBody, asHTMLDocument),
       ozoneAppEndpoint(PUT, "/just-write-it-in-rust", setHeaders, handleBadRequest));
 
-  OzoneStringVector options
-      = ozoneVectorFromElements(OzoneString, ozoneStringConstant("ozone-templates-base-path=./include/html"));
-
-  return ozoneAppServe(8080, &endpoints, &options);
+  return ozoneAppServe(argc, argv, &endpoints);
 }

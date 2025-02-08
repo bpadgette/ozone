@@ -2,13 +2,12 @@
 #define OZONE_APP_H
 
 #include "ozone_allocator.h"
-#include "ozone_cache.h"
 #include "ozone_http.h"
+#include "ozone_map.h"
 #include "ozone_socket.h"
 #include "ozone_string.h"
 #include "ozone_templates.h"
-
-#define OZONE_APP_OPTION_TEMPLATES_BASE_PATH_KEY "ozone-templates-base-path"
+#include <pthread.h>
 
 typedef struct OzoneAppEndpointStruct {
   OzoneHTTPMethod method;
@@ -18,11 +17,15 @@ typedef struct OzoneAppEndpointStruct {
 
 OZONE_VECTOR_DECLARE_API(OzoneAppEndpoint)
 
+typedef uintptr_t OzoneAppVoidRef;
+OZONE_VECTOR_DECLARE_API(OzoneAppVoidRef)
+OZONE_MAP_DECLARE_API(OzoneAppVoidRef)
+
 typedef struct OzoneAppContextStruct {
   OzoneAllocator* allocator;
   OzoneAppEndpointVector endpoints;
-  OzoneStringMap startup_configuration;
-  OzoneCache* cache;
+  pthread_mutex_t* cache_lock;
+  OzoneAppVoidRefMap* cache;
 } OzoneAppContext;
 
 typedef struct OzoneAppEventStruct
@@ -36,9 +39,24 @@ typedef int(OzoneAppHandler)(OzoneAppEvent* event);
     .handler_pipeline = ozoneVectorFromArray(OzoneSocketHandlerRef, ((OzoneAppHandler*[]) { __VA_ARGS__ }))            \
   }
 
-int ozoneAppServe(unsigned short int port, OzoneAppEndpointVector* endpoints, OzoneStringVector* options);
+int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints);
 
-void ozoneAppRenderOzoneShellHTML(OzoneAppEvent* event, const OzoneString* title);
+/* OzoneAppEvent convenience functions */
+
 void ozoneAppSetResponseHeader(OzoneAppEvent* event, const OzoneString* name, const OzoneString* value);
+
+#define ozoneAppContextLock(_event_) pthread_mutex_lock((_event_)->context->cache_lock);
+#define ozoneAppContextUnlock(_event_) pthread_mutex_unlock((_event_)->context->cache_lock);
+#define ozoneAppContextCachedValue(_event_, _type_, _cache_value_, _create_if_not_cached_)                             \
+  do {                                                                                                                 \
+    OzoneString cache_key = ozoneStringConstant(#_cache_value_);                                                       \
+    _cache_value_ = (_type_*)ozoneMapGetOzoneAppVoidRef((_event_)->context->cache, &cache_key);                        \
+    if (!_cache_value_) {                                                                                              \
+      do                                                                                                               \
+        _create_if_not_cached_ while (0);                                                                              \
+      ozoneMapInsertOzoneAppVoidRef(                                                                                   \
+          (_event_)->context->allocator, (_event_)->context->cache, &cache_key, (void*)_cache_value_);                 \
+    }                                                                                                                  \
+  } while (0)
 
 #endif

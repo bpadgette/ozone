@@ -71,9 +71,9 @@ void shouldRenderTemplate(void) {
       = ozoneTemplatesComponentFromFile(test_alloc, &ozoneStringConstant("./test/resources/test.html"));
 
   OzoneStringMap template_arguments = (OzoneStringMap) { 0 };
-  ozoneStringMapInsert(
+  ozoneMapInsertOzoneString(
       test_alloc, &template_arguments, &ozoneStringConstant("title"), &ozoneStringConstant("Hello, World!"));
-  ozoneStringMapInsert(
+  ozoneMapInsertOzoneString(
       test_alloc,
       &template_arguments,
       &ozoneStringConstant("body"),

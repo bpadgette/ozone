@@ -59,13 +59,9 @@ void ozoneStringConcatenate(OzoneAllocator* allocator, OzoneString* destination,
   ozoneVectorForEach(member, &source->vector) { ozoneStringAppend(allocator, destination, *member); }
 }
 
-OzoneString* ozoneStringJoin(OzoneAllocator* allocator, const OzoneStringVector* strings) {
-  OzoneString* string = ozoneString(allocator, "");
-
+void ozoneStringJoin(OzoneAllocator* allocator, OzoneString* destination, const OzoneStringVector* strings) {
   OzoneString* member;
-  ozoneVectorForEach(member, strings) { ozoneStringConcatenate(allocator, string, member); }
-
-  return string;
+  ozoneVectorForEach(member, strings) { ozoneStringConcatenate(allocator, destination, member); }
 }
 
 int ozoneStringCompare(const OzoneString* left, const OzoneString* right) {
@@ -100,16 +96,23 @@ int ozoneStringFindFirst(const OzoneString* string, const OzoneString* search) {
 
 OzoneString* ozoneStringFromBuffer(OzoneAllocator* allocator, char* buffer, size_t buffer_size) {
   OzoneString* string = ozoneAllocatorReserveOne(allocator, OzoneString);
+
+  size_t real_buffer_size = 0;
+  for (; real_buffer_size < buffer_size; real_buffer_size++) {
+    if (!buffer[real_buffer_size])
+      break;
+  }
+
   string->vector = (OzoneByteVector) {
     .elements = ozoneAllocatorReserveMany(allocator, char, buffer_size + 1),
-    .length = buffer_size + 1,
-    .capacity = buffer_size + 1,
+    .length = real_buffer_size + 1,
+    .capacity = real_buffer_size + 1,
   };
 
-  memcpy(string->vector.elements, buffer, buffer_size);
+  memcpy(string->vector.elements, buffer, real_buffer_size);
 
-  // Only a single null terminator is needed, if the ending of the string is NULL we should pop
-  while (!ozoneStringBufferEnd(string)) {
+  // Only a single null terminator is needed, if the ending of the string is a null terminator we should pop
+  while (ozoneStringLength(string) && ozoneStringBufferEnd(string) == '\0') {
     ozoneStringPop(string);
   }
 

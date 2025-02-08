@@ -251,7 +251,7 @@ OzoneHTTPRequest* ozoneHTTPParseSocketRequest(OzoneAllocator* allocator, const O
       }
       case OZONE_HTTP_PARSING_HEADER_VALUE: {
         if (cursor == '\r') {
-          ozoneStringMapInsert(allocator, &http_request->headers, header_name, token);
+          ozoneMapInsertOzoneString(allocator, &http_request->headers, header_name, ozoneStringCopy(allocator, token));
           ozoneStringClear(header_name);
           ozoneStringClear(token);
           parsing = OZONE_HTTP_PARSING_HEADER_LINE_RETURN;
@@ -269,7 +269,7 @@ OzoneHTTPRequest* ozoneHTTPParseSocketRequest(OzoneAllocator* allocator, const O
       case OZONE_HTTP_PARSING_HEADER_FINAL_LINE_RETURN: {
         if (cursor == '\n') {
           const OzoneString* content_length_header
-              = ozoneStringMapFindValue(&http_request->headers, &ozoneStringConstant("Content-Length"));
+              = ozoneMapGetOzoneString(&http_request->headers, &ozoneStringConstant("Content-Length"));
           if (!content_length_header || ozoneStringToInteger(content_length_header) <= 0)
             return http_request;
 
@@ -358,18 +358,24 @@ int ozoneHTTPEndPipeline(OzoneHTTPEvent* event) {
     response->version = http_version;
 
   if (response->version == OZONE_HTTP_VERSION_1_1)
-    ozoneStringMapInsert(
-        event->allocator, &response->headers, &ozoneStringConstant("Connection"), &ozoneStringConstant("keep-alive"));
+    ozoneMapInsertOzoneString(
+        event->allocator,
+        &response->headers,
+        &ozoneStringConstant("Connection"),
+        ozoneString(event->allocator, "keep-alive"));
 
   if (!response->code)
     response->code = ozoneStringLength(&response->body) ? 200 : 204;
 
   if (ozoneStringLength(&response->body)
-      && !ozoneStringMapFindValue(&response->headers, &ozoneStringConstant("Content-Type")))
-    ozoneStringMapInsert(
-        event->allocator, &response->headers, &ozoneStringConstant("Content-Type"), &ozoneStringConstant("text/plain"));
+      && !ozoneMapGetOzoneString(&response->headers, &ozoneStringConstant("Content-Type")))
+    ozoneMapInsertOzoneString(
+        event->allocator,
+        &response->headers,
+        &ozoneStringConstant("Content-Type"),
+        ozoneString(event->allocator, "text/plain"));
 
-  ozoneStringMapInsert(
+  ozoneMapInsertOzoneString(
       event->allocator,
       &response->headers,
       &ozoneStringConstant("Content-Length"),

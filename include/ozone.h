@@ -3,7 +3,6 @@
 
 #include "ozone_allocator.h"
 #include "ozone_app.h"
-#include "ozone_cache.h"
 #include "ozone_file.h"
 #include "ozone_http.h"
 #include "ozone_log.h"
