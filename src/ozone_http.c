@@ -422,8 +422,9 @@ int ozoneHTTPServe(OzoneHTTPConfig* config) {
 
   OzoneSocketConfig socket_config = (OzoneSocketConfig) {
     .handler_pipeline = http_pipeline,
-    .port = config->port,
     .handler_context = config->handler_context,
+    .max_workers = config->max_workers,
+    .port = config->port,
   };
 
   int return_code = ozoneSocketServeTCP(&socket_config);
