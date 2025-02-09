@@ -168,10 +168,8 @@ void* ozoneSocketHandleWorker(OzoneSocketWorker* worker) {
           if (send_code == (int)ozoneStringLength(chunk))
             break;
 
-          if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            ozoneLogWarn("NONBLOCKING");
+          if (errno == EAGAIN || errno == EWOULDBLOCK)
             break;
-          }
 
           ozoneLogDebug(
               "Worker %ld: Could not send part of TCP connection response, errno %d for file %d",
@@ -386,12 +384,12 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config) {
         OzoneSocketWorker* backup_offline_worker = NULL;
         OzoneSocketWorker* worker;
         ozoneVectorForEach(worker, &worker_pool) {
-          pthread_mutex_lock(&worker->thread_lock);
+          if (pthread_mutex_trylock(&worker->thread_lock))
+            continue;
+
           if (worker->pending == -1) {
-            if (worker->thread) {
-              pthread_mutex_unlock(&worker->thread_lock);
+            if (worker->thread)
               pthread_join(worker->thread, NULL);
-            }
 
             worker->thread = 0;
             worker->pending = 0;
@@ -418,10 +416,8 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config) {
             accepted_worker = worker;
           }
           pthread_mutex_unlock(&worker->thread_lock);
-
-          if (locked) {
+          if (locked)
             break;
-          }
         }
 
         if (locked)
@@ -440,10 +436,10 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config) {
           continue;
         }
 
-        pthread_mutex_lock(&worker->thread_lock);
+        pthread_mutex_lock(&accepted_worker->thread_lock);
         for (size_t connection_index = 0; connection_index < OZONE_SOCKET_WORKER_CONNECTION_CAPACITY;
              connection_index++) {
-          if (accepted_worker->connection_fds[connection_index] == 0) {
+          if (!accepted_worker->connection_fds[connection_index]) {
             accepted_worker->connection_fds[connection_index] = event_fd;
             accepted_worker->pending++;
             ozoneLogDebug("Passing connection %d to worker %ld", event_fd, accepted_worker->id);
@@ -451,7 +447,7 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config) {
             break;
           }
         }
-        pthread_mutex_unlock(&worker->thread_lock);
+        pthread_mutex_unlock(&accepted_worker->thread_lock);
 
         if (!accepted_worker->thread)
           pthread_create(&accepted_worker->thread, NULL, (void* (*)(void*))ozoneSocketHandleWorker, accepted_worker);
