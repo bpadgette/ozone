@@ -8,11 +8,13 @@
   "ozone (pre-alpha) application help menu.\n\n"                                                                       \
   "Options:\n"                                                                                                         \
   "  --help                 Show this screen.\n"                                                                       \
-  "  --port=<port>          Port for your application [default: 8080].\n"                                              \
+  "  --max-workers=<value>  Max worker count for your application, 0 for automatic [default: 0].\n"                    \
+  "  --port=<value>         Port for your application [default: 8080].\n"                                              \
   "  --<other-key>=<value>  Intended for custom application configuration, inserts 'option:<other-key>' into "         \
   "the OzoneAppEvent.context cache.\n"
 
 #define OZONE_APP_DEFAULT_PORT 8080
+#define OZONE_APP_DEFAULT_MAX_WORKERS 0 // automatic
 #define OZONE_APP_MAX_OPTION_LENGTH 128
 
 OZONE_VECTOR_IMPLEMENT_API(OzoneAppEndpoint)
@@ -52,7 +54,8 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
   context.cache = ozoneAllocatorReserveOne(context.allocator, OzoneAppVoidRefMap);
 
   int help = 0;
-  unsigned short port = OZONE_APP_DEFAULT_PORT;
+  unsigned int max_workers = OZONE_APP_DEFAULT_MAX_WORKERS;
+  unsigned int port = OZONE_APP_DEFAULT_PORT;
 
   for (int option = 1; option < argc; option++) {
     OzoneString* option_key_value = ozoneStringFromBuffer(context.allocator, argv[option], OZONE_APP_MAX_OPTION_LENGTH);
@@ -75,8 +78,12 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
     if (!ozoneStringCompare(key, &ozoneStringConstant("help"))) {
       help = 1;
       break;
+    } else if (!ozoneStringCompare(key, &ozoneStringConstant("max-workers")) && value) {
+      max_workers = (unsigned int)ozoneStringToInteger(value);
+      ozoneLogInfo("Set max-workers to %d", max_workers);
     } else if (!ozoneStringCompare(key, &ozoneStringConstant("port")) && value) {
-      port = (unsigned short)ozoneStringToInteger(value);
+      port = (unsigned int)ozoneStringToInteger(value);
+      ozoneLogInfo("Set port to %d", port);
     } else if (!value) {
       ozoneLogWarn("Ignored option '%s'", ozoneStringBuffer(key));
       help = 1;
@@ -86,7 +93,7 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
       OzoneString* cache_key = ozoneString(context.allocator, "option:");
       ozoneStringConcatenate(context.allocator, cache_key, key);
       ozoneMapInsertOzoneAppVoidRef(context.allocator, context.cache, cache_key, (OzoneAppVoidRef*)&value);
-      ozoneLogDebug("Added '%s' to event context cache", ozoneStringBuffer(cache_key));
+      ozoneLogInfo("Added '%s' to event context cache", ozoneStringBuffer(cache_key));
     }
   }
 
@@ -98,9 +105,10 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
   }
 
   OzoneHTTPConfig http_config = (OzoneHTTPConfig) {
-    .port = port,
+    .handler_context = &context,
     .handler_pipeline = ozoneVectorFromElements(OzoneSocketHandlerRef, (OzoneSocketHandlerRef)ozoneAppBeginPipeline),
-    .handler_context = &context
+    .max_workers = max_workers,
+    .port = port,
   };
 
   pthread_mutex_init(context.cache_lock, NULL);

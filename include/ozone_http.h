@@ -29,7 +29,7 @@ typedef enum OzoneHTTPMethod {
 
 OzoneHTTPMethod ozoneHTTPParseMethod(const OzoneString* method_string);
 
-typedef unsigned short int OzoneHTTPStatusCode;
+typedef unsigned int OzoneHTTPStatusCode;
 OzoneString* ozoneHTTPStatusText(OzoneAllocator* allocator, OzoneHTTPStatusCode status);
 
 typedef struct OzoneHTTPRequestStruct {
@@ -55,9 +55,10 @@ OzoneHTTPRequest* ozoneHTTPParseSocketRequest(OzoneAllocator* allocator, const O
 OzoneStringVector* ozoneHTTPRenderResponse(OzoneAllocator* allocator, OzoneHTTPResponse* http_response);
 
 typedef struct OzoneHTTPConfigStruct {
-  unsigned short int port;
-  OzoneSocketHandlerRefVector handler_pipeline;
   void* handler_context;
+  OzoneSocketHandlerRefVector handler_pipeline;
+  unsigned int max_workers;
+  unsigned int port;
 } OzoneHTTPConfig;
 
 int ozoneHTTPServe(OzoneHTTPConfig* config);

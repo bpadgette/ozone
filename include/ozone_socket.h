@@ -22,10 +22,10 @@ typedef OzoneSocketHandler* OzoneSocketHandlerRef;
 OZONE_VECTOR_DECLARE_API(OzoneSocketHandlerRef)
 
 typedef struct OzoneSocketConfigStruct {
-  unsigned short int port;
-  size_t max_workers;
-  OzoneSocketHandlerRefVector handler_pipeline;
   void* handler_context;
+  OzoneSocketHandlerRefVector handler_pipeline;
+  unsigned int max_workers;
+  unsigned int port;
 } OzoneSocketConfig;
 
 int ozoneSocketServeTCP(OzoneSocketConfig* config);
