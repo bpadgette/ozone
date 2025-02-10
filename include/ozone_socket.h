@@ -8,6 +8,7 @@
 #define OZONE_SOCKET_EVENT_FIELDS(_request_type_, _response_type_, _context_type_)                                     \
   {                                                                                                                    \
     OzoneAllocator* allocator;                                                                                         \
+    OzoneStringMap parameters;                                                                                         \
     OzoneStringVector raw_socket_request;                                                                              \
     OzoneStringVector raw_socket_response;                                                                             \
     _request_type_* request;                                                                                           \
