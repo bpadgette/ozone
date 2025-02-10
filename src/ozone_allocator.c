@@ -1,7 +1,6 @@
 #include "ozone_allocator.h"
 
 #include "ozone_log.h"
-#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -72,7 +71,8 @@ uintptr_t ozoneAllocatorReserveBytes(OzoneAllocator* allocator, size_t size) {
     }
   } while (allocator_iterator->next && (allocator_iterator = allocator_iterator->next));
 
-  OzoneAllocator* new_region = ozoneAllocatorCreate(fmax(size, ozoneAllocatorGetRegionCapacity(allocator)));
+  size_t region_capacity = ozoneAllocatorGetRegionCapacity(allocator);
+  OzoneAllocator* new_region = ozoneAllocatorCreate(size > region_capacity ? size : region_capacity);
 
   new_region->cursor += size;
   allocator_iterator->next = new_region;
