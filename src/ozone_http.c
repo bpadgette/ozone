@@ -405,11 +405,14 @@ int ozoneHTTPEndPipeline(OzoneHTTPEvent* event) {
 int ozoneHTTPServe(OzoneHTTPConfig* config) {
   OzoneAllocator* allocator = ozoneAllocatorCreate(1024);
   OzoneSocketHandlerRefVector http_pipeline = (OzoneSocketHandlerRefVector) { 0 };
-
+#ifndef __clang__
 #pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
   OzoneSocketHandlerRef begin = (OzoneSocketHandlerRef)ozoneHTTPBeginPipeline;
   OzoneSocketHandlerRef end = (OzoneSocketHandlerRef)ozoneHTTPEndPipeline;
+#ifndef __clang__
 #pragma GCC diagnostic pop
+#endif
 
   ozoneVectorPushOzoneSocketHandlerRef(allocator, &http_pipeline, &begin);
 

@@ -173,15 +173,18 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
     ozoneAllocatorDelete(context.allocator);
     return 0;
   }
-
+#ifndef __clang__
 #pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
   OzoneHTTPConfig http_config = (OzoneHTTPConfig) {
     .handler_context = &context,
     .handler_pipeline = ozoneVectorFromElements(OzoneSocketHandlerRef, (OzoneSocketHandlerRef)ozoneAppBeginPipeline),
     .max_workers = max_workers,
     .port = port,
   };
+#ifndef __clang__
 #pragma GCC diagnostic pop
+#endif
 
   pthread_mutex_init(context.cache_lock, NULL);
   int return_code = ozoneHTTPServe(&http_config);
