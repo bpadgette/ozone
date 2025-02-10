@@ -36,7 +36,7 @@ void greet(OzoneAppEvent* event) {
   }
 
   if (!name) {
-    name = &ozoneStringConstant("World");
+    name = ozoneString(event->allocator, "World");
   }
 
   ozoneStringConcatenate(event->allocator, &event->response->body, name);
