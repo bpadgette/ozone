@@ -81,6 +81,7 @@ void* ozoneSocketHandleWorker(OzoneSocketWorker* worker) {
       if (!connection_fd)
         continue;
 
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
       switch (worker->connection_states[connection_index]) {
       case OZONE_SOCKET_WORKER_CONNECTION_INIT: {
         ozoneLogDebug("Worker %ld: Preparing to handle connection %d", worker->id, connection_fd);
@@ -209,6 +210,7 @@ void* ozoneSocketHandleWorker(OzoneSocketWorker* worker) {
       }
     }
   }
+#pragma GCC diagnostic pop
 
   pthread_mutex_lock(&worker->thread_lock);
   for (size_t connection_index = 0; connection_index < OZONE_SOCKET_WORKER_CONNECTION_CAPACITY; connection_index++) {

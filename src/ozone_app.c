@@ -140,7 +140,10 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
       value = ozoneStringSlice(context.allocator, option_key_value, equals_at + 1, ozoneStringLength(option_key_value));
 
     OzoneString* key = ozoneStringSlice(
-        context.allocator, option_key_value, 2, equals_at > 1 ? equals_at : ozoneStringLength(option_key_value));
+        context.allocator,
+        option_key_value,
+        2,
+        equals_at > 1 ? (size_t)equals_at : ozoneStringLength(option_key_value));
 
     if (!ozoneStringCompare(key, &ozoneStringConstant("help"))) {
       help = 1;
@@ -171,12 +174,14 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
     return 0;
   }
 
+#pragma GCC diagnostic ignored "-Wcast-function-type"
   OzoneHTTPConfig http_config = (OzoneHTTPConfig) {
     .handler_context = &context,
     .handler_pipeline = ozoneVectorFromElements(OzoneSocketHandlerRef, (OzoneSocketHandlerRef)ozoneAppBeginPipeline),
     .max_workers = max_workers,
     .port = port,
   };
+#pragma GCC diagnostic pop
 
   pthread_mutex_init(context.cache_lock, NULL);
   int return_code = ozoneHTTPServe(&http_config);
