@@ -4,7 +4,7 @@ void asHTMLDocument(OzoneAppEvent* event) {
   OzoneTemplatesComponent* html_shell;
 
   ozoneAppContextLock(event);
-  ozoneAppContextCachedValue(event, OzoneTemplatesComponent, html_shell, {
+  ozoneAppContextCachedValue(event, OzoneTemplatesComponent, "middlewares:html_shell", html_shell, {
     html_shell = ozoneTemplatesComponentFromFile(
         event->context->allocator, &ozoneStringConstant("./examples/html/shell.html"));
   });
@@ -14,7 +14,11 @@ void asHTMLDocument(OzoneAppEvent* event) {
   ozoneMapInsertOzoneString(
       event->allocator, &arguments, &ozoneStringConstant("title"), &ozoneStringConstant("Ozone Examples"));
   ozoneMapInsertOzoneString(event->allocator, &arguments, &ozoneStringConstant("body"), &event->response->body);
-  ozoneTemplatesComponentRender(event->allocator, html_shell, &arguments);
+  event->response->body = *ozoneTemplatesComponentRender(event->allocator, html_shell, &arguments);
 
-  ozoneAppSetResponseHeader(event, &ozoneStringConstant("Content-Type"), &ozoneStringConstant("text/html"));
+  ozoneMapInsertOzoneString(
+      event->allocator,
+      &event->response->headers,
+      &ozoneStringConstant("Content-Type"),
+      &ozoneStringConstant("text/html"));
 }

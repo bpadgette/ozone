@@ -17,31 +17,95 @@
 #define OZONE_APP_DEFAULT_MAX_WORKERS 0 // automatic
 #define OZONE_APP_MAX_OPTION_LENGTH 128
 
-OZONE_VECTOR_IMPLEMENT_API(OzoneAppEndpoint)
+#define OZONE_APP_ROUTER_MATCH_NOT_FOUND 0
+#define OZONE_APP_ROUTER_MATCH_SEEK 1
+#define OZONE_APP_ROUTER_MATCH_WILDCARD_START 2
+#define OZONE_APP_ROUTER_MATCH_WILDCARD_STOP 3
 
+OZONE_VECTOR_IMPLEMENT_API(OzoneAppEndpoint)
 OZONE_VECTOR_IMPLEMENT_API(OzoneAppVoidRef)
 OZONE_MAP_IMPLEMENT_API(OzoneAppVoidRef)
-
-void ozoneAppSetResponseHeader(OzoneAppEvent* event, const OzoneString* name, const OzoneString* value) {
-  ozoneMapInsertOzoneString(
-      event->allocator, &event->response->headers, name, ozoneStringCopy(event->allocator, value));
-}
 
 int ozoneAppBeginPipeline(OzoneAppEvent* event) {
   ozoneLogTrace(
       "Beginning app pipeline, %ld live bytes in event allocator", ozoneAllocatorGetTotalFree(event->allocator));
 
   OzoneAppEndpoint* endpoint;
-  ozoneVectorForEach(endpoint, &event->context->endpoints) {
+  ozoneVectorForEach(endpoint, event->context->endpoints) {
     if (event->request->method != endpoint->method)
       continue;
 
-    if (ozoneStringCompare(&event->request->target, &endpoint->target_pattern) != 0)
-      continue;
+    int parsing = OZONE_APP_ROUTER_MATCH_SEEK;
+    char wildcard_stop = '\0';
+    OzoneString* parameter_name = NULL;
+    OzoneString* parameter_value = NULL;
 
-    OzoneSocketHandlerRef* handler;
-    ozoneVectorForEach(handler, &endpoint->handler_pipeline) { (*handler)((OzoneSocketEvent*)event); }
-    return 0;
+    size_t pattern_index = 0;
+    size_t target_index = 0;
+    while (parsing != OZONE_APP_ROUTER_MATCH_NOT_FOUND && target_index < ozoneStringLength(&event->request->target)) {
+
+      char target_cursor = ozoneStringBufferAt(&event->request->target, target_index);
+      char pattern_cursor = pattern_index < ozoneStringLength(&endpoint->target_pattern)
+          ? ozoneStringBufferAt(&endpoint->target_pattern, pattern_index)
+          : '\0';
+
+      switch (parsing) {
+      case OZONE_APP_ROUTER_MATCH_SEEK: {
+        if (pattern_cursor == '{') {
+          parsing = OZONE_APP_ROUTER_MATCH_WILDCARD_START;
+          pattern_index++;
+          parameter_name = ozoneString(event->allocator, "path:");
+        } else if (pattern_cursor == target_cursor) {
+          pattern_index++;
+          target_index++;
+        } else {
+          pattern_index = -1;
+          target_index = -1;
+        }
+        break;
+      }
+      case OZONE_APP_ROUTER_MATCH_WILDCARD_START: {
+        if (pattern_cursor == '}') {
+          parsing = OZONE_APP_ROUTER_MATCH_WILDCARD_STOP;
+          pattern_index++;
+          parameter_value = ozoneString(event->allocator, "");
+        } else {
+          ozoneStringAppend(event->allocator, parameter_name, pattern_cursor);
+          pattern_index++;
+        }
+        break;
+      }
+      case OZONE_APP_ROUTER_MATCH_WILDCARD_STOP: {
+        if (!wildcard_stop)
+          wildcard_stop = pattern_cursor;
+
+        if (target_cursor == wildcard_stop || target_cursor == '/') {
+          wildcard_stop = '\0';
+          parsing = OZONE_APP_ROUTER_MATCH_SEEK;
+          ozoneMapInsertOzoneString(event->allocator, &event->parameters, parameter_name, parameter_value);
+          ozoneStringClear(parameter_name);
+          parameter_value = NULL;
+        } else {
+          ozoneStringAppend(event->allocator, parameter_value, target_cursor);
+          target_index++;
+        }
+
+        break;
+      }
+      }
+    }
+
+    if (pattern_index == ozoneStringLength(&endpoint->target_pattern)
+        && target_index == ozoneStringLength(&event->request->target)) {
+      if (parameter_name && parameter_value && ozoneStringLength(parameter_name)
+          && ozoneStringLength(parameter_value)) {
+        ozoneMapInsertOzoneString(event->allocator, &event->parameters, parameter_name, parameter_value);
+      }
+
+      OzoneSocketHandlerRef* handler;
+      ozoneVectorForEach(handler, &endpoint->handler_pipeline) { (*handler)((OzoneSocketEvent*)event); }
+      return 0;
+    }
   }
 
   event->response->code = 404;
@@ -49,7 +113,10 @@ int ozoneAppBeginPipeline(OzoneAppEvent* event) {
 }
 
 int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
-  OzoneAppContext context = (OzoneAppContext) { .allocator = ozoneAllocatorCreate(4096), .endpoints = *endpoints };
+  OzoneAppContext context = (OzoneAppContext) {
+    .allocator = ozoneAllocatorCreate(4096),
+    .endpoints = endpoints,
+  };
   context.cache_lock = ozoneAllocatorReserveOne(context.allocator, pthread_mutex_t);
   context.cache = ozoneAllocatorReserveOne(context.allocator, OzoneAppVoidRefMap);
 
