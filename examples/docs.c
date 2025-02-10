@@ -1,7 +1,5 @@
 #include "ozone.h"
 
-#define PAGE_TITLE "Ozone Documentation"
-
 #include "middlewares.h"
 
 void homepage(OzoneAppEvent* event) {
