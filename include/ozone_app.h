@@ -56,7 +56,6 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints);
         _create_if_not_cached_ while (0);                                                                              \
       ozoneMapInsertOzoneAppVoidRef(                                                                                   \
           (_event_)->context->allocator, (_event_)->context->cache, &cache_key, (OzoneAppVoidRef*)&(_cache_value_));   \
-      _cache_value_ = (_type_*)(*cache_value);                                                                         \
     }                                                                                                                  \
   } while (0)
 
