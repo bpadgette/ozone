@@ -186,6 +186,11 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
 #pragma GCC diagnostic pop
 #endif
 
+  if (!endpoints) {
+    ozoneLogError("Cannot serve an app with no endpoints");
+    return 1;
+  }
+
   pthread_mutex_init(context.cache_lock, NULL);
   int return_code = ozoneHTTPServe(&http_config);
   pthread_mutex_destroy(context.cache_lock);

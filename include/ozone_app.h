@@ -59,4 +59,11 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints);
     }                                                                                                                  \
   } while (0)
 
+#define ozoneAppRedirect(_event_, _location_)                                                                          \
+  do {                                                                                                                 \
+    (_event_)->response->code = 301;                                                                                   \
+    ozoneMapInsertOzoneString(                                                                                         \
+        (_event_)->allocator, &(_event_)->response->headers, &ozoneStringConstant("Location"), _location_);            \
+  } while (0)
+
 #endif
