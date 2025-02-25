@@ -1,5 +1,7 @@
 # ozone
 
+[![workflow:main:ci](https://github.com/bpadgette/ozone/actions/workflows/main-ci.yml/badge.svg)](https://github.com/bpadgette/ozone/actions/workflows/main-ci.yml)
+
 Ozone is a minimal dependency, C-based web framework.
 
 # Contents
@@ -37,7 +39,7 @@ Ozone is a minimal dependency, C-based web framework.
 | [ ] ?             | HTTP/2                                                                                                        |
 | [ ] ?             | Websockets                                                                                                    |
 
-View [closed pull requests](https://github.com/bpadgette/ozone/pulls?q=is%3Apr+is%3Aclosed) fir more details.
+View [closed pull requests](https://github.com/bpadgette/ozone/pulls?q=is%3Apr+is%3Aclosed) for more details.
 
 ## Hello, World! <a name="hello-world"></a>
 
@@ -63,6 +65,9 @@ For a more comprehensive demo, build and run a release build of `./examples/hell
 
 ```bash
 make hello_world
+
+# Not using clang? Override the C-compiler value here:
+make hello_world CC=gcc
 ```
 
 ## Other Examples <a name="other-examples"></a>
@@ -92,7 +97,7 @@ Build and install the shared library, `libozone`.
 
 > [!IMPORTANT]  
 > I test builds with clang and GCC, and the root-level Makefile allows you to as well since it defines most of its binaries in variables.
-> `CC` is defined for example, i.e. `CC=gcc make build` would allow you to overwrite the default value clang and build with GCC.
+> `CC` is defined for example, i.e. `make build CC=gcc` would allow you to overwrite the default value clang and build with GCC.
 
 ```bash
 make build
@@ -128,13 +133,13 @@ Ozone is:
 
 1. a C project.
 2. a tool for learning.
-3. good enough to use for a personal website (in progress).
+3. good enough to use for a personal website (work in progress).
 
 Ozone builds:
 
 1. without linking non-std libraries.
 2. without compiler warnings on its strictest settings (-Wall -Werror -pedantic).
-3. for dynamic linking (I want one ozone lib for several tiny web-server binaries).
+3. for dynamic linking; I want one ozone lib for several tiny web-server binaries.
 
 Ozone allows me:
 
@@ -144,6 +149,6 @@ Ozone allows me:
 
 Ozone's code:
 
-1. can use preprocessor directives freely; that is part of its charm and experience with macro pitfalls is expected.
+1. can use preprocessor directives freely; this is part of its charm and experience with macro pitfalls is expected of the developer.
 2. should implement containers where appropriate for a web-server; i.e. strings, vectors, and maps.
 3. is extensible; an Ozone handler is stateless with a simple signature so that it may be re-used across projects.
