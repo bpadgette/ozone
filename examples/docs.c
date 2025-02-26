@@ -1,6 +1,6 @@
 #include "ozone.h"
 
-#include "middlewares.h"
+#include "example_helpers.h"
 
 void homepage(OzoneAppEvent* event) {
   OzoneStringVector readme_md = ozoneVectorFromElements(OzoneString, ozoneStringConstant("<pre>\n"));

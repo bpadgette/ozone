@@ -4,7 +4,7 @@ void asHTMLDocument(OzoneAppEvent* event) {
   OzoneTemplatesComponent* html_shell;
 
   ozoneAppContextLock(event);
-  ozoneAppContextCachedValue(event, OzoneTemplatesComponent, "middlewares:html_shell", html_shell, {
+  ozoneAppContextCacheGetOrCreate(event, OzoneTemplatesComponent, "middlewares:html_shell", html_shell, {
     html_shell = ozoneTemplatesComponentFromFile(
         event->context->allocator, &ozoneStringConstant("./examples/html/shell.html"));
   });
