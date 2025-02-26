@@ -6,17 +6,42 @@ on:
     branches: ["main"]
 
 jobs:
-  all:
-    name: Quality Checks, Build, & Test
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Deno
-        uses: denoland/setup-deno@v2
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build with Clang
+        run: make -B build CC=clang
+      - name: Build with GCC
+        run: make -B build CC=gcc
+  build-examples:
+    needs: [build]
+    name: Build Examples
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build examples with Clang
+        run: make -B build-examples CC=clang
+      - name: Build examples with GCC
+        run: make -B build-examples CC=gcc
+  quality-checks:
+    needs: [build]
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Quality Checks
         run: make format-check
-      - name: Build
-        run: make build
+  tests:
+    needs: [build]
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Test
         run: make test
