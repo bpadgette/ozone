@@ -1,6 +1,6 @@
 # ozone
 
-[![workflow:main:ci](https://github.com/bpadgette/ozone/actions/workflows/main-ci.yml/badge.svg)](https://github.com/bpadgette/ozone/actions/workflows/main-ci.yml)
+[![CI](https://github.com/bpadgette/ozone/actions/workflows/main-ci.yml/badge.svg)](https://github.com/bpadgette/ozone/actions/workflows/main-ci.yml)
 
 Ozone is a minimal dependency, C-based web framework.
 

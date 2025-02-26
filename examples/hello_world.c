@@ -6,7 +6,8 @@ void home(OzoneAppEvent* event) {
   OzoneStringVector body = ozoneVectorFromElements(
       OzoneString,
       ozoneStringConstant("<h1>ozone</h1>"
-                          "<p>Ozone is a minimal dependency, C-based web framework.</p>"
+                          "<p>Ozone is a minimal dependency, C-based web framework. (<a "
+                          "href=\"https://github.com/bpadgette/ozone\">Github Repository</a>)</p>"
                           "<ul>"));
 
   OzoneStringVector links = ozoneVectorFromElements(
