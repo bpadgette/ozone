@@ -87,8 +87,9 @@ $(BUILD_EXAMPLES)%: $(TARGET_LIB)
 build-examples: $(patsubst $(EXAMPLES)%.c, $(BUILD_EXAMPLES)%, $(wildcard *, $(EXAMPLES)*.c))
 build-examples-debug: $(patsubst $(EXAMPLES)%.c, $(BUILD_EXAMPLES)%.debug, $(wildcard *, $(EXAMPLES)*.c))
 
+EXAMPLES_ARGS     := --serve-directory=$(EXAMPLES)assets
 %: $(BUILD_EXAMPLES)%
-	$(BUILD_EXAMPLES)$*
+	$(BUILD_EXAMPLES)$* $(EXAMPLES_ARGS)
 
 ##############################################################################
 # Testing

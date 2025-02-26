@@ -12,4 +12,6 @@
 #include "ozone_templates.h"
 #include "ozone_vector.h"
 
+#include "middlewares/ozone_serve_directory.h"
+
 #endif

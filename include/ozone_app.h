@@ -45,7 +45,9 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints);
 
 #define ozoneAppContextLock(_event_) pthread_mutex_lock((_event_)->context->cache_lock);
 #define ozoneAppContextUnlock(_event_) pthread_mutex_unlock((_event_)->context->cache_lock);
-#define ozoneAppContextCachedValue(_event_, _type_, _cache_key_, _cache_value_, _create_if_not_cached_)                \
+#define ozoneAppContextCacheGetRef(_event_, _type_, _cache_key_)                                                       \
+  (_type_**)(ozoneMapGetOzoneAppVoidRef((_event_)->context->cache, &ozoneStringConstant(_cache_key_)));
+#define ozoneAppContextCacheGetOrCreate(_event_, _type_, _cache_key_, _cache_value_, _create_if_not_cached_)           \
   do {                                                                                                                 \
     OzoneString cache_key = ozoneStringConstant(_cache_key_);                                                          \
     OzoneAppVoidRef* cache_value = ozoneMapGetOzoneAppVoidRef((_event_)->context->cache, &cache_key);                  \
@@ -58,7 +60,7 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints);
           (_event_)->context->allocator, (_event_)->context->cache, &cache_key, (OzoneAppVoidRef*)&(_cache_value_));   \
     }                                                                                                                  \
   } while (0)
-
+#define ozoneAppParameter(_event_, _key_) ozoneMapGetOzoneString(&event->parameters, &ozoneStringConstant(_key_))
 #define ozoneAppRedirect(_event_, _location_)                                                                          \
   do {                                                                                                                 \
     (_event_)->response->code = 301;                                                                                   \
