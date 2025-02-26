@@ -12,7 +12,7 @@ void home(OzoneAppEvent* event) {
   OzoneStringVector body = ozoneVectorFromElements(
       OzoneString,
       ozoneStringConstant("<h1>ozone</h1>"
-                          "<p>Ozone is a minimal dependency, C and web standards based web framework.</p>"
+                          "<p>Ozone is a minimal dependency, C-based web framework.</p>"
                           "<ul>"));
 
   // TODO: text-templating with ozone_templates should have iterative blocks
