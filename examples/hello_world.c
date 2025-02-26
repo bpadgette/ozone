@@ -2,11 +2,14 @@
 
 #include "example_helpers.h"
 
+// This demo is hosted at https://ozone.bpadgette.net
+
 void home(OzoneAppEvent* event) {
   OzoneStringVector body = ozoneVectorFromElements(
       OzoneString,
       ozoneStringConstant("<h1>ozone</h1>"
-                          "<p>Ozone is a minimal dependency, C-based web framework.</p>"
+                          "<p>Ozone is a minimal dependency, C-based web framework. (<a "
+                          "href=\"https://github.com/bpadgette/ozone\">Github Repository</a>)</p>"
                           "<ul>"));
 
   OzoneStringVector links = ozoneVectorFromElements(
@@ -29,7 +32,13 @@ void home(OzoneAppEvent* event) {
     ozoneVectorPushOzoneString(event->allocator, &body, &ozoneStringConstant("</a></li>"));
   }
 
-  ozoneVectorPushOzoneString(event->allocator, &body, &ozoneStringConstant("</ul>"));
+  ozoneVectorPushOzoneString(
+      event->allocator,
+      &body,
+      &ozoneStringConstant("</ul>"
+                           "<p>You are viewing <a target=\"_blank\""
+                           "href=\"https://github.com/bpadgette/ozone/blob/main/examples/hello_world.c\">https://"
+                           "github.com/bpadgette/ozone/blob/main/examples/hello_world.c</a></p>"));
 
   ozoneStringJoin(event->allocator, &event->response->body, &body);
 }
