@@ -2,18 +2,18 @@
 
 #include "example_helpers.h"
 
-OzoneStringVector links = ozoneVectorFromElements(
-    OzoneString,
-    ozoneStringConstant("/assets/LoremIpsum.txt"),
-    ozoneStringConstant("/greet/World"),
-    ozoneStringConstant("/greet/World/secret/there"));
-
 void home(OzoneAppEvent* event) {
   OzoneStringVector body = ozoneVectorFromElements(
       OzoneString,
       ozoneStringConstant("<h1>ozone</h1>"
                           "<p>Ozone is a minimal dependency, C-based web framework.</p>"
                           "<ul>"));
+
+  OzoneStringVector links = ozoneVectorFromElements(
+      OzoneString,
+      ozoneStringConstant("/assets/LoremIpsum.txt"),
+      ozoneStringConstant("/greet/World"),
+      ozoneStringConstant("/greet/World/secret/there"));
 
   // TODO: text-templating with ozone_templates should have iterative blocks
   OzoneString* link;
