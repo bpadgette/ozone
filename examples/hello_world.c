@@ -5,73 +5,64 @@
 // This demo is hosted at https://ozone.bpadgette.net
 
 void home(OzoneAppEvent* event) {
-  OzoneStringVector body = ozoneVectorFromElements(
-      OzoneString,
-      ozoneStringConstant("<h1>ozone</h1>"
-                          "<p>Ozone is a minimal dependency, C-based web framework. (<a "
-                          "href=\"https://github.com/bpadgette/ozone\">Github Repository</a>)</p>"
-                          "<ul>"));
+  ozoneStringWrite(
+      event->allocator,
+      &event->response->body,
+      "<h1>ozone</h1>"
+      "<p>Ozone is a minimal dependency, C-based web framework. (<a "
+      "href=\"https://github.com/bpadgette/ozone\">Github Repository</a>)</p>"
+      "<ul>");
 
-  OzoneStringVector links = ozoneVectorFromElements(
-      OzoneString,
-      ozoneStringConstant("/assets/LoremIpsum.txt"),
-      ozoneStringConstant("/greet/World"),
-      ozoneStringConstant("/greet/World/secret/there"));
+  OzoneStringVector links = ozoneVector(
+      OzoneString, ozoneString("/assets/LoremIpsum.txt"), ozoneString("/greet/World"), ozoneString("/greet/there"));
 
-  // TODO: text-templating with ozone_templates should have iterative blocks
+  // TODO: text-templating with ozone_template should have iterative blocks
   OzoneString* link;
   ozoneVectorForEach(link, &links) {
-    ozoneVectorPushOzoneString(event->allocator, &body, &ozoneStringConstant("<li><a href=\""));
-    ozoneVectorPushOzoneString(event->allocator, &body, link);
-    if (ozoneStringFindFirst(link, &ozoneStringConstant("/assets/")) == 0) {
-      ozoneVectorPushOzoneString(event->allocator, &body, &ozoneStringConstant("\" target=\"_blank\">"));
-    } else {
-      ozoneVectorPushOzoneString(event->allocator, &body, &ozoneStringConstant("\">"));
-    }
-    ozoneVectorPushOzoneString(event->allocator, &body, link);
-    ozoneVectorPushOzoneString(event->allocator, &body, &ozoneStringConstant("</a></li>"));
+    ozoneStringWrite(event->allocator, &event->response->body, "<li><a href=\"");
+    ozoneStringConcatenate(event->allocator, &event->response->body, link);
+
+    if (ozoneStringFindFirst(link, &ozoneString("/assets/")) == 0)
+      ozoneStringWrite(event->allocator, &event->response->body, "\" target=\"_blank\">");
+    else
+      ozoneStringWrite(event->allocator, &event->response->body, "\">");
+
+    ozoneStringConcatenate(event->allocator, &event->response->body, link);
+    ozoneStringWrite(event->allocator, &event->response->body, "</a></li>");
   }
 
-  ozoneVectorPushOzoneString(
+  ozoneStringWrite(
       event->allocator,
-      &body,
-      &ozoneStringConstant("</ul>"
-                           "<p>You are viewing <a target=\"_blank\""
-                           "href=\"https://github.com/bpadgette/ozone/blob/main/examples/hello_world.c\">https://"
-                           "github.com/bpadgette/ozone/blob/main/examples/hello_world.c</a></p>"));
-
-  ozoneStringJoin(event->allocator, &event->response->body, &body);
+      &event->response->body,
+      "</ul>"
+      "<p>You are viewing <a target=\"_blank\""
+      "href=\"https://github.com/bpadgette/ozone/blob/main/examples/hello_world.c\">https://"
+      "github.com/bpadgette/ozone/blob/main/examples/hello_world.c</a></p>");
 }
 
 void greet(OzoneAppEvent* event) {
-  event->response->body = *ozoneString(event->allocator, "<a href=\"/\">Home</a><h1>Hello, ");
-
-  OzoneString* name = ozoneAppParameter(event, "path:nickname");
-  if (!name)
-    name = ozoneAppParameter(event, "path:name");
-
-  if (!name)
-    name = ozoneString(event->allocator, "World");
-
-  ozoneStringConcatenate(event->allocator, &event->response->body, name);
-  ozoneStringConcatenate(event->allocator, &event->response->body, &ozoneStringConstant("!</h1>"));
+  ozoneTemplateWrite(
+      event->allocator,
+      &event->response->body,
+      ozoneTemplate(
+          event->allocator,
+          "<a href=\"/\">Home</a>"
+          "<h1>Hello, {{ path:name }}!</h1>"),
+      &event->parameters);
 }
 
 void handleBadRequest(OzoneAppEvent* event) {
-  event->response->body = *ozoneString(event->allocator, "No.");
+  ozoneStringWrite(event->allocator, &event->response->body, "No.");
   event->response->code = 400;
-
-  ozoneLogWarn("Bad request at %s", ozoneStringBuffer(&event->request->target));
 }
 
 int main(int argc, char* argv[]) {
-  OzoneAppEndpointVector endpoints = ozoneVectorFromElements(
+  OzoneAppEndpointVector endpoints = ozoneVector(
       OzoneAppEndpoint,
       // Endpoints can take a positive count of handlers
       ozoneAppEndpoint(GET, "/", home, asHTMLDocument),
       ozoneAppEndpoint(GET, "/assets/{location}", ozoneServeDirectory),
       ozoneAppEndpoint(GET, "/greet/{name}", greet, asHTMLDocument),
-      ozoneAppEndpoint(GET, "/greet/{name}/secret/{nickname}", greet, asHTMLDocument),
       ozoneAppEndpoint(POST, "/use-javascript", handleBadRequest),
       ozoneAppEndpoint(PUT, "/just-write-it-in-rust", handleBadRequest));
 

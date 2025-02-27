@@ -4,33 +4,31 @@
 
 void shouldLoadFileFromPath(void) {
   OzoneStringVector chunks = (OzoneStringVector) { 0 };
-  ozoneFileLoadFromPath(test_alloc, &chunks, &ozoneStringConstant("./test/resources/content.txt"), 100);
+  ozoneFileLoadFromPath(test_alloc, &chunks, &ozoneString("./test/resources/content.txt"), 100);
 
   TEST_ASSERT_EQUAL_MESSAGE(1, ozoneVectorLength(&chunks), "It should load the whole file into a single chunk");
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
-      &ozoneStringConstant("Hello,\n\n\tWorld!\n\nfin\n"),
+      &ozoneString("Hello,\n\n\tWorld!\n\nfin\n"),
       &ozoneVectorAt(&chunks, 0),
       "It should load all of the file's content into the first chunk");
 }
 
 void shouldLoadFileChunksFromPath(void) {
   OzoneStringVector chunks = (OzoneStringVector) { 0 };
-  ozoneFileLoadFromPath(test_alloc, &chunks, &ozoneStringConstant("./test/resources/content.txt"), 10);
+  ozoneFileLoadFromPath(test_alloc, &chunks, &ozoneString("./test/resources/content.txt"), 10);
 
   TEST_ASSERT_EQUAL_MESSAGE(3, ozoneVectorLength(&chunks), "It should load the whole file into 3 chunks");
 
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
-      &ozoneStringConstant("Hello,\n\n\t"),
+      &ozoneString("Hello,\n\n\t"),
       &ozoneVectorAt(&chunks, 0),
       "It should load some of the file's content into chunk 0");
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
-      &ozoneStringConstant("World!\n\nf"),
+      &ozoneString("World!\n\nf"),
       &ozoneVectorAt(&chunks, 1),
       "It should load some of the file's content into chunk 1");
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
-      &ozoneStringConstant("in\n"),
-      &ozoneVectorAt(&chunks, 2),
-      "It should load some of the file's content into chunk 2");
+      &ozoneString("in\n"), &ozoneVectorAt(&chunks, 2), "It should load some of the file's content into chunk 2");
 }
 
 int main(void) {

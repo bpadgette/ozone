@@ -18,7 +18,7 @@ void ozoneFileLoad(OzoneAllocator* allocator, OzoneStringVector* destination, FI
     string->vector.length = read_status + 1;
     string->vector.elements = cursor;
 
-    ozoneVectorPushOzoneString(allocator, destination, string);
+    OzoneStringVectorPush(allocator, destination, string);
 
     bytes_read += read_status;
     if (read_status != max_chunk_bytes - 1)

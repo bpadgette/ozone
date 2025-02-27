@@ -1,24 +1,22 @@
 #include "ozone.h"
 
 void asHTMLDocument(OzoneAppEvent* event) {
-  OzoneTemplatesComponent* html_shell;
+  OzoneTemplate* html_shell;
 
   ozoneAppContextLock(event);
-  ozoneAppContextCacheGetOrCreate(event, OzoneTemplatesComponent, "middlewares:html_shell", html_shell, {
-    html_shell = ozoneTemplatesComponentFromFile(
-        event->context->allocator, &ozoneStringConstant("./examples/html/shell.html"));
+  ozoneAppContextCacheGetOrCreate(event, OzoneTemplate, "middlewares:html_shell", html_shell, {
+    html_shell = ozoneTemplateFromFile(event->context->allocator, &ozoneString("./examples/html/shell.html"));
   });
   ozoneAppContextUnlock(event);
 
   OzoneStringMap arguments = (OzoneStringMap) { 0 };
-  ozoneMapInsertOzoneString(
-      event->allocator, &arguments, &ozoneStringConstant("title"), &ozoneStringConstant("Ozone Examples"));
-  ozoneMapInsertOzoneString(event->allocator, &arguments, &ozoneStringConstant("body"), &event->response->body);
-  event->response->body = *ozoneTemplatesComponentRender(event->allocator, html_shell, &arguments);
+  OzoneStringMapInsert(event->allocator, &arguments, &ozoneString("title"), &ozoneString("Ozone Examples"));
+  OzoneStringMapInsert(event->allocator, &arguments, &ozoneString("body"), &event->response->body);
 
-  ozoneMapInsertOzoneString(
-      event->allocator,
-      &event->response->headers,
-      &ozoneStringConstant("Content-Type"),
-      &ozoneStringConstant("text/html"));
+  OzoneString* new_body = ozoneStringAllocate(event->allocator, "");
+  ozoneTemplateWrite(event->allocator, new_body, html_shell, &arguments);
+  event->response->body = *new_body;
+
+  OzoneStringMapInsert(
+      event->allocator, &event->response->headers, &ozoneString("Content-Type"), &ozoneString("text/html"));
 }

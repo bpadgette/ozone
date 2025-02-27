@@ -7,14 +7,14 @@
 OZONE_VECTOR_IMPLEMENT_API(OzoneByte)
 OZONE_VECTOR_IMPLEMENT_API(OzoneString)
 
-void ozoneStringAppend(OzoneAllocator* allocator, OzoneString* string, char byte) {
+void ozoneStringWriteByte(OzoneAllocator* allocator, OzoneString* string, char byte) {
   if (!string || byte == '\0')
     return;
 
   char end = '\0';
-  ozoneVectorPushOzoneByte(allocator, &string->vector, &end);
+  OzoneByteVectorPush(allocator, &string->vector, &end);
   if (ozoneVectorLength(&string->vector) < 2)
-    ozoneVectorPushOzoneByte(allocator, &string->vector, &end);
+    OzoneByteVectorPush(allocator, &string->vector, &end);
 
   string->vector.elements[string->vector.length - 2] = byte;
 }
@@ -56,10 +56,11 @@ OzoneString* ozoneStringCopy(OzoneAllocator* allocator, const OzoneString* origi
 
 void ozoneStringConcatenate(OzoneAllocator* allocator, OzoneString* destination, const OzoneString* source) {
   char* member;
-  ozoneVectorForEach(member, &source->vector) { ozoneStringAppend(allocator, destination, *member); }
+  ozoneVectorForEach(member, &source->vector) { ozoneStringWriteByte(allocator, destination, *member); }
 }
 
-void ozoneStringJoin(OzoneAllocator* allocator, OzoneString* destination, const OzoneStringVector* strings) {
+void ozoneStringVectorConcatenate(
+    OzoneAllocator* allocator, OzoneString* destination, const OzoneStringVector* strings) {
   OzoneString* member;
   ozoneVectorForEach(member, strings) { ozoneStringConcatenate(allocator, destination, member); }
 }

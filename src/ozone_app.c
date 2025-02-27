@@ -54,7 +54,7 @@ int ozoneAppBeginPipeline(OzoneAppEvent* event) {
         if (pattern_cursor == '{') {
           parsing = OZONE_APP_ROUTER_MATCH_WILDCARD_START;
           pattern_index++;
-          parameter_name = ozoneString(event->allocator, "path:");
+          parameter_name = ozoneStringAllocate(event->allocator, "path:");
         } else if (pattern_cursor == target_cursor) {
           pattern_index++;
           target_index++;
@@ -68,9 +68,9 @@ int ozoneAppBeginPipeline(OzoneAppEvent* event) {
         if (pattern_cursor == '}') {
           parsing = OZONE_APP_ROUTER_MATCH_WILDCARD_STOP;
           pattern_index++;
-          parameter_value = ozoneString(event->allocator, "");
+          parameter_value = ozoneStringAllocate(event->allocator, "");
         } else {
-          ozoneStringAppend(event->allocator, parameter_name, pattern_cursor);
+          ozoneStringWriteByte(event->allocator, parameter_name, pattern_cursor);
           pattern_index++;
         }
         break;
@@ -82,11 +82,11 @@ int ozoneAppBeginPipeline(OzoneAppEvent* event) {
         if (target_cursor == wildcard_stop || target_cursor == '/') {
           wildcard_stop = '\0';
           parsing = OZONE_APP_ROUTER_MATCH_SEEK;
-          ozoneMapInsertOzoneString(event->allocator, &event->parameters, parameter_name, parameter_value);
+          OzoneStringMapInsert(event->allocator, &event->parameters, parameter_name, parameter_value);
           ozoneStringClear(parameter_name);
           parameter_value = NULL;
         } else {
-          ozoneStringAppend(event->allocator, parameter_value, target_cursor);
+          ozoneStringWriteByte(event->allocator, parameter_value, target_cursor);
           target_index++;
         }
 
@@ -99,7 +99,7 @@ int ozoneAppBeginPipeline(OzoneAppEvent* event) {
         && target_index == ozoneStringLength(&event->request->target)) {
       if (parameter_name && parameter_value && ozoneStringLength(parameter_name)
           && ozoneStringLength(parameter_value)) {
-        ozoneMapInsertOzoneString(event->allocator, &event->parameters, parameter_name, parameter_value);
+        OzoneStringMapInsert(event->allocator, &event->parameters, parameter_name, parameter_value);
       }
 
       OzoneSocketHandlerRef* handler;
@@ -127,7 +127,7 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
   for (int option = 1; option < argc; option++) {
     OzoneString* option_key_value = ozoneStringFromBuffer(context.allocator, argv[option], OZONE_APP_MAX_OPTION_LENGTH);
 
-    int option_marker = ozoneStringFindFirst(option_key_value, &ozoneStringConstant("--"));
+    int option_marker = ozoneStringFindFirst(option_key_value, &ozoneString("--"));
     if (option_marker != 0) {
       ozoneLogError("Command line options should begin with '--'");
       help = 1;
@@ -135,7 +135,7 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
     }
 
     OzoneString* value = NULL;
-    int equals_at = ozoneStringFindFirst(option_key_value, &ozoneStringConstant("="));
+    int equals_at = ozoneStringFindFirst(option_key_value, &ozoneString("="));
     if (equals_at > 1)
       value = ozoneStringSlice(context.allocator, option_key_value, equals_at + 1, ozoneStringLength(option_key_value));
 
@@ -145,13 +145,13 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
         2,
         equals_at > 1 ? (size_t)equals_at : ozoneStringLength(option_key_value));
 
-    if (!ozoneStringCompare(key, &ozoneStringConstant("help"))) {
+    if (!ozoneStringCompare(key, &ozoneString("help"))) {
       help = 1;
       break;
-    } else if (!ozoneStringCompare(key, &ozoneStringConstant("max-workers")) && value) {
+    } else if (!ozoneStringCompare(key, &ozoneString("max-workers")) && value) {
       max_workers = (unsigned int)ozoneStringToInteger(value);
       ozoneLogInfo("Set max-workers to %d", max_workers);
-    } else if (!ozoneStringCompare(key, &ozoneStringConstant("port")) && value) {
+    } else if (!ozoneStringCompare(key, &ozoneString("port")) && value) {
       port = (unsigned int)ozoneStringToInteger(value);
       ozoneLogInfo("Set port to %d", port);
     } else if (!value) {
@@ -160,9 +160,9 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
       break;
     } else {
       // Cache ignored options in the event context
-      OzoneString* cache_key = ozoneString(context.allocator, "option:");
+      OzoneString* cache_key = ozoneStringAllocate(context.allocator, "option:");
       ozoneStringConcatenate(context.allocator, cache_key, key);
-      ozoneMapInsertOzoneAppVoidRef(context.allocator, context.cache, cache_key, (OzoneAppVoidRef*)&value);
+      OzoneAppVoidRefMapInsert(context.allocator, context.cache, cache_key, (OzoneAppVoidRef*)&value);
       ozoneLogInfo("Added '%s' to event context cache", ozoneStringBuffer(cache_key));
     }
   }
@@ -178,7 +178,7 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
 #endif
   OzoneHTTPConfig http_config = (OzoneHTTPConfig) {
     .handler_context = &context,
-    .handler_pipeline = ozoneVectorFromElements(OzoneSocketHandlerRef, (OzoneSocketHandlerRef)ozoneAppBeginPipeline),
+    .handler_pipeline = ozoneVector(OzoneSocketHandlerRef, (OzoneSocketHandlerRef)ozoneAppBeginPipeline),
     .max_workers = max_workers,
     .port = port,
   };

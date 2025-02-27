@@ -8,11 +8,11 @@
     OzoneStringVector keys;                                                                                            \
     _type_##Vector values;                                                                                             \
   } _type_##Map;                                                                                                       \
-  _type_* ozoneMapGet##_type_(_type_##Map* map, const OzoneString* key);                                               \
-  void ozoneMapInsert##_type_(OzoneAllocator* allocator, _type_##Map* map, const OzoneString* key, _type_* value);
+  _type_* _type_##MapFind(_type_##Map* map, const OzoneString* key);                                                   \
+  void _type_##MapInsert(OzoneAllocator* allocator, _type_##Map* map, const OzoneString* key, _type_* value);
 
 #define OZONE_MAP_IMPLEMENT_API(_type_)                                                                                \
-  _type_* ozoneMapGet##_type_(_type_##Map* map, const OzoneString* key) {                                              \
+  _type_* _type_##MapFind(_type_##Map* map, const OzoneString* key) {                                                  \
     if (!map || !key)                                                                                                  \
       return NULL;                                                                                                     \
     for (size_t key_index = 0;                                                                                         \
@@ -23,7 +23,7 @@
     }                                                                                                                  \
     return NULL;                                                                                                       \
   }                                                                                                                    \
-  void ozoneMapInsert##_type_(OzoneAllocator* allocator, _type_##Map* map, const OzoneString* key, _type_* value) {    \
+  void _type_##MapInsert(OzoneAllocator* allocator, _type_##Map* map, const OzoneString* key, _type_* value) {         \
     if (!key || !value)                                                                                                \
       return;                                                                                                          \
     for (size_t key_index = 0;                                                                                         \
@@ -34,8 +34,8 @@
         return;                                                                                                        \
       }                                                                                                                \
     }                                                                                                                  \
-    ozoneVectorPushOzoneString(allocator, &map->keys, ozoneStringCopy(allocator, key));                                \
-    ozoneVectorPush##_type_(allocator, &map->values, value);                                                           \
+    OzoneStringVectorPush(allocator, &map->keys, ozoneStringCopy(allocator, key));                                     \
+    _type_##VectorPush(allocator, &map->values, value);                                                                \
   }
 
 OZONE_MAP_DECLARE_API(OzoneString)

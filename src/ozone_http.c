@@ -5,9 +5,9 @@
 #include <string.h>
 
 OzoneHTTPVersion ozoneHTTPParseVersion(const OzoneString* version_string) {
-  if (ozoneStringCompare(version_string, &ozoneStringConstant("HTTP/1.1")) == 0)
+  if (ozoneStringCompare(version_string, &ozoneString("HTTP/1.1")) == 0)
     return OZONE_HTTP_VERSION_1_1;
-  if (ozoneStringCompare(version_string, &ozoneStringConstant("HTTP/1.0")) == 0)
+  if (ozoneStringCompare(version_string, &ozoneString("HTTP/1.0")) == 0)
     return OZONE_HTTP_VERSION_1_0;
 
   ozoneLogWarn("Could not parse HTTP version");
@@ -15,23 +15,23 @@ OzoneHTTPVersion ozoneHTTPParseVersion(const OzoneString* version_string) {
 }
 
 OzoneHTTPMethod ozoneHTTPParseMethod(const OzoneString* method_string) {
-  if (ozoneStringCompare(method_string, &ozoneStringConstant("GET")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("GET")) == 0)
     return OZONE_HTTP_METHOD_GET;
-  if (ozoneStringCompare(method_string, &ozoneStringConstant("HEAD")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("HEAD")) == 0)
     return OZONE_HTTP_METHOD_HEAD;
-  if (ozoneStringCompare(method_string, &ozoneStringConstant("POST")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("POST")) == 0)
     return OZONE_HTTP_METHOD_POST;
-  if (ozoneStringCompare(method_string, &ozoneStringConstant("PUT")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("PUT")) == 0)
     return OZONE_HTTP_METHOD_PUT;
-  if (ozoneStringCompare(method_string, &ozoneStringConstant("DELETE")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("DELETE")) == 0)
     return OZONE_HTTP_METHOD_DELETE;
-  if (ozoneStringCompare(method_string, &ozoneStringConstant("CONNECT")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("CONNECT")) == 0)
     return OZONE_HTTP_METHOD_CONNECT;
-  if (ozoneStringCompare(method_string, &ozoneStringConstant("OPTIONS")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("OPTIONS")) == 0)
     return OZONE_HTTP_METHOD_OPTIONS;
-  if (ozoneStringCompare(method_string, &ozoneStringConstant("PATCH")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("PATCH")) == 0)
     return OZONE_HTTP_METHOD_PATCH;
-  if (ozoneStringCompare(method_string, &ozoneStringConstant("TRACE")) == 0)
+  if (ozoneStringCompare(method_string, &ozoneString("TRACE")) == 0)
     return OZONE_HTTP_METHOD_TRACE;
 
   ozoneLogWarn("Could not parse HTTP method");
@@ -41,130 +41,130 @@ OzoneHTTPMethod ozoneHTTPParseMethod(const OzoneString* method_string) {
 OzoneString* ozoneHTTPStatusText(OzoneAllocator* allocator, OzoneHTTPStatusCode status) {
   switch (status) {
   case 100:
-    return ozoneString(allocator, "100 Continue");
+    return ozoneStringAllocate(allocator, "100 Continue");
   case 101:
-    return ozoneString(allocator, "101 Switching Protocols");
+    return ozoneStringAllocate(allocator, "101 Switching Protocols");
   case 102:
-    return ozoneString(allocator, "102 Processing");
+    return ozoneStringAllocate(allocator, "102 Processing");
   case 103:
-    return ozoneString(allocator, "103 Early Hints");
+    return ozoneStringAllocate(allocator, "103 Early Hints");
   case 200:
-    return ozoneString(allocator, "200 OK");
+    return ozoneStringAllocate(allocator, "200 OK");
   case 201:
-    return ozoneString(allocator, "201 Created");
+    return ozoneStringAllocate(allocator, "201 Created");
   case 202:
-    return ozoneString(allocator, "202 Accepted");
+    return ozoneStringAllocate(allocator, "202 Accepted");
   case 203:
-    return ozoneString(allocator, "203 Non-Authoritative Information");
+    return ozoneStringAllocate(allocator, "203 Non-Authoritative Information");
   case 204:
-    return ozoneString(allocator, "204 No Content");
+    return ozoneStringAllocate(allocator, "204 No Content");
   case 205:
-    return ozoneString(allocator, "205 Reset Content");
+    return ozoneStringAllocate(allocator, "205 Reset Content");
   case 206:
-    return ozoneString(allocator, "206 Partial Content");
+    return ozoneStringAllocate(allocator, "206 Partial Content");
   case 207:
-    return ozoneString(allocator, "207 Multi-Status");
+    return ozoneStringAllocate(allocator, "207 Multi-Status");
   case 208:
-    return ozoneString(allocator, "208 Already Reported");
+    return ozoneStringAllocate(allocator, "208 Already Reported");
   case 226:
-    return ozoneString(allocator, "226 IM Used");
+    return ozoneStringAllocate(allocator, "226 IM Used");
   case 300:
-    return ozoneString(allocator, "300 Multiple Choices");
+    return ozoneStringAllocate(allocator, "300 Multiple Choices");
   case 301:
-    return ozoneString(allocator, "301 Moved Permanently");
+    return ozoneStringAllocate(allocator, "301 Moved Permanently");
   case 302:
-    return ozoneString(allocator, "302 Found");
+    return ozoneStringAllocate(allocator, "302 Found");
   case 303:
-    return ozoneString(allocator, "303 See Other");
+    return ozoneStringAllocate(allocator, "303 See Other");
   case 304:
-    return ozoneString(allocator, "304 Not Modified");
+    return ozoneStringAllocate(allocator, "304 Not Modified");
   case 305:
-    return ozoneString(allocator, "305 Use Proxy");
+    return ozoneStringAllocate(allocator, "305 Use Proxy");
   case 307:
-    return ozoneString(allocator, "307 Temporary Redirect");
+    return ozoneStringAllocate(allocator, "307 Temporary Redirect");
   case 308:
-    return ozoneString(allocator, "308 Permanent Redirect");
+    return ozoneStringAllocate(allocator, "308 Permanent Redirect");
   case 400:
-    return ozoneString(allocator, "400 Bad Request");
+    return ozoneStringAllocate(allocator, "400 Bad Request");
   case 401:
-    return ozoneString(allocator, "401 Unauthorized");
+    return ozoneStringAllocate(allocator, "401 Unauthorized");
   case 402:
-    return ozoneString(allocator, "402 Payment Required");
+    return ozoneStringAllocate(allocator, "402 Payment Required");
   case 403:
-    return ozoneString(allocator, "403 Forbidden");
+    return ozoneStringAllocate(allocator, "403 Forbidden");
   case 404:
-    return ozoneString(allocator, "404 Not Found");
+    return ozoneStringAllocate(allocator, "404 Not Found");
   case 405:
-    return ozoneString(allocator, "405 Method Not Allowed");
+    return ozoneStringAllocate(allocator, "405 Method Not Allowed");
   case 406:
-    return ozoneString(allocator, "406 Not Acceptable");
+    return ozoneStringAllocate(allocator, "406 Not Acceptable");
   case 407:
-    return ozoneString(allocator, "407 Proxy Authentication Required");
+    return ozoneStringAllocate(allocator, "407 Proxy Authentication Required");
   case 408:
-    return ozoneString(allocator, "408 Request Timeout");
+    return ozoneStringAllocate(allocator, "408 Request Timeout");
   case 409:
-    return ozoneString(allocator, "409 Conflict");
+    return ozoneStringAllocate(allocator, "409 Conflict");
   case 410:
-    return ozoneString(allocator, "410 Gone");
+    return ozoneStringAllocate(allocator, "410 Gone");
   case 411:
-    return ozoneString(allocator, "411 Length Required");
+    return ozoneStringAllocate(allocator, "411 Length Required");
   case 412:
-    return ozoneString(allocator, "412 Precondition Failed");
+    return ozoneStringAllocate(allocator, "412 Precondition Failed");
   case 413:
-    return ozoneString(allocator, "413 Content Too Large");
+    return ozoneStringAllocate(allocator, "413 Content Too Large");
   case 414:
-    return ozoneString(allocator, "414 URI Too Long");
+    return ozoneStringAllocate(allocator, "414 URI Too Long");
   case 415:
-    return ozoneString(allocator, "415 Unsupported Media Type");
+    return ozoneStringAllocate(allocator, "415 Unsupported Media Type");
   case 416:
-    return ozoneString(allocator, "416 Range Not Satisfiable");
+    return ozoneStringAllocate(allocator, "416 Range Not Satisfiable");
   case 417:
-    return ozoneString(allocator, "417 Expectation Failed");
+    return ozoneStringAllocate(allocator, "417 Expectation Failed");
   case 418:
-    return ozoneString(allocator, "418 I'm a teapot");
+    return ozoneStringAllocate(allocator, "418 I'm a teapot");
   case 421:
-    return ozoneString(allocator, "421 Misdirected Request");
+    return ozoneStringAllocate(allocator, "421 Misdirected Request");
   case 422:
-    return ozoneString(allocator, "422 Unprocessable Content");
+    return ozoneStringAllocate(allocator, "422 Unprocessable Content");
   case 423:
-    return ozoneString(allocator, "423 Locked");
+    return ozoneStringAllocate(allocator, "423 Locked");
   case 424:
-    return ozoneString(allocator, "424 Failed Dependency");
+    return ozoneStringAllocate(allocator, "424 Failed Dependency");
   case 425:
-    return ozoneString(allocator, "425 Too Early");
+    return ozoneStringAllocate(allocator, "425 Too Early");
   case 426:
-    return ozoneString(allocator, "426 Upgrade Required");
+    return ozoneStringAllocate(allocator, "426 Upgrade Required");
   case 428:
-    return ozoneString(allocator, "428 Precondition Required");
+    return ozoneStringAllocate(allocator, "428 Precondition Required");
   case 429:
-    return ozoneString(allocator, "429 Too Many Requests");
+    return ozoneStringAllocate(allocator, "429 Too Many Requests");
   case 431:
-    return ozoneString(allocator, "431 Request Header Fields Too Large");
+    return ozoneStringAllocate(allocator, "431 Request Header Fields Too Large");
   case 500:
-    return ozoneString(allocator, "500 Internal Server Error");
+    return ozoneStringAllocate(allocator, "500 Internal Server Error");
   case 501:
-    return ozoneString(allocator, "501 Not Implemented");
+    return ozoneStringAllocate(allocator, "501 Not Implemented");
   case 502:
-    return ozoneString(allocator, "502 Bad Gateway");
+    return ozoneStringAllocate(allocator, "502 Bad Gateway");
   case 503:
-    return ozoneString(allocator, "503 Service Unavailable");
+    return ozoneStringAllocate(allocator, "503 Service Unavailable");
   case 504:
-    return ozoneString(allocator, "504 Gateway Timeout");
+    return ozoneStringAllocate(allocator, "504 Gateway Timeout");
   case 505:
-    return ozoneString(allocator, "505 HTTP Version Not Supported");
+    return ozoneStringAllocate(allocator, "505 HTTP Version Not Supported");
   case 506:
-    return ozoneString(allocator, "506 Variant Also Negotiates");
+    return ozoneStringAllocate(allocator, "506 Variant Also Negotiates");
   case 507:
-    return ozoneString(allocator, "507 Insufficient Storage");
+    return ozoneStringAllocate(allocator, "507 Insufficient Storage");
   case 508:
-    return ozoneString(allocator, "508 Loop Detected");
+    return ozoneStringAllocate(allocator, "508 Loop Detected");
   case 510:
-    return ozoneString(allocator, "510 Not Extended");
+    return ozoneStringAllocate(allocator, "510 Not Extended");
   case 511:
-    return ozoneString(allocator, "511 Network Authentication Required");
+    return ozoneStringAllocate(allocator, "511 Network Authentication Required");
   default:
     ozoneLogWarn("Unknown HTTP status %d", status);
-    return ozoneString(allocator, "500 Internal Server Error");
+    return ozoneStringAllocate(allocator, "500 Internal Server Error");
   }
 }
 
@@ -182,8 +182,8 @@ OzoneString* ozoneHTTPStatusText(OzoneAllocator* allocator, OzoneHTTPStatusCode 
 OzoneHTTPRequest* ozoneHTTPParseSocketRequest(OzoneAllocator* allocator, const OzoneStringVector* socket_request) {
   OzoneHTTPRequest* http_request = ozoneAllocatorReserveOne(allocator, OzoneHTTPRequest);
 
-  OzoneString* token = ozoneString(allocator, "");
-  OzoneString* header_name = ozoneString(allocator, "");
+  OzoneString* token = ozoneStringAllocate(allocator, "");
+  OzoneString* header_name = ozoneStringAllocate(allocator, "");
   size_t content_length = 0;
 
   int parsing = OZONE_HTTP_PARSING_METHOD;
@@ -202,7 +202,7 @@ OzoneHTTPRequest* ozoneHTTPParseSocketRequest(OzoneAllocator* allocator, const O
           ozoneStringClear(token);
           parsing = OZONE_HTTP_PARSING_TARGET;
         } else {
-          ozoneStringAppend(allocator, token, cursor);
+          ozoneStringWriteByte(allocator, token, cursor);
         }
         break;
       }
@@ -212,7 +212,7 @@ OzoneHTTPRequest* ozoneHTTPParseSocketRequest(OzoneAllocator* allocator, const O
           ozoneStringClear(token);
           parsing = OZONE_HTTP_PARSING_VERSION;
         } else {
-          ozoneStringAppend(allocator, token, cursor);
+          ozoneStringWriteByte(allocator, token, cursor);
         }
         break;
       }
@@ -222,7 +222,7 @@ OzoneHTTPRequest* ozoneHTTPParseSocketRequest(OzoneAllocator* allocator, const O
           ozoneStringClear(token);
           parsing = OZONE_HTTP_PARSING_FIRST_LINE_RETURN;
         } else {
-          ozoneStringAppend(allocator, token, cursor);
+          ozoneStringWriteByte(allocator, token, cursor);
         }
         break;
       }
@@ -238,25 +238,25 @@ OzoneHTTPRequest* ozoneHTTPParseSocketRequest(OzoneAllocator* allocator, const O
         } else if (cursor == ':') {
           parsing = OZONE_HTTP_PARSING_HEADER_WHITESPACE;
         } else {
-          ozoneStringAppend(allocator, header_name, cursor);
+          ozoneStringWriteByte(allocator, header_name, cursor);
         }
         break;
       }
       case OZONE_HTTP_PARSING_HEADER_WHITESPACE: {
         if (cursor > ' ') {
-          ozoneStringAppend(allocator, token, cursor);
+          ozoneStringWriteByte(allocator, token, cursor);
           parsing = OZONE_HTTP_PARSING_HEADER_VALUE;
         }
         break;
       }
       case OZONE_HTTP_PARSING_HEADER_VALUE: {
         if (cursor == '\r') {
-          ozoneMapInsertOzoneString(allocator, &http_request->headers, header_name, ozoneStringCopy(allocator, token));
+          OzoneStringMapInsert(allocator, &http_request->headers, header_name, ozoneStringCopy(allocator, token));
           ozoneStringClear(header_name);
           ozoneStringClear(token);
           parsing = OZONE_HTTP_PARSING_HEADER_LINE_RETURN;
         } else {
-          ozoneStringAppend(allocator, token, cursor);
+          ozoneStringWriteByte(allocator, token, cursor);
         }
         break;
       }
@@ -269,7 +269,7 @@ OzoneHTTPRequest* ozoneHTTPParseSocketRequest(OzoneAllocator* allocator, const O
       case OZONE_HTTP_PARSING_HEADER_FINAL_LINE_RETURN: {
         if (cursor == '\n') {
           const OzoneString* content_length_header
-              = ozoneMapGetOzoneString(&http_request->headers, &ozoneStringConstant("Content-Length"));
+              = OzoneStringMapFind(&http_request->headers, &ozoneString("Content-Length"));
           if (!content_length_header || ozoneStringToInteger(content_length_header) <= 0)
             return http_request;
 
@@ -279,7 +279,7 @@ OzoneHTTPRequest* ozoneHTTPParseSocketRequest(OzoneAllocator* allocator, const O
         break;
       }
       case OZONE_HTTP_PARSING_BODY: {
-        ozoneStringAppend(allocator, token, cursor);
+        ozoneStringWriteByte(allocator, token, cursor);
         if (ozoneStringLength(token) == content_length) {
           http_request->body = *token;
           return http_request;
@@ -296,38 +296,38 @@ OzoneHTTPRequest* ozoneHTTPParseSocketRequest(OzoneAllocator* allocator, const O
 OzoneStringVector* ozoneHTTPRenderResponse(OzoneAllocator* allocator, OzoneHTTPResponse* http_response) {
   OzoneString* response;
   if (http_response->version == OZONE_HTTP_VERSION_1_0) {
-    response = ozoneString(allocator, "HTTP/1.0 ");
+    response = ozoneStringAllocate(allocator, "HTTP/1.0 ");
   } else {
-    response = ozoneString(allocator, "HTTP/1.1 ");
+    response = ozoneStringAllocate(allocator, "HTTP/1.1 ");
   }
 
   ozoneStringConcatenate(allocator, response, ozoneHTTPStatusText(allocator, http_response->code));
-  ozoneStringAppend(allocator, response, '\r');
-  ozoneStringAppend(allocator, response, '\n');
+  ozoneStringWriteByte(allocator, response, '\r');
+  ozoneStringWriteByte(allocator, response, '\n');
 
   for (size_t header_index = 0; header_index < ozoneVectorLength(&http_response->headers.keys); header_index++) {
     ozoneStringConcatenate(allocator, response, &ozoneVectorAt(&http_response->headers.keys, header_index));
-    ozoneStringAppend(allocator, response, ':');
-    ozoneStringAppend(allocator, response, ' ');
+    ozoneStringWriteByte(allocator, response, ':');
+    ozoneStringWriteByte(allocator, response, ' ');
     ozoneStringConcatenate(allocator, response, &ozoneVectorAt(&http_response->headers.values, header_index));
-    ozoneStringAppend(allocator, response, '\r');
-    ozoneStringAppend(allocator, response, '\n');
+    ozoneStringWriteByte(allocator, response, '\r');
+    ozoneStringWriteByte(allocator, response, '\n');
   }
 
-  ozoneStringAppend(allocator, response, '\r');
-  ozoneStringAppend(allocator, response, '\n');
+  ozoneStringWriteByte(allocator, response, '\r');
+  ozoneStringWriteByte(allocator, response, '\n');
 
   if (ozoneStringLength(&http_response->body))
     ozoneStringConcatenate(allocator, response, &http_response->body);
 
   // Keep the chunked response format simply because it could be useful for HTTP/2 or multi-part bodies etc.
   OzoneStringVector* chunks = ozoneAllocatorReserveOne(allocator, OzoneStringVector);
-  ozoneVectorPushOzoneString(allocator, chunks, response);
+  OzoneStringVectorPush(allocator, chunks, response);
   return chunks;
 }
 
 int ozoneHTTPBeginPipeline(OzoneHTTPEvent* event) {
-  OzoneString* first_line = ozoneString(event->allocator, "");
+  OzoneString* first_line = ozoneStringAllocate(event->allocator, "");
   OzoneString* chunk;
   ozoneVectorForEach(chunk, &event->raw_socket_request) {
     for (size_t string_index = 0; string_index < ozoneStringLength(chunk); string_index++) {
@@ -338,7 +338,7 @@ int ozoneHTTPBeginPipeline(OzoneHTTPEvent* event) {
         break;
       }
 
-      ozoneStringAppend(event->allocator, first_line, cursor);
+      ozoneStringWriteByte(event->allocator, first_line, cursor);
     }
   }
 
@@ -358,32 +358,31 @@ int ozoneHTTPEndPipeline(OzoneHTTPEvent* event) {
     response->version = http_version;
 
   if (response->version == OZONE_HTTP_VERSION_1_1)
-    ozoneMapInsertOzoneString(
+    OzoneStringMapInsert(
         event->allocator,
         &response->headers,
-        &ozoneStringConstant("Connection"),
-        ozoneString(event->allocator, "keep-alive"));
+        &ozoneString("Connection"),
+        ozoneStringAllocate(event->allocator, "keep-alive"));
 
   if (!response->code)
     response->code = ozoneStringLength(&response->body) ? 200 : 204;
 
-  if (ozoneStringLength(&response->body)
-      && !ozoneMapGetOzoneString(&response->headers, &ozoneStringConstant("Content-Type")))
-    ozoneMapInsertOzoneString(
+  if (ozoneStringLength(&response->body) && !OzoneStringMapFind(&response->headers, &ozoneString("Content-Type")))
+    OzoneStringMapInsert(
         event->allocator,
         &response->headers,
-        &ozoneStringConstant("Content-Type"),
-        ozoneString(event->allocator, "text/plain"));
+        &ozoneString("Content-Type"),
+        ozoneStringAllocate(event->allocator, "text/plain"));
 
-  ozoneMapInsertOzoneString(
+  OzoneStringMapInsert(
       event->allocator,
       &response->headers,
-      &ozoneStringConstant("Content-Length"),
+      &ozoneString("Content-Length"),
       ozoneStringFromInteger(event->allocator, ozoneStringLength(&response->body)));
 
   event->raw_socket_response = *ozoneHTTPRenderResponse(event->allocator, response);
 
-  OzoneString* first_line = ozoneString(event->allocator, "");
+  OzoneString* first_line = ozoneStringAllocate(event->allocator, "");
   OzoneString* chunk;
   ozoneVectorForEach(chunk, &event->raw_socket_response) {
     for (size_t string_index = 0; string_index < ozoneStringLength(chunk); string_index++) {
@@ -393,7 +392,7 @@ int ozoneHTTPEndPipeline(OzoneHTTPEvent* event) {
         return 0;
       }
 
-      ozoneStringAppend(event->allocator, first_line, cursor);
+      ozoneStringWriteByte(event->allocator, first_line, cursor);
     }
   }
 
@@ -414,14 +413,14 @@ int ozoneHTTPServe(OzoneHTTPConfig* config) {
 #pragma GCC diagnostic pop
 #endif
 
-  ozoneVectorPushOzoneSocketHandlerRef(allocator, &http_pipeline, &begin);
+  OzoneSocketHandlerRefVectorPush(allocator, &http_pipeline, &begin);
 
   OzoneSocketHandlerRef* handler;
   ozoneVectorForEach(handler, &config->handler_pipeline) {
-    ozoneVectorPushOzoneSocketHandlerRef(allocator, &http_pipeline, handler);
+    OzoneSocketHandlerRefVectorPush(allocator, &http_pipeline, handler);
   }
 
-  ozoneVectorPushOzoneSocketHandlerRef(allocator, &http_pipeline, &end);
+  OzoneSocketHandlerRefVectorPush(allocator, &http_pipeline, &end);
 
   ozoneLogInfo("Serving at http://localhost:%d", config->port);
 

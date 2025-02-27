@@ -105,7 +105,7 @@ void* ozoneSocketHandleWorker(OzoneSocketWorker* worker) {
         }
 
         if (recv_code > 0) {
-          ozoneVectorPushOzoneString(
+          OzoneStringVectorPush(
               events[connection_index].allocator,
               &events[connection_index].raw_socket_request,
               ozoneStringFromBuffer(events[connection_index].allocator, recv_buffer, (size_t)recv_code));
@@ -329,7 +329,7 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config) {
 
   struct timespec idle = (struct timespec) { .tv_nsec = OZONE_SOCKET_WORKER_IDLE_NANOSECONDS };
   while (!ozone_socket_shutdown) {
-    ozoneVectorClearOzonePollingEvent(&events);
+    OzonePollingEventVectorClear(&events);
 #ifdef OZONE_SOCKET_USE_KQUEUE
     events.length = (size_t)kevent(polling_fd, NULL, 0, ozoneVectorBegin(&events), events.capacity, &kqueue_timeout);
 #else

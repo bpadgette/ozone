@@ -3,16 +3,16 @@
 #include "example_helpers.h"
 
 void homepage(OzoneAppEvent* event) {
-  OzoneStringVector readme_md = ozoneVectorFromElements(OzoneString, ozoneStringConstant("<pre>\n"));
-  ozoneFileLoadFromPath(event->allocator, &readme_md, &ozoneStringConstant("./README.md"), 1024);
-  ozoneVectorPushOzoneString(event->allocator, &readme_md, &ozoneStringConstant("\n</pre>"));
+  OzoneStringVector readme_md = ozoneVector(OzoneString, ozoneString("<pre>\n"));
+  ozoneFileLoadFromPath(event->allocator, &readme_md, &ozoneString("./README.md"), 1024);
+  OzoneStringVectorPush(event->allocator, &readme_md, &ozoneString("\n</pre>"));
 
-  ozoneStringJoin(event->allocator, &event->response->body, &readme_md);
+  ozoneStringVectorConcatenate(event->allocator, &event->response->body, &readme_md);
 }
 
 int main(int argc, char* argv[]) {
   OzoneAppEndpointVector endpoints
-      = ozoneVectorFromElements(OzoneAppEndpoint, ozoneAppEndpoint(GET, "/", homepage, asHTMLDocument));
+      = ozoneVector(OzoneAppEndpoint, ozoneAppEndpoint(GET, "/", homepage, asHTMLDocument));
 
   return ozoneAppServe(argc, argv, &endpoints);
 }

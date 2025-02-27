@@ -21,7 +21,7 @@ void ozoneServeDirectory(OzoneAppEvent* event) {
   }
 
   OzoneString* path = ozoneStringCopy(event->allocator, *directory);
-  ozoneStringAppend(event->allocator, path, '/');
+  ozoneStringWriteByte(event->allocator, path, '/');
   ozoneStringConcatenate(event->allocator, path, location);
 
   OzoneStringVector file_chunks = (OzoneStringVector) { 0 };
@@ -31,7 +31,7 @@ void ozoneServeDirectory(OzoneAppEvent* event) {
     return;
   }
 
-  ozoneStringJoin(event->allocator, &event->response->body, &file_chunks);
+  ozoneStringVectorConcatenate(event->allocator, &event->response->body, &file_chunks);
 
   // TODO: infer Content-Type & chunk HTTP responses
 }

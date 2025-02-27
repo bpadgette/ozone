@@ -15,11 +15,11 @@ void shouldCreateAndPushToVector(void) {
   int el_2 = 21;
   int el_3 = 28;
   int el_4 = 35;
-  ozoneVectorPushOzoneDummy(test_alloc, &vector, &el_0);
-  ozoneVectorPushOzoneDummy(test_alloc, &vector, &el_1);
-  ozoneVectorPushOzoneDummy(test_alloc, &vector, &el_2);
-  ozoneVectorPushOzoneDummy(test_alloc, &vector, &el_3);
-  ozoneVectorPushOzoneDummy(test_alloc, &vector, &el_4);
+  OzoneDummyVectorPush(test_alloc, &vector, &el_0);
+  OzoneDummyVectorPush(test_alloc, &vector, &el_1);
+  OzoneDummyVectorPush(test_alloc, &vector, &el_2);
+  OzoneDummyVectorPush(test_alloc, &vector, &el_3);
+  OzoneDummyVectorPush(test_alloc, &vector, &el_4);
 
   TEST_ASSERT_EQUAL_MESSAGE(8, vector.capacity, "It sets the capacity to the correct value");
   TEST_ASSERT_EQUAL_MESSAGE(5, ozoneVectorLength(&vector), "It sets the length to the correct value");
