@@ -12,33 +12,30 @@
   "field1=value1&field2=value2"
 
 void shouldParseSocketChunksAsHTTPRequest(void) {
-  OzoneStringVector chunks = ozoneVectorFromElements(OzoneString, ozoneStringConstant(EXAMPLE_HTTP_REQUEST));
+  OzoneStringVector chunks = ozoneVector(OzoneString, ozoneString(EXAMPLE_HTTP_REQUEST));
 
   OzoneHTTPRequest* request = ozoneHTTPParseSocketRequest(test_alloc, &chunks);
   TEST_ASSERT_NOT_NULL_MESSAGE(request, "It returns an HTTP request");
 
   TEST_ASSERT_EQUAL_MESSAGE(OZONE_HTTP_METHOD_POST, request->method, "It parses the correct HTTP method");
-  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
-      &ozoneStringConstant("/users"), &request->target, "It parses the correct HTTP target");
+  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&ozoneString("/users"), &request->target, "It parses the correct HTTP target");
 
   TEST_ASSERT_EQUAL_MESSAGE(OZONE_HTTP_VERSION_1_1, request->version, "It parses the correct HTTP version");
 
-  const OzoneString* header = ozoneMapGetOzoneString(&request->headers, &ozoneStringConstant("Host"));
+  const OzoneString* header = OzoneStringMapFind(&request->headers, &ozoneString("Host"));
   TEST_ASSERT_NOT_NULL_MESSAGE(header, "It returns a Host header");
-  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
-      &ozoneStringConstant("example.com"), header, "It parses the correct Host value");
+  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&ozoneString("example.com"), header, "It parses the correct Host value");
 
-  header = ozoneMapGetOzoneString(&request->headers, &ozoneStringConstant("Content-Type"));
+  header = OzoneStringMapFind(&request->headers, &ozoneString("Content-Type"));
   TEST_ASSERT_NOT_NULL_MESSAGE(header, "It returns a Content-Type header");
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
-      &ozoneStringConstant("application/x-www-form-urlencoded"), header, "It parses the correct Content-Type value");
+      &ozoneString("application/x-www-form-urlencoded"), header, "It parses the correct Content-Type value");
 
-  header = ozoneMapGetOzoneString(&request->headers, &ozoneStringConstant("Content-Length"));
+  header = OzoneStringMapFind(&request->headers, &ozoneString("Content-Length"));
   TEST_ASSERT_NOT_NULL_MESSAGE(header, "It returns a Content-Length header");
-  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
-      &ozoneStringConstant("27"), header, "It parses the correct Content-Length value");
+  TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&ozoneString("27"), header, "It parses the correct Content-Length value");
 
-  OzoneString body = ozoneStringConstant("field1=value1&field2=value2");
+  OzoneString body = ozoneString("field1=value1&field2=value2");
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&body, &request->body, "It parses the correct HTTP body");
 }
 

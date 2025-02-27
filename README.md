@@ -32,11 +32,11 @@ Here is the source code for the tiniest reasonable Ozone application:
 #include <ozone/ozone.h>
 
 void handler(OzoneAppEvent* event) {
-  event->response->body = *ozoneString(event->allocator, "Hello, World! This is how simple Ozone is.");
+  ozoneStringWrite(event->allocator, &event->response->body, "Hello, World! This is how simple Ozone is.");
 }
 
 int main(int argc, char* argv[]) {
-  OzoneAppEndpointVector endpoints = ozoneVectorFromElements(OzoneAppEndpoint, ozoneAppEndpoint(GET, "/", handler));
+  OzoneAppEndpointVector endpoints = ozoneVector(OzoneAppEndpoint, ozoneAppEndpoint(GET, "/", handler));
 
   return ozoneAppServe(argc, argv, &endpoints);
 }

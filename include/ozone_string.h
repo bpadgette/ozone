@@ -13,7 +13,7 @@ typedef struct OzoneStringStruct {
 
 OZONE_VECTOR_DECLARE_API(OzoneString)
 
-#define ozoneStringConstant(_chars_)                                                                                   \
+#define ozoneString(_chars_)                                                                                           \
   ((OzoneString) {                                                                                                     \
       .vector = ((OzoneByteVector) {                                                                                   \
           .elements = _chars_,                                                                                         \
@@ -22,7 +22,9 @@ OZONE_VECTOR_DECLARE_API(OzoneString)
       }),                                                                                                              \
   })
 
-#define ozoneString(_allocator_, _chars_) ozoneStringCopy(_allocator_, &ozoneStringConstant((_chars_)))
+#define ozoneStringAllocate(_allocator_, _chars_) ozoneStringCopy(_allocator_, &ozoneString((_chars_)))
+#define ozoneStringWrite(_allocator_, _destination_, _chars_)                                                          \
+  ozoneStringConcatenate(_allocator_, (_destination_), &ozoneString((_chars_)))
 
 #define ozoneStringLength(_string_)                                                                                    \
   (ozoneVectorLength(&(_string_)->vector) > 0 ? ozoneVectorLength(&(_string_)->vector) - 1 : 0)
@@ -30,12 +32,13 @@ OZONE_VECTOR_DECLARE_API(OzoneString)
 #define ozoneStringBufferAt(_string_, _index_) ((_string_)->vector.elements[_index_])
 #define ozoneStringBufferEnd(_string_) ((_string_)->vector.elements[ozoneStringLength(_string_) - 1])
 
-void ozoneStringAppend(OzoneAllocator* allocator, OzoneString* string, char byte);
+void ozoneStringWriteByte(OzoneAllocator* allocator, OzoneString* string, char byte);
 void ozoneStringClear(OzoneString* string);
 char ozoneStringPop(OzoneString* string);
 OzoneString* ozoneStringCopy(OzoneAllocator* allocator, const OzoneString* original);
 void ozoneStringConcatenate(OzoneAllocator* allocator, OzoneString* destination, const OzoneString* source);
-void ozoneStringJoin(OzoneAllocator* allocator, OzoneString* destination, const OzoneStringVector* strings);
+void ozoneStringVectorConcatenate(
+    OzoneAllocator* allocator, OzoneString* destination, const OzoneStringVector* strings);
 OzoneString* ozoneStringSlice(OzoneAllocator* allocator, OzoneString* string, size_t begin, size_t end);
 
 /**
