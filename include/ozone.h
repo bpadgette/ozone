@@ -7,6 +7,7 @@
 #include "ozone_http.h"
 #include "ozone_log.h"
 #include "ozone_map.h"
+#include "ozone_properties.h"
 #include "ozone_socket.h"
 #include "ozone_string.h"
 #include "ozone_template.h"

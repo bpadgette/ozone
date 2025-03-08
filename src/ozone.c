@@ -3,6 +3,7 @@
 #include "ozone_file.c"
 #include "ozone_http.c"
 #include "ozone_map.c"
+#include "ozone_properties.c"
 #include "ozone_socket.c"
 #include "ozone_string.c"
 #include "ozone_template.c"
