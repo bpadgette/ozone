@@ -8,7 +8,7 @@
 
 /** Event */
 OzoneAllocator* test_alloc;
-void setUp(void) { test_alloc = ozoneAllocatorCreate(1024); }
+void setUp(void) { test_alloc = ozoneAllocatorCreate(8092); }
 void tearDown(void) { ozoneAllocatorDelete(test_alloc); }
 
 /** Test helpers */
