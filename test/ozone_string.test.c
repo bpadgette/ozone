@@ -14,7 +14,16 @@ void shouldFindInString(void) {
   TEST_ASSERT_EQUAL_MESSAGE(
       1, ozoneStringFindFirst(&string, &ozoneString("el")), "It finds the first occurrence of the search string.");
   TEST_ASSERT_EQUAL_MESSAGE(
-      -1, ozoneStringFindFirst(&string, &ozoneString("ele")), "It returns -1 when the search string is not found.");
+      -1,
+      ozoneStringFindFirst(&string, &ozoneString("ele")),
+      "It returns -1 when the first occurrence of a search string is not found.");
+
+  TEST_ASSERT_EQUAL_MESSAGE(
+      10, ozoneStringFindLast(&string, &ozoneString("l")), "It finds the last occurrence of the search string.");
+  TEST_ASSERT_EQUAL_MESSAGE(
+      -1,
+      ozoneStringFindLast(&string, &ozoneString("ele")),
+      "It returns -1 when the last occurrence of a search string is not found.");
 }
 
 void shouldScanStringBuffer(void) {

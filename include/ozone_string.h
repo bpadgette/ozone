@@ -47,6 +47,11 @@ OzoneString* ozoneStringSlice(OzoneAllocator* allocator, OzoneString* string, si
 int ozoneStringFindFirst(const OzoneString* string, const OzoneString* search);
 
 /**
+ * \returns -1 if not found, or the index of the last occurrence of the search string.
+ */
+int ozoneStringFindLast(const OzoneString* string, const OzoneString* search);
+
+/**
  * \returns 0 if equal, negative if left less than right, positive if left greater than right
  */
 int ozoneStringCompare(const OzoneString* left, const OzoneString* right);
