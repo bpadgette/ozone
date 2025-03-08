@@ -14,7 +14,11 @@ void home(OzoneAppEvent* event) {
       "<ul>");
 
   OzoneStringVector links = ozoneVector(
-      OzoneString, ozoneString("/assets/LoremIpsum.txt"), ozoneString("/greet/World"), ozoneString("/greet/there"));
+      OzoneString,
+      ozoneString("/assets/LoremIpsum.txt"),
+      ozoneString("/assets/style.css"),
+      ozoneString("/greet/World"),
+      ozoneString("/greet/there"));
 
   // TODO: text-templating with ozone_template should have iterative blocks
   OzoneString* link;

@@ -95,6 +95,19 @@ int ozoneStringFindFirst(const OzoneString* string, const OzoneString* search) {
   return -1;
 }
 
+int ozoneStringFindLast(const OzoneString* string, const OzoneString* search) {
+  if (!search || !string)
+    return -1;
+
+  for (size_t string_index = ozoneStringLength(string) - ozoneStringLength(search); string_index > 0; string_index--) {
+    if (!memcmp(ozoneStringBuffer(string) + string_index, ozoneStringBuffer(search), ozoneStringLength(search))) {
+      return (int)string_index;
+    }
+  }
+
+  return -1;
+}
+
 OzoneString* ozoneStringFromBuffer(OzoneAllocator* allocator, char* buffer, size_t buffer_size) {
   OzoneString* string = ozoneAllocatorReserveOne(allocator, OzoneString);
 
