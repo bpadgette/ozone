@@ -148,20 +148,20 @@ Ozone's code:
 
 # Timeline <a name="timeline"></a>
 
-| Delivery          | Features                                                                                                      |
-| ----------------- | ------------------------------------------------------------------------------------------------------------- |
-| **Milestone 0**   | _Write C code, work without non-std dependencies_                                                             |
-| [x] October 2024  | Initialize repository, try building an arena allocator for socket response handling.                          |
-| [x] December 2024 | Implement a nominal HTTP 1.0 parser, ignore content marshaling and other complexities, basic text templating. |
-| [x] January 2025  | Performance focus: stabilize sub-millisecond responses and write a [benchmarks](./test/benchmarks) script.    |
-| [x] February 2025 | Ergonomics, reduce complexity of Ozone handlers. Path-parameter parsing for HTTP requests.                    |
-| **Milestone 1**   | _Toward a working web-app built on Ozone_                                                                     |
-| [ ] March 2025    | Static file-serving with efficient chunking and accurate content-types.                                       |
-| [ ] May 2025      | Ozone serves its own styled, readable, informative docs site.                                                 |
-| **Milestone 2**   | _Dynamic web applications and APIs_                                                                           |
-| [ ] ?             | Basic crypto via optional OpenSSL linking with some basic auth strategy middlewares.                          |
-| [ ] ?             | Database connection pooling.                                                                                  |
-| [ ] ?             | HTTP/2                                                                                                        |
-| [ ] ?             | Websockets                                                                                                    |
+| Delivery         | Features                                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Milestone 0**  | _Write C code, work without non-std dependencies_                                                             |
+| ✅ October 2024  | Initialize repository, try building an arena allocator for socket response handling.                          |
+| ✅ December 2024 | Implement a nominal HTTP 1.0 parser, ignore content marshaling and other complexities, basic text templating. |
+| ✅ January 2025  | Performance focus: stabilize sub-millisecond responses and write a [benchmarks](./test/benchmarks) script.    |
+| ✅ February 2025 | Ergonomics, reduce complexity of Ozone handlers. Path-parameter parsing for HTTP requests.                    |
+| **Milestone 1**  | _Toward a working web-app built on Ozone_                                                                     |
+| ⏳ March 2025    | Static file-serving with efficient chunking and accurate content-types.                                       |
+| [ ] May 2025     | Ozone serves its own styled, readable, informative docs site.                                                 |
+| **Milestone 2**  | _Dynamic web applications and APIs_                                                                           |
+| [ ] ?            | Basic crypto via optional OpenSSL linking with some basic auth strategy middlewares.                          |
+| [ ] ?            | Database connection pooling.                                                                                  |
+| [ ] ?            | HTTP/2                                                                                                        |
+| [ ] ?            | Websockets                                                                                                    |
 
 View [closed pull requests](https://github.com/bpadgette/ozone/pulls?q=is%3Apr+is%3Aclosed) for more details.
