@@ -1,8 +1,8 @@
 # Host Information
 
-- **Platform**: Linux 6.8.0-52-generic (x64)
-- **CPU**: 12-core 13th Gen Intel(R) Core(TM) i7-1355U
-- **Memory**: 15678 MB (8829 MB free)
+- **Platform**: Linux 6.15.6-arch1-1 (x64)
+- **CPU**: 16-core AMD Ryzen 7 9700X 8-Core Processor
+- **Memory**: 31182 MB (24718 MB available)
 
 # Benchmarks
 
@@ -17,15 +17,15 @@ For this benchmark, send and wait on requests for 10 seconds using 1 concurrent 
 
 ### Server Performance
 
-- Handled 113592 requests in 10.031 seconds
-  - Requests per second: 11324
-  - Mean response time: 0.088 ms
+- Handled 142843 requests in 10.011 seconds
+  - Requests per second: 14269
+  - Mean response time: 0.070 ms
 
 ### User Experience
 
 - For the 1 user in this phase:
-  - Fastest response time: 0.041 ms
-  - Slowest response time: 41.760 ms
+  - Fastest response time: 0.024 ms
+  - Slowest response time: 33.466 ms
 
 
 # Phase: 30 users
@@ -37,15 +37,15 @@ For this benchmark, send and wait on requests for 10 seconds using 30 concurrent
 
 ### Server Performance
 
-- Handled 303233 requests in 10.058 seconds
-  - Requests per second: 30150
-  - Mean response time: 0.033 ms
+- Handled 575738 requests in 10.071 seconds
+  - Requests per second: 57167
+  - Mean response time: 0.017 ms
 
 ### User Experience
 
 - For the 30 users in this phase:
-  - Fastest response time: 0.484 ms
-  - Slowest response time: 68.785 ms
+  - Fastest response time: 0.111 ms
+  - Slowest response time: 74.390 ms
 
 
 # Phase: 100 users
@@ -57,13 +57,13 @@ For this benchmark, send and wait on requests for 10 seconds using 100 concurren
 
 ### Server Performance
 
-- Handled 200335 requests in 10.051 seconds
-  - Requests per second: 19931
-  - Mean response time: 0.050 ms
+- Handled 566468 requests in 10.040 seconds
+  - Requests per second: 56422
+  - Mean response time: 0.018 ms
 
 ### User Experience
 
 - For the 100 users in this phase:
-  - Fastest response time: 2.042 ms
-  - Slowest response time: 71.424 ms
+  - Fastest response time: 1.003 ms
+  - Slowest response time: 78.804 ms
 

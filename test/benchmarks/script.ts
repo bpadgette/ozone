@@ -51,8 +51,8 @@ console.log(`- **CPU**: ${1 + others.length}-core ${cpu.model}`);
 const memoryInfo = Deno.systemMemoryInfo();
 console.log(
   `- **Memory**: ${(memoryInfo.total / 1024 / 1024).toFixed(0)} MB (${
-    (memoryInfo.free / 1024 / 1024).toFixed(0)
-  } MB free)`,
+    (memoryInfo.available/ 1024 / 1024).toFixed(0)
+  } MB available)`,
 );
 console.log();
 
