@@ -406,11 +406,16 @@ int ozoneHTTPServe(OzoneHTTPConfig* config) {
   OzoneSocketHandlerRefVector http_pipeline = (OzoneSocketHandlerRefVector) { 0 };
 #ifndef __clang__
 #pragma GCC diagnostic ignored "-Wcast-function-type"
+#else
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcast-function-type-mismatch"
 #endif
   OzoneSocketHandlerRef begin = (OzoneSocketHandlerRef)ozoneHTTPBeginPipeline;
   OzoneSocketHandlerRef end = (OzoneSocketHandlerRef)ozoneHTTPEndPipeline;
 #ifndef __clang__
 #pragma GCC diagnostic pop
+#else
+#pragma clang diagnostic pop
 #endif
 
   OzoneSocketHandlerRefVectorPush(allocator, &http_pipeline, &begin);
