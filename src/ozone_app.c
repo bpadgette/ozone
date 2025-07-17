@@ -177,6 +177,7 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
 #pragma GCC diagnostic ignored "-Wcast-function-type"
 #else
 #pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-warning-option"
 #pragma clang diagnostic ignored "-Wcast-function-type-mismatch"
 #endif
   OzoneHTTPConfig http_config = (OzoneHTTPConfig) {
