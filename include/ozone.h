@@ -4,6 +4,7 @@
 #include "ozone_allocator.h"
 #include "ozone_app.h"
 #include "ozone_file.h"
+#include "ozone_generator.h"
 #include "ozone_http.h"
 #include "ozone_log.h"
 #include "ozone_map.h"
