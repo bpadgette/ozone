@@ -6,7 +6,7 @@
 #include "ozone_map.h"
 #include "ozone_string.h"
 
-void ozonePropertiesLoadText(OzoneAllocator* allocator, OzoneStringMap* properties, const OzoneStringVector* text);
+void ozonePropertiesLoadFromText(OzoneAllocator* allocator, OzoneStringMap* properties, const OzoneStringVector* text);
 void ozonePropertiesLoadFromPath(OzoneAllocator* allocator, OzoneStringMap* properties, const OzoneString* path);
 
 #endif
