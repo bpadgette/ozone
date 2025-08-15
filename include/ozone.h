@@ -12,6 +12,7 @@
 #include "ozone_socket.h"
 #include "ozone_string.h"
 #include "ozone_template.h"
+#include "ozone_time.h"
 #include "ozone_vector.h"
 
 #include "middlewares/ozone_serve_directory.h"
