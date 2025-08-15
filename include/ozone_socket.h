@@ -2,6 +2,7 @@
 #define OZONE_SOCKET_H
 
 #include "ozone_allocator.h"
+#include "ozone_map.h"
 #include "ozone_string.h"
 #include "ozone_vector.h"
 
@@ -25,7 +26,7 @@ OZONE_VECTOR_DECLARE_API(OzoneSocketHandlerRef)
 typedef struct OzoneSocketConfigStruct {
   void* handler_context;
   OzoneSocketHandlerRefVector handler_pipeline;
-  unsigned int max_workers;
+  unsigned int workers;
   unsigned int port;
 } OzoneSocketConfig;
 

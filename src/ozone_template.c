@@ -84,7 +84,7 @@ OzoneTemplate* ozoneTemplateFromFile(OzoneAllocator* allocator, const OzoneStrin
 
 void ozoneTemplateWrite(
     OzoneAllocator* allocator, OzoneString* destination, const OzoneTemplate* component, OzoneStringMap* arguments) {
-  for (size_t block_index = 0; block_index < ozoneVectorLength(&component->blocks); block_index++) {
+  for (size_t block_index = 0; block_index < component->blocks.length; block_index++) {
     OzoneString* block = &ozoneVectorAt(&component->blocks, block_index);
     char block_class = block_index < ozoneStringLength(&component->block_classes)
         ? ozoneStringBufferAt(&component->block_classes, block_index)

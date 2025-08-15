@@ -305,7 +305,7 @@ OzoneStringVector* ozoneHTTPRenderResponse(OzoneAllocator* allocator, OzoneHTTPR
   ozoneStringWriteByte(allocator, response, '\r');
   ozoneStringWriteByte(allocator, response, '\n');
 
-  for (size_t header_index = 0; header_index < ozoneVectorLength(&http_response->headers.keys); header_index++) {
+  for (size_t header_index = 0; header_index < http_response->headers.keys.length; header_index++) {
     ozoneStringConcatenate(allocator, response, &ozoneVectorAt(&http_response->headers.keys, header_index));
     ozoneStringWriteByte(allocator, response, ':');
     ozoneStringWriteByte(allocator, response, ' ');

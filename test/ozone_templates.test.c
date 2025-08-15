@@ -10,7 +10,7 @@ void shouldParseTemplate(void) {
   OzoneTemplate* component = ozoneTemplateCreate(test_alloc, &ozoneString("test"), &source);
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&ozoneString("test"), &component->name, "It sets the component name");
 
-  TEST_ASSERT_EQUAL_MESSAGE(5, ozoneVectorLength(&component->blocks), "It parses the template source into 5 blocks");
+  TEST_ASSERT_EQUAL_MESSAGE(5, component->blocks.length, "It parses the template source into 5 blocks");
   TEST_ASSERT_EQUAL_MESSAGE(
       5, ozoneStringLength(&component->block_classes), "It parses the template source into 5 blocks");
 
@@ -19,12 +19,13 @@ void shouldParseTemplate(void) {
       ozoneStringBufferAt(&component->block_classes, 0),
       "It parses the class of block 0");
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
-      &ozoneString("<!DOCTYPE html>\n"
-                   "<html lang=\"en\">\n"
-                   "<head>\n"
-                   "    <meta charset=\"UTF-8\">\n"
-                   "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-                   "    <title>"),
+      &ozoneString(
+          "<!DOCTYPE html>\n"
+          "<html lang=\"en\">\n"
+          "<head>\n"
+          "    <meta charset=\"UTF-8\">\n"
+          "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+          "    <title>"),
       &ozoneVectorAt(&component->blocks, 0),
       "It parses the content of block 0");
 
@@ -40,10 +41,11 @@ void shouldParseTemplate(void) {
       ozoneStringBufferAt(&component->block_classes, 2),
       "It parses the class of block 2");
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
-      &ozoneString("</title>\n"
-                   "</head>\n"
-                   "<body>\n"
-                   "    "),
+      &ozoneString(
+          "</title>\n"
+          "</head>\n"
+          "<body>\n"
+          "    "),
       &ozoneVectorAt(&component->blocks, 2),
       "It parses the content of block 2");
 
@@ -59,9 +61,10 @@ void shouldParseTemplate(void) {
       ozoneStringBufferAt(&component->block_classes, 4),
       "It parses the class of block 4");
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
-      &ozoneString("\n"
-                   "</body>\n"
-                   "</html>\n"),
+      &ozoneString(
+          "\n"
+          "</body>\n"
+          "</html>\n"),
       &ozoneVectorAt(&component->blocks, 4),
       "It parses the content of block 4");
 }
@@ -77,17 +80,18 @@ void shouldRenderTemplate(void) {
   OzoneString rendered = (OzoneString) { 0 };
   ozoneTemplateWrite(test_alloc, &rendered, component, &template_arguments);
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(
-      &ozoneString("<!DOCTYPE html>\n"
-                   "<html lang=\"en\">\n"
-                   "<head>\n"
-                   "    <meta charset=\"UTF-8\">\n"
-                   "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-                   "    <title>Hello, World!</title>\n"
-                   "</head>\n"
-                   "<body>\n"
-                   "    Now available in Old High German.\n"
-                   "</body>\n"
-                   "</html>\n"),
+      &ozoneString(
+          "<!DOCTYPE html>\n"
+          "<html lang=\"en\">\n"
+          "<head>\n"
+          "    <meta charset=\"UTF-8\">\n"
+          "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+          "    <title>Hello, World!</title>\n"
+          "</head>\n"
+          "<body>\n"
+          "    Now available in Old High German.\n"
+          "</body>\n"
+          "</html>\n"),
       &rendered,
       "It should render a rendered template.");
 }

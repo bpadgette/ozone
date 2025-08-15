@@ -13,14 +13,14 @@ void ozoneStringWriteByte(OzoneAllocator* allocator, OzoneString* string, char b
 
   char end = '\0';
   OzoneByteVectorPush(allocator, &string->vector, &end);
-  if (ozoneVectorLength(&string->vector) < 2)
+  if (string->vector.length < 2)
     OzoneByteVectorPush(allocator, &string->vector, &end);
 
   string->vector.elements[string->vector.length - 2] = byte;
 }
 
 void ozoneStringClear(OzoneString* string) {
-  if (!string || !ozoneVectorLength(&string->vector))
+  if (!string || !string->vector.length)
     return;
 
   string->vector.length = 0;
@@ -28,10 +28,10 @@ void ozoneStringClear(OzoneString* string) {
 }
 
 char ozoneStringPop(OzoneString* string) {
-  if (ozoneVectorLength(&string->vector) < 2)
+  if (string->vector.length < 2)
     return '\0';
 
-  size_t last = ozoneVectorLength(&string->vector) - 2;
+  size_t last = string->vector.length - 2;
   char popped = string->vector.elements[last];
   string->vector.elements[last] = '\0';
   string->vector.length--;
