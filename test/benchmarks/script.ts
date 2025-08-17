@@ -1,12 +1,15 @@
 import { arch, cpus, release, type } from "node:os";
 
 Deno.chdir("../../");
-const serverBinPath = Deno.args[0];
+const [serverBinPath, ...serverArgs] = Deno.args;
 const serverStartupSeconds = 1;
 
 let process;
 if (serverBinPath) {
-  process = new Deno.Command(serverBinPath, { stdout: "null" })
+  process = new Deno.Command(serverBinPath, {
+    stdout: "null",
+    args: serverArgs,
+  })
     .spawn();
 }
 
@@ -51,7 +54,7 @@ console.log(`- **CPU**: ${1 + others.length}-core ${cpu.model}`);
 const memoryInfo = Deno.systemMemoryInfo();
 console.log(
   `- **Memory**: ${(memoryInfo.total / 1024 / 1024).toFixed(0)} MB (${
-    (memoryInfo.available/ 1024 / 1024).toFixed(0)
+    (memoryInfo.available / 1024 / 1024).toFixed(0)
   } MB available)`,
 );
 console.log();

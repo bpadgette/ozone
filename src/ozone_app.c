@@ -5,7 +5,7 @@
 
 #define OZONE_APP_DEFAULT_PORT 8080
 #define OZONE_APP_DEFAULT_REQUEST_TIMEOUT 8000
-#define OZONE_APP_DEFAULT_WORKERS 1
+#define OZONE_APP_DEFAULT_WORKERS 4
 #define OZONE_APP_HELP                                                                                                 \
   "ozone (pre-alpha) application help menu.\n\n"                                                                       \
   "Options:\n"                                                                                                         \
