@@ -2,19 +2,23 @@
 
 #include "ozone_file.h"
 #include "ozone_log.h"
-#include <pthread.h>
 
+#define OZONE_APP_DEFAULT_PORT 8080
+#define OZONE_APP_DEFAULT_REQUEST_TIMEOUT 8000
+#define OZONE_APP_DEFAULT_WORKERS 1
 #define OZONE_APP_HELP                                                                                                 \
   "ozone (pre-alpha) application help menu.\n\n"                                                                       \
   "Options:\n"                                                                                                         \
-  "  --help                 Show this screen.\n"                                                                       \
-  "  --max-workers=<value>  Max worker count for your application, 0 for automatic [default: 0].\n"                    \
-  "  --port=<value>         Port for your application [default: 8080].\n"                                              \
-  "  --<other-key>=<value>  Intended for custom application configuration, inserts 'option:<other-key>' into "         \
-  "the OzoneAppEvent.context cache.\n"
+  "  --help                        Show this screen.\n"                                                                \
+  "  --port=<value>                Port [default: %d].\n"                                                              \
+  "  --request-timeout=<value>     Timeout for socket operations in milliseconds [default: %d].\n"                     \
+  "  --workers=<value>             Worker thread count [default: %d].\n"                                               \
+  "  --<other-key>=<value>         Custom application configuration, inserts 'option:<other-key>' into the "           \
+  "OzoneAppEvent.context cache.\n"
 
-#define OZONE_APP_DEFAULT_PORT 8080
-#define OZONE_APP_DEFAULT_MAX_WORKERS 0 // automatic
+#define ozoneAppPrintHelp()                                                                                            \
+  printf(OZONE_APP_HELP, OZONE_APP_DEFAULT_PORT, OZONE_APP_DEFAULT_REQUEST_TIMEOUT, OZONE_APP_DEFAULT_WORKERS)
+
 #define OZONE_APP_MAX_OPTION_LENGTH 128
 
 #define OZONE_APP_ROUTER_MATCH_NOT_FOUND 0
@@ -121,8 +125,9 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
   context.cache = ozoneAllocatorReserveOne(context.allocator, OzoneAppVoidRefMap);
 
   int help = 0;
-  unsigned int max_workers = OZONE_APP_DEFAULT_MAX_WORKERS;
   unsigned int port = OZONE_APP_DEFAULT_PORT;
+  unsigned int request_timeout_ms = OZONE_APP_DEFAULT_REQUEST_TIMEOUT;
+  unsigned int workers = OZONE_APP_DEFAULT_WORKERS;
 
   for (int option = 1; option < argc; option++) {
     OzoneString* option_key_value = ozoneStringFromBuffer(context.allocator, argv[option], OZONE_APP_MAX_OPTION_LENGTH);
@@ -148,12 +153,13 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
     if (!ozoneStringCompare(key, &ozoneString("help"))) {
       help = 1;
       break;
-    } else if (!ozoneStringCompare(key, &ozoneString("max-workers")) && value) {
-      max_workers = (unsigned int)ozoneStringToInteger(value);
-      ozoneLogInfo("Set max-workers to %d", max_workers);
     } else if (!ozoneStringCompare(key, &ozoneString("port")) && value) {
       port = (unsigned int)ozoneStringToInteger(value);
-      ozoneLogInfo("Set port to %d", port);
+    } else if (!ozoneStringCompare(key, &ozoneString("request-timeout")) && value) {
+      request_timeout_ms = (unsigned int)ozoneStringToInteger(value);
+    } else if (!ozoneStringCompare(key, &ozoneString("workers")) && value) {
+      workers = (unsigned int)ozoneStringToInteger(value);
+      workers = !workers ? OZONE_APP_DEFAULT_WORKERS : workers;
     } else if (!value) {
       ozoneLogWarn("Ignored option '%s'", ozoneStringBuffer(key));
       help = 1;
@@ -168,11 +174,14 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
   }
 
   if (help) {
-    printf(OZONE_APP_HELP);
-
+    ozoneAppPrintHelp();
     ozoneAllocatorDelete(context.allocator);
     return 0;
   }
+
+  ozoneLogInfo("Set port to %d", port);
+  ozoneLogInfo("Set request-timeout to %d ms", request_timeout_ms);
+  ozoneLogInfo("Set workers to %d", workers);
 #ifndef __clang__
 #pragma GCC diagnostic ignored "-Wcast-function-type"
 #else
@@ -183,8 +192,9 @@ int ozoneAppServe(int argc, char* argv[], OzoneAppEndpointVector* endpoints) {
   OzoneHTTPConfig http_config = (OzoneHTTPConfig) {
     .handler_context = &context,
     .handler_pipeline = ozoneVector(OzoneSocketHandlerRef, (OzoneSocketHandlerRef)ozoneAppBeginPipeline),
-    .max_workers = max_workers,
     .port = port,
+    .request_timeout_ms = request_timeout_ms,
+    .workers = workers,
   };
 #ifndef __clang__
 #pragma GCC diagnostic pop

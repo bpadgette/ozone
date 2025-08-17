@@ -7,3 +7,4 @@
 #include "ozone_socket.c"
 #include "ozone_string.c"
 #include "ozone_template.c"
+#include "ozone_time.c"

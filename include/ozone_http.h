@@ -57,8 +57,9 @@ OzoneStringVector* ozoneHTTPRenderResponse(OzoneAllocator* allocator, OzoneHTTPR
 typedef struct OzoneHTTPConfigStruct {
   void* handler_context;
   OzoneSocketHandlerRefVector handler_pipeline;
-  unsigned int max_workers;
   unsigned int port;
+  unsigned int request_timeout_ms;
+  unsigned int workers;
 } OzoneHTTPConfig;
 
 int ozoneHTTPServe(OzoneHTTPConfig* config);
