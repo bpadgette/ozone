@@ -26,8 +26,7 @@ OZONE_VECTOR_DECLARE_API(OzoneString)
 #define ozoneStringWrite(_allocator_, _destination_, _chars_)                                                          \
   ozoneStringConcatenate(_allocator_, (_destination_), &ozoneString((_chars_)))
 
-#define ozoneStringLength(_string_)                                                                                    \
-  (ozoneVectorLength(&(_string_)->vector) > 0 ? ozoneVectorLength(&(_string_)->vector) - 1 : 0)
+#define ozoneStringLength(_string_) ((_string_)->vector.length > 0 ? (_string_)->vector.length - 1 : 0)
 #define ozoneStringBuffer(_string_) ((_string_)->vector.elements)
 #define ozoneStringBufferAt(_string_, _index_) ((_string_)->vector.elements[_index_])
 #define ozoneStringBufferEnd(_string_) ((_string_)->vector.elements[ozoneStringLength(_string_) - 1])

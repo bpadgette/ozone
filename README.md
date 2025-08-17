@@ -16,13 +16,13 @@ Ozone is a minimal dependency, C-based web framework.
   - [Middlewares](#middlewares)
   - [Workers](#workers)
 - [Principles](#principles)
-- [Timeline](#timeline)
 
 # Getting Started <a name="getting-started"></a>
 
 Ozone is a hobby project. It is and will not be production-ready.
 
-Use Ozone to learn and challenge your perceptions of C code. The section [Principles](#principles) covers this subject.
+Use Ozone to learn and challenge your perceptions of C code. The section
+[Principles](#principles) covers this subject.
 
 ## Hello, World! <a name="hello-world"></a>
 
@@ -42,9 +42,11 @@ int main(int argc, char* argv[]) {
 }
 ```
 
-A version of this program is available in `./examples/tiny.c`; run it with `make tiny`.
+A version of this program is available in `./examples/tiny.c`; run it with
+`make tiny`.
 
-For a more comprehensive demo, build and run a release build of `./examples/hello_world.c` with:
+For a more comprehensive demo, build and run a release build of
+`./examples/hello_world.c` with:
 
 ```bash
 make hello_world
@@ -63,10 +65,11 @@ Build all of the examples to `./build/examples` with:
 make build-examples
 ```
 
-> [!IMPORTANT]  
+> [!IMPORTANT]\
 > **Valgrind** is the memory-checking binary used by the `.memcheck` make rules.
 
-Debug builds, benchmarks, and memcheck runs can be executed for any example program:
+Debug builds, benchmarks, and memcheck runs can be executed for any example
+program:
 
 ```bash
 make hello_world.debug
@@ -78,9 +81,11 @@ make hello_world.memcheck
 
 Build and install the shared library, `libozone`.
 
-> [!IMPORTANT]  
-> I test builds with clang and GCC, and the root-level Makefile allows you to as well since it defines most of its binaries in variables.
-> `CC` is defined for example, i.e. `make build CC=gcc` would allow you to overwrite the default value clang and build with GCC.
+> [!IMPORTANT]\
+> I test builds with clang and GCC, and the root-level Makefile allows you to as
+> well since it defines most of its binaries in variables. `CC` is defined for
+> example, i.e. `make build CC=gcc` would allow you to overwrite the default
+> value clang and build with GCC.
 
 ```bash
 make build
@@ -101,10 +106,13 @@ Build and run the tests in `./tests` with:
 make test
 ```
 
-> [!IMPORTANT]  
-> The benchmarks script is written in TypeScript and runs with **Deno**.
+> [!IMPORTANT]\
+> The benchmarks script is written in TypeScript and runs with **Deno**. This
+> script is not consistent, a goal of mine is to later use an industry-standard
+> benchmarks framework for this purpose.
 
-Run [benchmarks](./test/benchmarks) for any example program, such as `hello_world` with:
+Run [benchmarks](./test/benchmarks) for any example program, such as
+`hello_world` with:
 
 ```bash
 make hello_world.benchmarks
@@ -131,8 +139,10 @@ Ozone is:
 Ozone builds:
 
 1. without linking non-std libraries.
-2. without compiler warnings on its strictest settings (-Wall -Werror -pedantic).
-3. for dynamic linking; I want one ozone lib for several tiny web-server binaries.
+2. without compiler warnings on its strictest settings (-Wall -Werror
+   -pedantic).
+3. for dynamic linking; I want one ozone lib for several tiny web-server
+   binaries.
 
 Ozone allows me:
 
@@ -142,26 +152,9 @@ Ozone allows me:
 
 Ozone's code:
 
-1. can use preprocessor directives freely; this is part of its charm and experience with macro pitfalls is expected of the developer.
-2. should implement containers where appropriate for a web-server; i.e. strings, vectors, and maps.
-3. is extensible; an Ozone handler is stateless with a simple signature so that it may be re-used across projects.
-
-# Timeline <a name="timeline"></a>
-
-| Delivery         | Features                                                                                                      |
-| ---------------- | ------------------------------------------------------------------------------------------------------------- |
-| **Milestone 0**  | _Write C code, work without non-std dependencies_                                                             |
-| ✅ October 2024  | Initialize repository, try building an arena allocator for socket response handling.                          |
-| ✅ December 2024 | Implement a nominal HTTP 1.0 parser, ignore content marshaling and other complexities, basic text templating. |
-| ✅ January 2025  | Performance focus: stabilize sub-millisecond responses and write a [benchmarks](./test/benchmarks) script.    |
-| ✅ February 2025 | Ergonomics, reduce complexity of Ozone handlers. Path-parameter parsing for HTTP requests.                    |
-| **Milestone 1**  | _Toward a working web-app built on Ozone_                                                                     |
-| ⏳ March 2025    | Static file-serving with efficient chunking and accurate content-types.                                       |
-| [ ] May 2025     | Ozone serves its own styled, readable, informative docs site.                                                 |
-| **Milestone 2**  | _Dynamic web applications and APIs_                                                                           |
-| [ ] ?            | Basic crypto via optional OpenSSL linking with some basic auth strategy middlewares.                          |
-| [ ] ?            | Database connection pooling.                                                                                  |
-| [ ] ?            | HTTP/2                                                                                                        |
-| [ ] ?            | Websockets                                                                                                    |
-
-View [closed pull requests](https://github.com/bpadgette/ozone/pulls?q=is%3Apr+is%3Aclosed) for more details.
+1. can use preprocessor directives freely; this is part of its charm and
+   experience with macro pitfalls is expected of the developer.
+2. should implement containers where appropriate for a web-server; i.e. strings,
+   vectors, and maps.
+3. is extensible; an Ozone handler is stateless with a simple signature so that
+   it may be re-used across projects.

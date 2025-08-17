@@ -10,7 +10,7 @@ void shouldParseTemplate(void) {
   OzoneTemplate* component = ozoneTemplateCreate(test_alloc, &ozoneString("test"), &source);
   TEST_ASSERT_EQUAL_OZONE_STRING_MESSAGE(&ozoneString("test"), &component->name, "It sets the component name");
 
-  TEST_ASSERT_EQUAL_MESSAGE(5, ozoneVectorLength(&component->blocks), "It parses the template source into 5 blocks");
+  TEST_ASSERT_EQUAL_MESSAGE(5, component->blocks.length, "It parses the template source into 5 blocks");
   TEST_ASSERT_EQUAL_MESSAGE(
       5, ozoneStringLength(&component->block_classes), "It parses the template source into 5 blocks");
 

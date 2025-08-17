@@ -2,7 +2,7 @@
 
 - **Platform**: Darwin 24.2.0 (x64)
 - **CPU**: 4-core Intel(R) Core(TM) i3-8100B CPU @ 3.60GHz
-- **Memory**: 8192 MB (335 MB free)
+- **Memory**: 8192 MB (3382 MB available)
 
 # Benchmarks
 
@@ -17,15 +17,15 @@ For this benchmark, send and wait on requests for 10 seconds using 1 concurrent 
 
 ### Server Performance
 
-- Handled 59177 requests in 10.055 seconds
-  - Requests per second: 5885
-  - Mean response time: 0.170 ms
+- Handled 53129 requests in 10.019 seconds
+  - Requests per second: 5303
+  - Mean response time: 0.189 ms
 
 ### User Experience
 
 - For the 1 user in this phase:
-  - Fastest response time: 0.114 ms
-  - Slowest response time: 79.765 ms
+  - Fastest response time: 0.122 ms
+  - Slowest response time: 77.259 ms
 
 
 # Phase: 30 users
@@ -37,15 +37,15 @@ For this benchmark, send and wait on requests for 10 seconds using 30 concurrent
 
 ### Server Performance
 
-- Handled 111741 requests in 10.019 seconds
-  - Requests per second: 11153
-  - Mean response time: 0.090 ms
+- Handled 92237 requests in 10.045 seconds
+  - Requests per second: 9182
+  - Mean response time: 0.109 ms
 
 ### User Experience
 
 - For the 30 users in this phase:
-  - Fastest response time: 1.360 ms
-  - Slowest response time: 120.548 ms
+  - Fastest response time: 0.586 ms
+  - Slowest response time: 117.736 ms
 
 
 # Phase: 100 users
@@ -57,13 +57,13 @@ For this benchmark, send and wait on requests for 10 seconds using 100 concurren
 
 ### Server Performance
 
-- Handled 105987 requests in 10.041 seconds
-  - Requests per second: 10556
-  - Mean response time: 0.095 ms
+- Handled 77168 requests in 10.092 seconds
+  - Requests per second: 7647
+  - Mean response time: 0.131 ms
 
 ### User Experience
 
 - For the 100 users in this phase:
-  - Fastest response time: 5.203 ms
-  - Slowest response time: 124.777 ms
+  - Fastest response time: 1.791 ms
+  - Slowest response time: 116.058 ms
 

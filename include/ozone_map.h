@@ -15,9 +15,7 @@
   _type_* _type_##MapFind(_type_##Map* map, const OzoneString* key) {                                                  \
     if (!map || !key)                                                                                                  \
       return NULL;                                                                                                     \
-    for (size_t key_index = 0;                                                                                         \
-         key_index < ozoneVectorLength(&map->keys) && key_index < ozoneVectorLength(&map->values);                     \
-         key_index++) {                                                                                                \
+    for (size_t key_index = 0; key_index < map->keys.length && key_index < map->values.length; key_index++) {          \
       if (!ozoneStringCompare(&ozoneVectorAt(&map->keys, key_index), key))                                             \
         return &ozoneVectorAt(&map->values, key_index);                                                                \
     }                                                                                                                  \
@@ -26,9 +24,7 @@
   void _type_##MapInsert(OzoneAllocator* allocator, _type_##Map* map, const OzoneString* key, _type_* value) {         \
     if (!key || !value)                                                                                                \
       return;                                                                                                          \
-    for (size_t key_index = 0;                                                                                         \
-         key_index < ozoneVectorLength(&map->keys) && key_index < ozoneVectorLength(&map->values);                     \
-         key_index++) {                                                                                                \
+    for (size_t key_index = 0; key_index < map->keys.length && key_index < map->values.length; key_index++) {          \
       if (!ozoneStringCompare(&ozoneVectorAt(&map->keys, key_index), key)) {                                           \
         map->values.elements[key_index] = *value;                                                                      \
         return;                                                                                                        \

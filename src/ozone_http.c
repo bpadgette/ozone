@@ -1,6 +1,7 @@
 #include "ozone_http.h"
 
 #include "ozone_log.h"
+#include "ozone_time.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -305,7 +306,7 @@ OzoneStringVector* ozoneHTTPRenderResponse(OzoneAllocator* allocator, OzoneHTTPR
   ozoneStringWriteByte(allocator, response, '\r');
   ozoneStringWriteByte(allocator, response, '\n');
 
-  for (size_t header_index = 0; header_index < ozoneVectorLength(&http_response->headers.keys); header_index++) {
+  for (size_t header_index = 0; header_index < http_response->headers.keys.length; header_index++) {
     ozoneStringConcatenate(allocator, response, &ozoneVectorAt(&http_response->headers.keys, header_index));
     ozoneStringWriteByte(allocator, response, ':');
     ozoneStringWriteByte(allocator, response, ' ');
@@ -388,7 +389,10 @@ int ozoneHTTPEndPipeline(OzoneHTTPEvent* event) {
     for (size_t string_index = 0; string_index < ozoneStringLength(chunk); string_index++) {
       char cursor = ozoneStringBufferAt(chunk, string_index);
       if (cursor == '\r') {
-        ozoneLogInfo("%s", ozoneStringBuffer(first_line));
+        ozoneLogInfo(
+            "%s in %ld ms",
+            ozoneStringBuffer(first_line),
+            ozoneTimeDifferenceMilliseconds(&event->time_begin, &event->time_end));
         return 0;
       }
 
@@ -433,8 +437,9 @@ int ozoneHTTPServe(OzoneHTTPConfig* config) {
   OzoneSocketConfig socket_config = (OzoneSocketConfig) {
     .handler_pipeline = http_pipeline,
     .handler_context = config->handler_context,
-    .max_workers = config->max_workers,
     .port = config->port,
+    .request_timeout_ms = config->request_timeout_ms,
+    .workers = config->workers,
   };
 
   int return_code = ozoneSocketServeTCP(&socket_config);

@@ -5,6 +5,7 @@
         "denoland",
         "DOZONE",
         "dylib",
+        "EPOLLET",
         "EPOLLIN",
         "esbuild",
         "fpic",
@@ -14,7 +15,8 @@
         "valgrind",
         "webserver",
         "Werror",
-        "Wextra"
+        "Wextra",
+        "Wunknown"
     ],
     "files.associations": {
         "*.h": "c"

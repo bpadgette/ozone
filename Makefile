@@ -3,6 +3,10 @@
 #
 # Compiler
 CC                := clang
+EXTRA_CFLAGS      :=
+
+# Debugger
+DEBUGGER          := gdb
 
 # Memory checking
 MEMCHECK          := valgrind --leak-check=full -s
@@ -57,7 +61,8 @@ TARGET_DEBUG_LIB   := $(BUILD)lib$(TARGET).debug$(SHARED_OBJECT_EXTENSION)
 ##############################################################################
 # C Build
 #
-CFLAGS        := -std=gnu99 -Wall -Werror -Wextra -pedantic -fpic -O3 -I$(INCLUDE)
+CFLAGS_DEBUG  := -std=gnu99 -Wall -Werror -Wextra -pedantic -fpic -O0 -I$(INCLUDE) $(EXTRA_CFLAGS) -DOZONE_LOG_DEBUG -g
+CFLAGS        := -std=gnu99 -Wall -Werror -Wextra -pedantic -fpic -O3 -I$(INCLUDE) $(EXTRA_CFLAGS)
 
 $(TARGET_LIB):
 	$(CC) -shared $(CFLAGS) -o $(TARGET_LIB) $(SOURCE)$(TARGET).c
@@ -65,7 +70,7 @@ $(TARGET_LIB):
 build: $(TARGET_LIB)
 
 $(TARGET_DEBUG_LIB):
-	$(CC) -shared -DOZONE_LOG_DEBUG -g $(CFLAGS) -o $(TARGET_DEBUG_LIB) $(SOURCE)$(TARGET).c
+	$(CC) -shared -DOZONE_LOG_DEBUG -g $(CFLAGS_DEBUG) -o $(TARGET_DEBUG_LIB) $(SOURCE)$(TARGET).c
 
 build-debug: $(TARGET_DEBUG_LIB)
 
@@ -76,10 +81,10 @@ EXAMPLES    	  := $(ROOT)examples/
 BUILD_EXAMPLES    := $(BUILD)examples/
 
 $(BUILD_EXAMPLES)%.debug: $(TARGET_DEBUG_LIB)
-	$(shell $(MKDIR) $(BUILD_EXAMPLES)) $(CC) $(CFLAGS) -I$(EXAMPLES) -DOZONE_LOG_DEBUG -g $(EXAMPLES)$*.c $(TARGET_DEBUG_LIB) -o $@
+	$(shell $(MKDIR) $(BUILD_EXAMPLES)) $(CC) -I$(EXAMPLES) $(CFLAGS_DEBUG) $(EXAMPLES)$*.c $(TARGET_DEBUG_LIB) -o $@
 
 $(BUILD_EXAMPLES)%: $(TARGET_LIB)
-	$(shell $(MKDIR) $(BUILD_EXAMPLES))	$(CC) $(CFLAGS) -I$(EXAMPLES) $(EXAMPLES)$*.c $(TARGET_LIB) -o $@
+	$(shell $(MKDIR) $(BUILD_EXAMPLES))	$(CC) -I$(EXAMPLES) $(CFLAGS) $(EXAMPLES)$*.c $(TARGET_LIB) -o $@
 
 %.memcheck: $(BUILD_EXAMPLES)%.debug
 	$(MEMCHECK) $(BUILD_EXAMPLES)$*.debug
@@ -90,6 +95,9 @@ build-examples-debug: $(patsubst $(EXAMPLES)%.c, $(BUILD_EXAMPLES)%.debug, $(wil
 EXAMPLES_ARGS     := --serve-directory=$(EXAMPLES)assets --content-types=$(EXAMPLES)configuration/content_types.properties
 %: $(BUILD_EXAMPLES)%
 	$(BUILD_EXAMPLES)$* $(EXAMPLES_ARGS)
+
+%.debug: $(BUILD_EXAMPLES)%.debug
+	$(DEBUGGER) --args $(BUILD_EXAMPLES)$*.debug $(EXAMPLES_ARGS)
 
 ##############################################################################
 # Testing
@@ -110,7 +118,7 @@ test: $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
 
 BENCHMARKS  := $(TEST)benchmarks/
 %.benchmarks: $(BUILD_EXAMPLES)%
-	cd $(TEST)benchmarks && deno install && deno task run $^ | tee $(BENCHMARKS)$@_$(PLATFORM).md
+	cd $(TEST)benchmarks && deno install && deno task run $^ $(EXAMPLES_ARGS) | tee $(BENCHMARKS)$@_$(PLATFORM).md
 
 ##############################################################################
 # Installation
