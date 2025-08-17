@@ -13,7 +13,7 @@
 #define OZONE_SOCKET_EVENT_POLLING_CAPACITY 64
 #define OZONE_SOCKET_IDLE_NS 100000
 #define OZONE_SOCKET_INIT_ALLOCATOR 32768
-#define OZONE_SOCKET_POLLING_TIMEOUT_MS 5000
+#define OZONE_SOCKET_POLLING_TIMEOUT_MS 100
 #define OZONE_SOCKET_REQUEST_CHUNK_SIZE 8192
 
 OZONE_VECTOR_IMPLEMENT_API(OzoneSocketHandlerRef)
@@ -254,54 +254,52 @@ void* ozoneSocketHandleWorker(OzoneSocketWorker* worker) {
       pthread_mutex_lock(worker->sockets_write_lock);
       int* socket_fd_it;
       ozoneVectorForEach(socket_fd_it, worker->sockets_processing) {
-        if (*socket_fd_it == socket_fd_to_clear)
+        if (*socket_fd_it == socket_fd_to_clear) {
           *socket_fd_it = 0;
-        break;
+          break;
+        }
       }
-
-      while (worker->sockets_processing->length && !*ozoneVectorLast(worker->sockets_processing))
-        SocketFdVectorPop(worker->sockets_processing, NULL);
 
       pthread_mutex_unlock(worker->sockets_write_lock);
     }
 
-    while (connections.length && !ozoneGeneratorPending(ozoneVectorLast(&connections))) {
+    size_t connections_count_before_cleanup = connections.length;
+    while (connections.length && !ozoneGeneratorPending(ozoneVectorLast(&connections)))
       OzoneSocketConnectionVectorPop(&connections, NULL);
+
+    if (connections_count_before_cleanup && !connections.length) {
+      connections = (OzoneSocketConnectionVector) { 0 };
+      ozoneAllocatorClear(allocator);
     }
 
     pthread_mutex_lock(worker->sockets_write_lock);
     int socket_fd = 0;
     SocketFdVectorShift(worker->sockets_waiting, &socket_fd);
 
-    if (socket_fd) {
-      int sockets_processing_reused = 0;
-      int* socket_fd_it;
-      ozoneVectorForEach(socket_fd_it, worker->sockets_processing) {
-        if (!*socket_fd_it) {
-          *socket_fd_it = socket_fd;
-          sockets_processing_reused = 1;
-          break;
-        }
-      }
-
-      if (!sockets_processing_reused)
-        SocketFdVectorPush(worker->sockets_allocator, worker->sockets_processing, &socket_fd);
-    }
-
-    pthread_mutex_unlock(worker->sockets_write_lock);
-
     if (!socket_fd) {
-      if (!connections.length) {
-        connections = (OzoneSocketConnectionVector) { 0 };
-        ozoneAllocatorClear(allocator);
+      pthread_mutex_unlock(worker->sockets_write_lock);
+      if (!connections.length)
         nanosleep(&(struct timespec) { .tv_nsec = OZONE_SOCKET_IDLE_NS }, NULL);
-      }
 
       continue;
     }
 
-    OzoneSocketConnection* connection = ozoneAllocatorReserveOne(allocator, OzoneSocketConnection);
-    *connection = ozoneGenerator(
+    int sockets_processing_reused = 0;
+    int* socket_fd_it;
+    ozoneVectorForEach(socket_fd_it, worker->sockets_processing) {
+      if (!*socket_fd_it) {
+        *socket_fd_it = socket_fd;
+        sockets_processing_reused = 1;
+        break;
+      }
+    }
+
+    if (!sockets_processing_reused)
+      SocketFdVectorPush(worker->sockets_allocator, worker->sockets_processing, &socket_fd);
+
+    pthread_mutex_unlock(worker->sockets_write_lock);
+
+    OzoneSocketConnection connection = ozoneGenerator(
         OzoneSocketConnectionData,
         ((OzoneSocketConnectionData) {
             .config = worker->config,
@@ -315,14 +313,14 @@ void* ozoneSocketHandleWorker(OzoneSocketWorker* worker) {
     int connection_reused = 0;
     ozoneVectorForEach(connection_it, &connections) {
       if (!ozoneGeneratorPending(connection_it)) {
-        *connection_it = *connection;
+        *connection_it = connection;
         connection_reused = 1;
         break;
       }
     }
 
     if (!connection_reused)
-      OzoneSocketConnectionVectorPush(allocator, &connections, connection);
+      OzoneSocketConnectionVectorPush(allocator, &connections, &connection);
   }
 
   ozoneAllocatorDelete(allocator);
@@ -380,10 +378,23 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config) {
         0,
         ozoneVectorBegin(&events),
         events.capacity,
-        &(struct timespec) { .tv_sec = OZONE_SOCKET_POLLING_TIMEOUT_MS * 1000 });
+        &(struct timespec) { .tv_nsec = 1000000 * OZONE_SOCKET_POLLING_TIMEOUT_MS });
 #else
     events.length = epoll_wait(polling_fd, ozoneVectorBegin(&events), events.capacity, OZONE_SOCKET_POLLING_TIMEOUT_MS);
 #endif
+
+    if (!events.length) {
+      // use downtime to clean-up
+      pthread_mutex_lock(&sockets_write_lock);
+      while (sockets_processing.length && !*ozoneVectorLast(&sockets_processing))
+        SocketFdVectorPop(&sockets_processing, NULL);
+
+      while (sockets_waiting.length && !*ozoneVectorLast(&sockets_waiting))
+        SocketFdVectorPop(&sockets_waiting, NULL);
+
+      pthread_mutex_unlock(&sockets_write_lock);
+      continue;
+    }
 
     OzonePollingEvent* event;
     ozoneVectorForEach(event, &events) {
@@ -436,7 +447,7 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config) {
       int* reusable_socket = NULL;
       if (!socket_reused) {
         ozoneVectorForEach(socket_fd, &sockets_waiting) {
-          if (!*socket_fd)
+          if (!*socket_fd && !reusable_socket)
             reusable_socket = socket_fd;
 
           if (event_fd == *socket_fd) {
