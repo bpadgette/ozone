@@ -109,4 +109,7 @@
     vector->elements[vector->length++] = *element;                                                                     \
   }
 
+typedef size_t SizeT;
+OZONE_VECTOR_DECLARE_API(SizeT)
+
 #endif
