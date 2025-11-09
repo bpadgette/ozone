@@ -1,6 +1,6 @@
 #ifndef OZONE_SERVE_DIRECTORY_H
 #define OZONE_SERVE_DIRECTORY_H
-#include "ozone.h"
+#include "../ozone.h"
 
 #define OZONE_SERVE_DIRECTORY_CONTENT_TYPES "middlewares:serve-directory:content-types"
 #define OZONE_SERVE_DIRECTORY_DEFAULT_CONTENT_TYPE "application/octet-stream"
@@ -52,8 +52,9 @@ void ozoneServeDirectory(OzoneAppEvent* event) {
   OzoneString** content_types_path = ozoneAppContextCacheGetRef(event, OzoneString, "option:content-types");
   if (!content_types_path) {
     ozoneAppContextUnlock(event);
-    ozoneLogWarn("CLI option content-types not specified, all files will be "
-                 "assigned " OZONE_SERVE_DIRECTORY_DEFAULT_CONTENT_TYPE);
+    ozoneLogWarn(
+        "CLI option content-types not specified, all files will be "
+        "assigned " OZONE_SERVE_DIRECTORY_DEFAULT_CONTENT_TYPE);
     return;
   }
 
