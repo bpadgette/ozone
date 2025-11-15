@@ -2,7 +2,7 @@
 
 #include "example_helpers.h"
 
-// This demo is hosted at https://ozone.bpadgette.net
+// This demo is hosted at https://ozone.bpadgette.com
 
 void home(OzoneAppEvent* event) {
   ozoneStringWrite(
