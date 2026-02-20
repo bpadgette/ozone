@@ -19,7 +19,7 @@ Ozone is a minimal dependency, C-based web framework.
 
 # Getting Started <a name="getting-started"></a>
 
-Ozone is a hobby project. It is and will not be production-ready.
+Ozone is a hobby project. It is not and will not be production-ready.
 
 Use Ozone to learn and challenge your perceptions of C code. The section
 [Principles](#principles) covers this subject.
