@@ -5,8 +5,10 @@
 #include "ozone_time.h"
 #include <arpa/inet.h>
 #include <errno.h>
+#include <netinet/in.h>
 #include <pthread.h>
 #include <signal.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
@@ -82,21 +84,51 @@ int ozoneSocketSetupListener(
     int port,
     int* listening_socket_fd,
     int* polling_fd,
-    struct sockaddr_in6* host_addr,
+    struct sockaddr_storage* host_addr,
     socklen_t* host_addr_len,
     struct timeval* request_timeout_ms) {
+  const int optval_0 = 0;
+  const int optval_1 = 1;
+
   *listening_socket_fd = socket(AF_INET6, SOCK_STREAM, 0);
-  if (*listening_socket_fd == -1) {
-    ozoneLogError("Failed to get AF_INET6 SOCK_STREAM socket file descriptor, returning EACCES");
-    return EACCES;
+  if (*listening_socket_fd != -1) {
+    if (setsockopt(*listening_socket_fd, IPPROTO_IPV6, IPV6_V6ONLY, &optval_0, sizeof(int)) != 0)
+      ozoneLogWarn("Could not clear IPV6_V6ONLY, IPv4 clients may be refused. %s.", strerror(errno));
+
+    *(struct sockaddr_in6*)host_addr = (struct sockaddr_in6) {
+      .sin6_family = AF_INET6,
+      .sin6_port = htons((unsigned short)port),
+      .sin6_addr = in6addr_any,
+    };
+    *host_addr_len = sizeof(struct sockaddr_in6);
+  } else {
+    int errnum = errno;
+    if (errnum != EAFNOSUPPORT) {
+      ozoneLogError("Failed to get AF_INET6 SOCK_STREAM socket file descriptor. %s.", strerror(errnum));
+      return errnum;
+    }
+
+    ozoneLogWarn("IPv6 unavailable, listening on IPv4 only");
+    *listening_socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (*listening_socket_fd == -1) {
+      errnum = errno;
+      ozoneLogError("Failed to get AF_INET SOCK_STREAM socket file descriptor. %s.", strerror(errnum));
+      return errnum;
+    }
+
+    *(struct sockaddr_in*)host_addr = (struct sockaddr_in) {
+      .sin_family = AF_INET,
+      .sin_port = htons((unsigned short)port),
+      .sin_addr.s_addr = htonl(INADDR_ANY),
+    };
+    *host_addr_len = sizeof(struct sockaddr_in);
   }
 
   // todo: review socket options, consider SO_LINGER
-  const int socket_option_one = 1;
-  setsockopt(*listening_socket_fd, SOL_SOCKET, SO_REUSEADDR, &socket_option_one, sizeof(int));
+  setsockopt(*listening_socket_fd, SOL_SOCKET, SO_REUSEADDR, &optval_1, sizeof(int));
   setsockopt(*listening_socket_fd, SOL_SOCKET, SO_RCVTIMEO, request_timeout_ms, sizeof(struct timeval));
 
-  if (ioctl(*listening_socket_fd, FIONBIO, &socket_option_one) < 0)
+  if (ioctl(*listening_socket_fd, FIONBIO, &optval_1) < 0)
     ozoneLogWarn("Connection ioctl FIONBIO failed, socket may run in blocking mode");
 
   OzonePollingEvent listening_socket_event;
@@ -104,50 +136,56 @@ int ozoneSocketSetupListener(
 #ifdef OZONE_SOCKET_USE_KQUEUE
   *polling_fd = kqueue();
   if (*polling_fd == -1) {
-    ozoneLogError("Failed to get kqueue handle, returning EACCES");
+    int errnum = errno;
+    ozoneLogError("Failed to get kqueue handle, %s.", strerror(errnum));
     close(*listening_socket_fd);
-    return EACCES;
+    return errnum;
   }
 
   EV_SET(&listening_socket_event, *listening_socket_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, 0);
 
   if (kevent(*polling_fd, &listening_socket_event, 1, NULL, 0, NULL) == -1) {
-    ozoneLogError("Failed to add socket polling event to kqueue handle, returning EACCES");
+    int errnum = errno;
+    ozoneLogError("Failed to add socket polling event to kqueue handle. %s.", strerror(errnum));
     close(*listening_socket_fd);
     close(*polling_fd);
-    return EACCES;
+    return errnum;
   }
 #else
   *polling_fd = epoll_create1(0);
   if (*polling_fd == -1) {
-    ozoneLogError("Failed to get epoll file descriptor, returning EACCES");
+    int errnum = errno;
+    ozoneLogError("Failed to get epoll file descriptor. %s.", strerror(errnum));
     close(*listening_socket_fd);
-    return EACCES;
+    return errnum;
   }
 
   listening_socket_event.events = EPOLLIN | EPOLLET;
   listening_socket_event.data.fd = *listening_socket_fd;
 
   if (epoll_ctl(*polling_fd, EPOLL_CTL_ADD, *listening_socket_fd, &listening_socket_event)) {
-    ozoneLogError("Failed to add socket polling event to epoll, returning EACCES");
+    int errnum = errno;
+    ozoneLogError("Failed to add socket polling event to epoll. %s.", strerror(errnum));
     close(*listening_socket_fd);
     close(*polling_fd);
-    return EACCES;
+    return errnum;
   }
 #endif
 
   if (bind(*listening_socket_fd, (struct sockaddr*)host_addr, *host_addr_len) != 0) {
-    ozoneLogError("Bind failed, returning ECONNABORTED");
+    int errnum = errno;
+    ozoneLogError("Bind failed. %s.", strerror(errnum));
     close(*listening_socket_fd);
     close(*polling_fd);
-    return ECONNABORTED;
+    return errnum;
   }
 
   if (listen(*listening_socket_fd, SOMAXCONN) != 0) {
-    ozoneLogError("Listen on port %d failed", port);
+    int errnum = errno;
+    ozoneLogError("Listen on port %d failed. %s", port, strerror(errnum));
     close(*listening_socket_fd);
     close(*polling_fd);
-    return ECONNABORTED;
+    return errnum;
   }
 
   return 0;
@@ -330,11 +368,8 @@ void* ozoneSocketHandleWorker(OzoneSocketWorker* worker) {
 
 int ozoneSocketServeTCP(OzoneSocketConfig* config) {
   int listening_socket_fd, polling_fd;
-  struct sockaddr_in6 host_addr = (struct sockaddr_in6) {
-    .sin6_family = AF_INET6,
-    .sin6_port = htons(config->port),
-  };
-  socklen_t host_addr_len = sizeof(host_addr);
+  struct sockaddr_storage host_addr = (struct sockaddr_storage) { 0 };
+  socklen_t host_addr_len = 0;
   struct timeval request_timeout_ms = (struct timeval) { .tv_usec = config->request_timeout_ms * 1000 };
   int err = ozoneSocketSetupListener(
       config->port, &listening_socket_fd, &polling_fd, &host_addr, &host_addr_len, &request_timeout_ms);
