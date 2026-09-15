@@ -1,8 +1,8 @@
 # Host Information
 
-- **Platform**: Linux 6.16.0-arch2-1 (x64)
+- **Platform**: Linux 7.1.3-arch1-2 (x64)
 - **CPU**: 16-core AMD Ryzen 7 9700X 8-Core Processor
-- **Memory**: 31182 MB (27101 MB available)
+- **Memory**: 31179 MB (25597 MB available)
 
 # Benchmarks
 
@@ -17,15 +17,15 @@ For this benchmark, send and wait on requests for 10 seconds using 1 concurrent 
 
 ### Server Performance
 
-- Handled 69250 requests in 10.031 seconds
-  - Requests per second: 6904
-  - Mean response time: 0.145 ms
+- Handled 119868 requests in 10.003 seconds
+  - Requests per second: 11984
+  - Mean response time: 0.083 ms
 
 ### User Experience
 
 - For the 1 user in this phase:
-  - Fastest response time: 0.031 ms
-  - Slowest response time: 28.518 ms
+  - Fastest response time: 0.019 ms
+  - Slowest response time: 3.848 ms
 
 
 # Phase: 30 users
@@ -37,15 +37,15 @@ For this benchmark, send and wait on requests for 10 seconds using 30 concurrent
 
 ### Server Performance
 
-- Handled 574307 requests in 10.047 seconds
-  - Requests per second: 57160
-  - Mean response time: 0.017 ms
+- Handled 793986 requests in 10.005 seconds
+  - Requests per second: 79357
+  - Mean response time: 0.013 ms
 
 ### User Experience
 
 - For the 30 users in this phase:
-  - Fastest response time: 0.308 ms
-  - Slowest response time: 73.635 ms
+  - Fastest response time: 0.132 ms
+  - Slowest response time: 19.258 ms
 
 
 # Phase: 100 users
@@ -57,13 +57,13 @@ For this benchmark, send and wait on requests for 10 seconds using 100 concurren
 
 ### Server Performance
 
-- Handled 568983 requests in 10.065 seconds
-  - Requests per second: 56529
-  - Mean response time: 0.018 ms
+- Handled 771638 requests in 10.003 seconds
+  - Requests per second: 77141
+  - Mean response time: 0.013 ms
 
 ### User Experience
 
 - For the 100 users in this phase:
-  - Fastest response time: 1.043 ms
-  - Slowest response time: 78.599 ms
+  - Fastest response time: 0.691 ms
+  - Slowest response time: 18.556 ms
 
