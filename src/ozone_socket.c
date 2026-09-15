@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
@@ -87,8 +88,9 @@ int ozoneSocketSetupListener(
     struct timeval* request_timeout_ms) {
   *listening_socket_fd = socket(AF_INET6, SOCK_STREAM, 0);
   if (*listening_socket_fd == -1) {
-    ozoneLogError("Failed to get AF_INET6 SOCK_STREAM socket file descriptor, returning EACCES");
-    return EACCES;
+    int errnum = errno;
+    ozoneLogError("Failed to get AF_INET6 SOCK_STREAM socket file descriptor. %s.", strerror(errnum));
+    return errnum;
   }
 
   // todo: review socket options, consider SO_LINGER
@@ -104,50 +106,56 @@ int ozoneSocketSetupListener(
 #ifdef OZONE_SOCKET_USE_KQUEUE
   *polling_fd = kqueue();
   if (*polling_fd == -1) {
-    ozoneLogError("Failed to get kqueue handle, returning EACCES");
+    int errnum = errno;
+    ozoneLogError("Failed to get kqueue handle, %s.", strerror(errnum));
     close(*listening_socket_fd);
-    return EACCES;
+    return errnum;
   }
 
   EV_SET(&listening_socket_event, *listening_socket_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, 0);
 
   if (kevent(*polling_fd, &listening_socket_event, 1, NULL, 0, NULL) == -1) {
-    ozoneLogError("Failed to add socket polling event to kqueue handle, returning EACCES");
+    int errnum = errno;
+    ozoneLogError("Failed to add socket polling event to kqueue handle. %s.", strerror(errnum));
     close(*listening_socket_fd);
     close(*polling_fd);
-    return EACCES;
+    return errnum;
   }
 #else
   *polling_fd = epoll_create1(0);
   if (*polling_fd == -1) {
-    ozoneLogError("Failed to get epoll file descriptor, returning EACCES");
+    int errnum = errno;
+    ozoneLogError("Failed to get epoll file descriptor. %s.", strerror(errnum));
     close(*listening_socket_fd);
-    return EACCES;
+    return errnum;
   }
 
   listening_socket_event.events = EPOLLIN | EPOLLET;
   listening_socket_event.data.fd = *listening_socket_fd;
 
   if (epoll_ctl(*polling_fd, EPOLL_CTL_ADD, *listening_socket_fd, &listening_socket_event)) {
-    ozoneLogError("Failed to add socket polling event to epoll, returning EACCES");
+    int errnum = errno;
+    ozoneLogError("Failed to add socket polling event to epoll. %s.", strerror(errnum));
     close(*listening_socket_fd);
     close(*polling_fd);
-    return EACCES;
+    return errnum;
   }
 #endif
 
   if (bind(*listening_socket_fd, (struct sockaddr*)host_addr, *host_addr_len) != 0) {
-    ozoneLogError("Bind failed, returning ECONNABORTED");
+    int errnum = errno;
+    ozoneLogError("Bind failed. %s.", strerror(errnum));
     close(*listening_socket_fd);
     close(*polling_fd);
-    return ECONNABORTED;
+    return errnum;
   }
 
   if (listen(*listening_socket_fd, SOMAXCONN) != 0) {
-    ozoneLogError("Listen on port %d failed", port);
+    int errnum = errno;
+    ozoneLogError("Listen on port %d failed. %s", port, strerror(errnum));
     close(*listening_socket_fd);
     close(*polling_fd);
-    return ECONNABORTED;
+    return errnum;
   }
 
   return 0;
