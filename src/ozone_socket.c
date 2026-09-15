@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <time.h>
 #include <unistd.h>
 
 #define OZONE_SOCKET_EVENT_POLLING_CAPACITY 64
@@ -66,6 +67,7 @@ typedef struct OzoneSocketWorkerStruct {
   // Architecturally, sparse arrays indexed by socket make much more sense here
   SocketFdVector* sockets_processing;
   SocketFdVector* sockets_waiting;
+  pthread_cond_t* sockets_waiting_signal;
   pthread_mutex_t* sockets_write_lock;
 } OzoneSocketWorker;
 
@@ -315,10 +317,17 @@ void* ozoneSocketHandleWorker(OzoneSocketWorker* worker) {
     SocketFdVectorShift(worker->sockets_waiting, &socket_fd);
 
     if (!socket_fd) {
-      pthread_mutex_unlock(worker->sockets_write_lock);
-      if (!connections.length)
-        nanosleep(&(struct timespec) { .tv_nsec = OZONE_SOCKET_IDLE_NS }, NULL);
+      if (connections.length) {
+        struct timespec deadline;
+        clock_gettime(CLOCK_REALTIME, &deadline);
+        deadline.tv_nsec += OZONE_SOCKET_IDLE_NS;
 
+        pthread_cond_timedwait(worker->sockets_waiting_signal, worker->sockets_write_lock, &deadline);
+      } else if (!ozone_socket_shutdown) {
+        pthread_cond_wait(worker->sockets_waiting_signal, worker->sockets_write_lock);
+      }
+
+      pthread_mutex_unlock(worker->sockets_write_lock);
       continue;
     }
 
@@ -383,6 +392,8 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config) {
   SocketFdVector sockets_processing = (SocketFdVector) { 0 };
   pthread_mutex_t sockets_write_lock = (pthread_mutex_t) { 0 };
   pthread_mutex_init(&sockets_write_lock, NULL);
+  pthread_cond_t sockets_waiting_signal = (pthread_cond_t) { 0 };
+  pthread_cond_init(&sockets_waiting_signal, NULL);
 
   OzoneSocketWorkerVector workers = ozoneVectorAllocate(sockets_allocator, OzoneSocketWorker, config->workers);
   for (size_t worker_index = 0; worker_index < config->workers; worker_index++) {
@@ -393,6 +404,7 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config) {
       .sockets_allocator = sockets_allocator,
       .sockets_processing = &sockets_processing,
       .sockets_waiting = &sockets_waiting,
+      .sockets_waiting_signal = &sockets_waiting_signal,
       .sockets_write_lock = &sockets_write_lock,
     };
 
@@ -495,17 +507,25 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config) {
       if (!socket_reused && reusable_socket) {
         *reusable_socket = event_fd;
         socket_reused = 1;
+        pthread_cond_signal(&sockets_waiting_signal);
       }
 
-      if (!socket_reused)
+      if (!socket_reused) {
         SocketFdVectorPush(sockets_allocator, &sockets_waiting, &event_fd);
+        pthread_cond_signal(&sockets_waiting_signal);
+      }
 
       pthread_mutex_unlock(&sockets_write_lock);
     }
   }
 
+  pthread_mutex_lock(&sockets_write_lock);
+  pthread_cond_broadcast(&sockets_waiting_signal);
+  pthread_mutex_unlock(&sockets_write_lock);
+
   OzoneSocketWorker* worker;
   ozoneVectorForEach(worker, &workers) pthread_join(worker->thread, NULL);
+  pthread_cond_destroy(&sockets_waiting_signal);
   pthread_mutex_destroy(&sockets_write_lock);
   ozoneAllocatorDelete(sockets_allocator);
   close(polling_fd);
