@@ -63,6 +63,7 @@ typedef struct OzoneSocketWorkerStruct {
   int id;
   pthread_t thread;
   OzoneSocketConfig* config;
+  int polling_fd;
   OzoneAllocator* sockets_allocator;
   // Architecturally, sparse arrays indexed by socket make much more sense here
   SocketFdVector* sockets_processing;
@@ -193,6 +194,17 @@ int ozoneSocketSetupListener(
   return 0;
 }
 
+int ozoneSocketWatchNextRead(int polling_fd, int socket_fd, int already_watched) {
+#ifdef OZONE_SOCKET_USE_KQUEUE
+  struct kevent event;
+  EV_SET(&event, socket_fd, EVFILT_READ, EV_ADD | EV_ONESHOT, 0, 0, 0);
+  return kevent(polling_fd, &event, 1, NULL, 0, NULL);
+#else
+  struct epoll_event event = (struct epoll_event) { .events = EPOLLIN | EPOLLONESHOT, .data.fd = socket_fd };
+  return epoll_ctl(polling_fd, already_watched ? EPOLL_CTL_MOD : EPOLL_CTL_ADD, socket_fd, &event);
+#endif
+}
+
 void ozoneSocketConnectionHandler(OzoneSocketConnection* connection) {
   OzoneSocketConnectionData* conn = &connection->context;
   ozoneGeneratorBegin(connection);
@@ -301,6 +313,12 @@ void* ozoneSocketHandleWorker(OzoneSocketWorker* worker) {
       }
 
       pthread_mutex_unlock(worker->sockets_write_lock);
+
+      if (ozoneGeneratorResolved(connection_it)
+          && ozoneSocketWatchNextRead(worker->polling_fd, socket_fd_to_clear, 1)) {
+        ozoneLogError("Could not watch socket %d", socket_fd_to_clear);
+        close(socket_fd_to_clear);
+      }
     }
 
     size_t connections_count_before_cleanup = connections.length;
@@ -401,6 +419,7 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config) {
     *worker = (OzoneSocketWorker) {
       .id = (int)worker_index + 1,
       .config = config,
+      .polling_fd = polling_fd,
       .sockets_allocator = sockets_allocator,
       .sockets_processing = &sockets_processing,
       .sockets_waiting = &sockets_waiting,
@@ -461,21 +480,10 @@ int ozoneSocketServeTCP(OzoneSocketConfig* config) {
         if (accepted_socket_fd == -1)
           break;
 
-        OzonePollingEvent accepted_event = (OzonePollingEvent) { 0 };
-#ifdef OZONE_SOCKET_USE_KQUEUE
-        EV_SET(&accepted_event, accepted_socket_fd, EVFILT_READ, EV_ADD, 0, 0, 0);
-        if (kevent(polling_fd, &accepted_event, 1, NULL, 0, NULL)) {
+        if (ozoneSocketWatchNextRead(polling_fd, accepted_socket_fd, 0)) {
           ozoneLogError("Could not poll connection %d", accepted_socket_fd);
           close(accepted_socket_fd);
         }
-#else
-        accepted_event.data.fd = accepted_socket_fd;
-        accepted_event.events = EPOLLIN | EPOLLET;
-        if (epoll_ctl(polling_fd, EPOLL_CTL_ADD, accepted_socket_fd, &accepted_event)) {
-          ozoneLogError("Could not poll connection %d", accepted_socket_fd);
-          close(accepted_socket_fd);
-        }
-#endif
       }
 
       if (event_fd == listening_socket_fd)

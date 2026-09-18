@@ -18,6 +18,7 @@ typedef enum OzoneGeneratorStateEnum {
   (_type_##Generator) { .context = (_context_) }
 
 #define ozoneGeneratorPending(_generator_) ((_generator_)->state == OZONE_GENERATOR_PENDING)
+#define ozoneGeneratorResolved(_generator_) ((_generator_)->state == OZONE_GENERATOR_RESOLVED)
 
 #define ozoneGeneratorBegin(_generator_)                                                                               \
   if (!ozoneGeneratorPending(_generator_))                                                                             \

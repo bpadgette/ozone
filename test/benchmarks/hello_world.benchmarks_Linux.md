@@ -1,69 +1,19 @@
 # Host Information
 
-- **Platform**: Linux 7.1.3-arch1-2 (x64)
-- **CPU**: 16-core AMD Ryzen 7 9700X 8-Core Processor
-- **Memory**: 31179 MB (25597 MB available)
+- **Platform**: Linux 7.1.3-arch1-2 (x86_64)
+- **CPU**: 16-thread AMD Ryzen 7 9700X 8-Core Processor
+- **Memory**: 31179 MB
+- **Load generator**: oha 1.16.0
+- **CPU pinning**: server on 0-7, oha on 8-15
 
 # Benchmarks
 
-Using server `hello_world`
+Using server `hello_world`, each phase runs for 10s against `http://localhost:8080/`.
 
-# Phase: Single User
-
-For this benchmark, send and wait on requests for 10 seconds using 1 concurrent user.
-
-
-## GET http://localhost:8080/ -> OK
-
-### Server Performance
-
-- Handled 119868 requests in 10.003 seconds
-  - Requests per second: 11984
-  - Mean response time: 0.083 ms
-
-### User Experience
-
-- For the 1 user in this phase:
-  - Fastest response time: 0.019 ms
-  - Slowest response time: 3.848 ms
-
-
-# Phase: 30 users
-
-For this benchmark, send and wait on requests for 10 seconds using 30 concurrent users.
-
-
-## GET http://localhost:8080/ -> OK
-
-### Server Performance
-
-- Handled 793986 requests in 10.005 seconds
-  - Requests per second: 79357
-  - Mean response time: 0.013 ms
-
-### User Experience
-
-- For the 30 users in this phase:
-  - Fastest response time: 0.132 ms
-  - Slowest response time: 19.258 ms
-
-
-# Phase: 100 users
-
-For this benchmark, send and wait on requests for 10 seconds using 100 concurrent users.
-
-
-## GET http://localhost:8080/ -> OK
-
-### Server Performance
-
-- Handled 771638 requests in 10.003 seconds
-  - Requests per second: 77141
-  - Mean response time: 0.013 ms
-
-### User Experience
-
-- For the 100 users in this phase:
-  - Fastest response time: 0.691 ms
-  - Slowest response time: 18.556 ms
-
+| Phase | Connections | Rate | Req/s | Success | p50 ms | p90 ms | p99 ms | p99.9 ms | Max ms |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| single-user | 1 | max | 72157 | 100% | 0.013 | 0.014 | 0.017 | 0.026 | 0.896 |
+| 30-users | 30 | max | 219891 | 100% | 0.135 | 0.144 | 0.171 | 0.272 | 5.652 |
+| 100-users | 100 | max | 222087 | 100% | 0.447 | 0.475 | 0.518 | 0.629 | 4.837 |
+| 100-users-no-keepalive | 100 | max | 21427 | 100% | 0.584 | 7.112 | 10.044 | 11.044 | 17.555 |
+| 100-users-at-50k-rps | 100 | 50000 | 49990 | 100% | 0.164 | 0.312 | 0.461 | 0.784 | 7.748 |

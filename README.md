@@ -107,9 +107,10 @@ make test
 ```
 
 > [!IMPORTANT]\
-> The benchmarks script is written in TypeScript and runs with **Deno**. This
-> script is not consistent, a goal of mine is to later use an industry-standard
-> benchmarks framework for this purpose.
+> Benchmarks are driven by [oha](https://github.com/hatoo/oha) and summarised
+> with **jq**; both must be on your `PATH`. The phases (connection counts,
+> request rates, extra oha flags) are listed in
+> [`test/benchmarks/phases.conf`](./test/benchmarks/phases.conf).
 
 Run [benchmarks](./test/benchmarks) for any example program, such as
 `hello_world` with:
