@@ -118,7 +118,7 @@ test: $(patsubst $(TEST)%.c, $(BUILD)%, $(wildcard *, $(TEST)*.test.c))
 
 BENCHMARKS  := $(TEST)benchmarks/
 %.benchmarks: $(BUILD_EXAMPLES)%
-	cd $(TEST)benchmarks && deno install && deno task run $^ $(EXAMPLES_ARGS) | tee $(BENCHMARKS)$@_$(PLATFORM).md
+	$(BENCHMARKS)run.sh $^ $(EXAMPLES_ARGS) | tee $(BENCHMARKS)$@_$(PLATFORM).md
 
 ##############################################################################
 # Installation
